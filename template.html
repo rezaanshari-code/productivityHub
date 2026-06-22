@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Performance & Productivity Hub</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242736;
+    --border: #2e3147;
+    --accent-ahi: #3b82f6;
+    --accent-hci: #f59e0b;
+    --accent-all: #8b5cf6;
+    --text: #e2e8f0;
+    --text-muted: #8892a4;
+    --green: #10b981;
+    --red: #ef4444;
+    --cyan: #06b6d4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+  
+  /* NAV */
+  .navbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 8px; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .navbar-brand { font-size: 16px; font-weight: 700; color: var(--text); margin-right: 16px; white-space: nowrap; }
+  .nav-tabs { display: flex; gap: 4px; overflow-x: auto; flex: 1; }
+  .nav-tab { padding: 6px 14px; border-radius: 6px; cursor: pointer; white-space: nowrap; color: var(--text-muted); font-size: 13px; font-weight: 500; transition: all .2s; border: none; background: none; }
+  .nav-tab:hover { background: var(--surface2); color: var(--text); }
+  .nav-tab.active { background: var(--accent-all); color: #fff; }
+  .nav-tab.ahi-tab.active { background: var(--accent-ahi); }
+  .nav-tab.hci-tab.active { background: var(--accent-hci); color: #000; }
+  .nav-tab.hub-tab.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+
+  /* PAGE */
+  .page { display: none; padding: 24px; max-width: 1400px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* SECTION HEADER */
+  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+  .badge-all { background: var(--accent-all); color: #fff; }
+  .badge-ahi { background: var(--accent-ahi); color: #fff; }
+  .badge-hci { background: var(--accent-hci); color: #000; }
+  .section-title { font-size: 22px; font-weight: 700; }
+  .section-sub { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+
+  /* KPI CARDS */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .kpi-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  .kpi-value { font-size: 24px; font-weight: 700; color: var(--text); line-height: 1; }
+  .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .kpi-card.accent-blue { border-top: 3px solid var(--accent-ahi); }
+  .kpi-card.accent-yellow { border-top: 3px solid var(--accent-hci); }
+  .kpi-card.accent-green { border-top: 3px solid var(--green); }
+  .kpi-card.accent-cyan { border-top: 3px solid var(--cyan); }
+  .kpi-card.accent-purple { border-top: 3px solid var(--accent-all); }
+
+  /* TABLE */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
+  .table-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .table-title { font-weight: 600; font-size: 14px; }
+  .table-search { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text); font-size: 13px; width: 200px; }
+  .table-search:focus { outline: none; border-color: var(--accent-all); }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: var(--surface2); padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .rank { width: 32px; color: var(--text-muted); font-weight: 700; }
+  .rank-1 { color: #fbbf24; }
+  .rank-2 { color: #94a3b8; }
+  .rank-3 { color: #cd7c3b; }
+
+  /* SUB-NAV TABS */
+  .sub-nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .sub-tab { padding: 6px 14px; border-radius: 6px; cursor: pointer; color: var(--text-muted); font-size: 13px; border: 1px solid var(--border); background: var(--surface); transition: all .2s; }
+  .sub-tab:hover { color: var(--text); border-color: var(--accent-all); }
+  .sub-tab.active { background: var(--surface2); color: var(--text); border-color: var(--accent-all); }
+
+  /* SECTION DIV */
+  .section-block { display: none; }
+  .section-block.active { display: block; }
+
+  /* FOOTER */
+  .footer { text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px; border-top: 1px solid var(--border); margin-top: 40px; }
+
+  /* HUB CARDS */
+  .hub-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .hub-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; cursor: pointer; transition: all .2s; }
+  .hub-card:hover { border-color: var(--accent-all); transform: translateY(-2px); }
+  .hub-card-title { font-weight: 700; font-size: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; }
+  .hub-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+  .hub-row-label { color: var(--text-muted); }
+  .hub-row-value { font-weight: 600; }
+
+  /* RESPONSIVE */
+  @media(max-width: 600px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .hub-cards { grid-template-columns: 1fr; }
+    .navbar { padding: 0 12px; }
+    .page { padding: 14px; }
+  }
+  
+  .tag { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .tag-ahi { background: rgba(59,130,246,.2); color: var(--accent-ahi); }
+  .tag-hci { background: rgba(245,158,11,.2); color: var(--accent-hci); }
+  
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; }
+  .progress-fill { height: 100%; border-radius: 2px; }
+  
+  .summary-split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+  @media(max-width:768px) { .summary-split { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <div class="navbar-brand">📦 Hub Dashboard</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('all')">🌐 Semua Hub</button>
+    <button class="nav-tab ahi-tab" onclick="showPage('ahi')">🔵 BU AHI</button>
+    <button class="nav-tab hci-tab" onclick="showPage('hci')">🟡 BU HCI</button>
+    <button class="nav-tab hub-tab" onclick="showPage('hub_AHI Alsut')">AHI Alsut</button>
+    <button class="nav-tab hub-tab" onclick="showPage('hub_AHI Bintaro')">AHI Bintaro</button>
+    <button class="nav-tab hub-tab" onclick="showPage('hub_AHI MAG')">AHI MAG</button>
+    <button class="nav-tab hub-tab" onclick="showPage('hub_AHI Puri')">AHI Puri</button>
+    <button class="nav-tab hub-tab" onclick="showPage('hub_AHI Gandaria')">AHI Gandaria</button>
+    <button class="nav-tab hub-tab" onclick="showPage('hub_HCI Tangerang')">HCI Tangerang</button>
+    <button class="nav-tab hub-tab" onclick="showPage('hub_HCI Bogor')">HCI Bogor</button>
+  </div>
+</div>
+
+<div id="page-all" class="page active"></div>
+<div id="page-ahi" class="page"></div>
+<div id="page-hci" class="page"></div>
+<div id="page-hub_AHI Alsut" class="page"></div>
+<div id="page-hub_AHI Bintaro" class="page"></div>
+<div id="page-hub_AHI MAG" class="page"></div>
+<div id="page-hub_AHI Puri" class="page"></div>
+<div id="page-hub_AHI Gandaria" class="page"></div>
+<div id="page-hub_HCI Tangerang" class="page"></div>
+<div id="page-hub_HCI Bogor" class="page"></div>
+
+<script>
+const DATA = DASHBOARD_DATA_PLACEHOLDER;
+
+function fmt(n) {
+  if(n == null || isNaN(n)) return '-';
+  return Math.round(n).toLocaleString('id-ID');
+}
+function fmtM(n) {
+  if(n == null || isNaN(n)) return '-';
+  if(n >= 1e9) return (n/1e9).toFixed(2) + ' M';
+  if(n >= 1e6) return (n/1e6).toFixed(1) + ' Jt';
+  return fmt(n);
+}
+
+function kpiCards(m, accent) {
+  const a = accent || 'blue';
+  return `
+  <div class="kpi-grid">
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label">Total Trip</div>
+      <div class="kpi-value">${fmt(m.trips)}</div>
+      <div class="kpi-sub">Pengiriman aktif</div>
+    </div>
+    <div class="kpi-card accent-cyan">
+      <div class="kpi-label">Total DO</div>
+      <div class="kpi-value">${fmt(m.total_do)}</div>
+      <div class="kpi-sub">Cust: ${fmt(m.do_cust)} &nbsp;|&nbsp; Store: ${fmt(m.do_store)}</div>
+    </div>
+    <div class="kpi-card accent-green">
+      <div class="kpi-label">TAT Rata-rata</div>
+      <div class="kpi-value">${m.tat_avg}</div>
+      <div class="kpi-sub">Jam:Menit per trip</div>
+    </div>
+    <div class="kpi-card accent-yellow">
+      <div class="kpi-label">Jarak KM</div>
+      <div class="kpi-value">${fmt(m.jarak_km)}</div>
+      <div class="kpi-sub">Total km tempuh</div>
+    </div>
+    <div class="kpi-card accent-purple">
+      <div class="kpi-label">Total Cost</div>
+      <div class="kpi-value">${fmtM(m.total_cost)}</div>
+      <div class="kpi-sub">Rp ${fmt(m.total_cost)}</div>
+    </div>
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label">Total UJP</div>
+      <div class="kpi-value">${fmtM(m.total_ujp)}</div>
+      <div class="kpi-sub">Rp ${fmt(m.total_ujp)}</div>
+    </div>
+    <div class="kpi-card accent-cyan">
+      <div class="kpi-label">Biaya BBM</div>
+      <div class="kpi-value">${fmtM(m.bbm_ujp)}</div>
+      <div class="kpi-sub">Rp ${fmt(m.bbm_ujp)}</div>
+    </div>
+  </div>`;
+}
+
+function jalurTable(jalurObj, searchId) {
+  const entries = Object.entries(jalurObj);
+  const rows = entries.map(([ jalur, m ], i) => `
+    <tr>
+      <td class="rank ${i<3?'rank-'+(i+1):''}">${i+1}</td>
+      <td>${jalur}</td>
+      <td class="num">${fmt(m.trips)}</td>
+      <td class="num">${fmt(m.total_do)}</td>
+      <td class="num">${fmt(m.do_cust)}</td>
+      <td class="num">${fmt(m.do_store)}</td>
+      <td class="num">${m.tat_avg}</td>
+      <td class="num">${fmt(m.jarak_km)}</td>
+      <td class="num">${fmtM(m.total_cost)}</td>
+      <td class="num">${fmtM(m.total_ujp)}</td>
+      <td class="num">${fmtM(m.bbm_ujp)}</td>
+    </tr>`).join('');
+  return `
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">📍 Analisa Per Jalur</div>
+      <input class="table-search" placeholder="Cari jalur..." oninput="filterTable(this,'${searchId}')" />
+    </div>
+    <div style="overflow-x:auto">
+    <table id="${searchId}">
+      <thead><tr>
+        <th class="rank">#</th><th>Jalur</th><th class="num">Trip</th><th class="num">Total DO</th>
+        <th class="num">DO Cust</th><th class="num">DO Store</th><th class="num">TAT</th>
+        <th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>
+  </div>`;
+}
+
+function driverTable(drivers, title, searchId) {
+  const rows = drivers.map((d, i) => `
+    <tr>
+      <td class="rank ${i<3?'rank-'+(i+1):''}">${i+1}</td>
+      <td>${d.name}</td>
+      <td class="num">${fmt(d.trips)}</td>
+      <td class="num">${fmt(d.total_do)}</td>
+      <td class="num">${fmt(d.do_cust)}</td>
+      <td class="num">${fmt(d.do_store)}</td>
+      <td class="num">${d.tat_avg}</td>
+      <td class="num">${fmt(d.jarak_km)}</td>
+      <td class="num">${fmtM(d.total_cost)}</td>
+    </tr>`).join('');
+  return `
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">${title}</div>
+      <input class="table-search" placeholder="Cari nama..." oninput="filterTable(this,'${searchId}')" />
+    </div>
+    <div style="overflow-x:auto">
+    <table id="${searchId}">
+      <thead><tr>
+        <th class="rank">#</th><th>Nama</th><th class="num">Trip</th><th class="num">Total DO</th>
+        <th class="num">DO Cust</th><th class="num">DO Store</th><th class="num">TAT</th>
+        <th class="num">KM</th><th class="num">Total Cost</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>
+  </div>`;
+}
+
+function filterTable(input, tableId) {
+  const q = input.value.toLowerCase();
+  const tbl = document.getElementById(tableId);
+  if(!tbl) return;
+  tbl.querySelectorAll('tbody tr').forEach(tr => {
+    tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+// ==================== ALL PAGE ====================
+function buildAllPage() {
+  const m = DATA.overall.metrics;
+  const ahi = DATA.bu.AHI.metrics;
+  const hci = DATA.bu.HCI.metrics;
+
+  let html = `
+  <div class="section-header">
+    <span class="badge badge-all">OVERVIEW</span>
+    <div>
+      <div class="section-title">Performance & Productivity — Semua Hub</div>
+      <div class="section-sub">Mencakup 7 Hub | AHI (5 Hub) + HCI (2 Hub) | *Status LC "New" tidak dihitung</div>
+    </div>
+  </div>
+  ${kpiCards(m)}
+
+  <div class="summary-split">
+    <div class="table-wrap">
+      <div class="table-header"><div class="table-title">📊 Perbandingan BU Hub</div></div>
+      <table>
+        <thead><tr><th>BU Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag tag-ahi">AHI</span></td><td class="num">${fmt(ahi.trips)}</td><td class="num">${fmt(ahi.total_do)}</td><td class="num">${ahi.tat_avg}</td><td class="num">${fmt(ahi.jarak_km)}</td><td class="num">${fmtM(ahi.total_cost)}</td><td class="num">${fmtM(ahi.bbm_ujp)}</td></tr>
+          <tr><td><span class="tag tag-hci">HCI</span></td><td class="num">${fmt(hci.trips)}</td><td class="num">${fmt(hci.total_do)}</td><td class="num">${hci.tat_avg}</td><td class="num">${fmt(hci.jarak_km)}</td><td class="num">${fmtM(hci.total_cost)}</td><td class="num">${fmtM(hci.bbm_ujp)}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header"><div class="table-title">📦 Ringkasan Per Hub</div></div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Hub</th><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">Total Cost</th></tr></thead>
+        <tbody>`;
+
+  Object.entries(DATA.hubs).forEach(([name, h]) => {
+    html += `<tr>
+      <td style="cursor:pointer;color:var(--accent-ahi)" onclick="showPage('hub_${name}')">${name}</td>
+      <td><span class="tag tag-${h.bu.toLowerCase()}">${h.bu}</span></td>
+      <td class="num">${fmt(h.metrics.trips)}</td>
+      <td class="num">${fmt(h.metrics.total_do)}</td>
+      <td class="num">${h.metrics.tat_avg}</td>
+      <td class="num">${fmtM(h.metrics.total_cost)}</td>
+    </tr>`;
+  });
+  
+  html += `</tbody></table></div></div>
+  </div>
+
+  <div class="sub-nav">
+    <button class="sub-tab active" onclick="showSection(this,'all','jalur')">📍 Per Jalur</button>
+    <button class="sub-tab" onclick="showSection(this,'all','driver')">🚗 Driver</button>
+    <button class="sub-tab" onclick="showSection(this,'all','asst')">👤 Asst Driver</button>
+  </div>
+
+  <div id="all-jalur" class="section-block active">
+    ${jalurTable(DATA.overall.jalur,'tbl-all-jalur')}
+  </div>
+  <div id="all-driver" class="section-block">
+    ${driverTable(DATA.overall.drivers,'🚗 Top Driver — Semua Hub','tbl-all-driver')}
+  </div>
+  <div id="all-asst" class="section-block">
+    ${driverTable(DATA.overall.assistants,'👤 Top Asisten Driver — Semua Hub','tbl-all-asst')}
+  </div>`;
+
+  document.getElementById('page-all').innerHTML = html;
+}
+
+// ==================== BU PAGE ====================
+function buildBUPage(bu) {
+  const bud = DATA.bu[bu];
+  const m = bud.metrics;
+  const color = bu === 'AHI' ? 'ahi' : 'hci';
+  const label = bu === 'AHI' ? '🔵 BU AHI' : '🟡 BU HCI';
+  const id = bu.toLowerCase();
+
+  let html = `
+  <div class="section-header">
+    <span class="badge badge-${color}">${bu}</span>
+    <div>
+      <div class="section-title">Performance & Productivity — ${label}</div>
+      <div class="section-sub">${bud.hubs.length} Hub: ${bud.hubs.join(', ')} | *Status LC "New" tidak dihitung</div>
+    </div>
+  </div>
+  ${kpiCards(m)}
+
+  <div class="table-wrap" style="margin-bottom:24px">
+    <div class="table-header"><div class="table-title">📦 Detail Per Hub</div></div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th></tr></thead>
+      <tbody>`;
+
+  bud.hubs.forEach(name => {
+    const h = DATA.hubs[name].metrics;
+    html += `<tr>
+      <td style="cursor:pointer;color:var(--accent-${color})" onclick="showPage('hub_${name}')">${name}</td>
+      <td class="num">${fmt(h.trips)}</td><td class="num">${fmt(h.total_do)}</td>
+      <td class="num">${fmt(h.do_cust)}</td><td class="num">${fmt(h.do_store)}</td>
+      <td class="num">${h.tat_avg}</td><td class="num">${fmt(h.jarak_km)}</td>
+      <td class="num">${fmtM(h.total_cost)}</td><td class="num">${fmtM(h.total_ujp)}</td><td class="num">${fmtM(h.bbm_ujp)}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>
+  </div>
+
+  <div class="sub-nav">
+    <button class="sub-tab active" onclick="showSection(this,'${id}','jalur')">📍 Per Jalur</button>
+    <button class="sub-tab" onclick="showSection(this,'${id}','driver')">🚗 Driver</button>
+    <button class="sub-tab" onclick="showSection(this,'${id}','asst')">👤 Asst Driver</button>
+  </div>
+  <div id="${id}-jalur" class="section-block active">
+    ${jalurTable(bud.jalur,'tbl-${id}-jalur')}
+  </div>
+  <div id="${id}-driver" class="section-block">
+    ${driverTable(bud.drivers,'🚗 Top Driver — ${label}','tbl-${id}-driver')}
+  </div>
+  <div id="${id}-asst" class="section-block">
+    ${driverTable(bud.assistants,'👤 Top Asisten Driver — ${label}','tbl-${id}-asst')}
+  </div>`;
+
+  document.getElementById('page-' + bu.toLowerCase()).innerHTML = html;
+}
+
+// ==================== HUB PAGE ====================
+function buildHubPage(hubName) {
+  const h = DATA.hubs[hubName];
+  const m = h.metrics;
+  const color = h.bu === 'AHI' ? 'ahi' : 'hci';
+  const safeId = hubName.replace(/\s+/g,'_');
+
+  let html = `
+  <div class="section-header">
+    <span class="badge badge-${color}">${h.bu}</span>
+    <div>
+      <div class="section-title">Performance & Productivity — ${hubName}</div>
+      <div class="section-sub">${Object.keys(h.jalur).length} Jalur | *Status LC "New" tidak dihitung</div>
+    </div>
+  </div>
+  ${kpiCards(m)}
+
+  <div class="sub-nav">
+    <button class="sub-tab active" onclick="showSection(this,'hub_${safeId}','jalur')">📍 Per Jalur</button>
+    <button class="sub-tab" onclick="showSection(this,'hub_${safeId}','driver')">🚗 Driver</button>
+    <button class="sub-tab" onclick="showSection(this,'hub_${safeId}','asst')">👤 Asst Driver</button>
+  </div>
+  <div id="hub_${safeId}-jalur" class="section-block active">
+    ${jalurTable(h.jalur,'tbl-${safeId}-jalur')}
+  </div>
+  <div id="hub_${safeId}-driver" class="section-block">
+    ${driverTable(h.drivers,'🚗 Top Driver — ${hubName}','tbl-${safeId}-driver')}
+  </div>
+  <div id="hub_${safeId}-asst" class="section-block">
+    ${driverTable(h.assistants,'👤 Top Asisten Driver — ${hubName}','tbl-${safeId}-asst')}
+  </div>`;
+
+  document.getElementById('page-hub_' + hubName).innerHTML = html;
+}
+
+// ==================== NAV ====================
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  
+  const page = document.getElementById('page-' + pageId);
+  if(page) { page.classList.add('active'); }
+  
+  // Find and activate correct tab
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach(t => {
+    if(t.getAttribute('onclick') && t.getAttribute('onclick').includes("'"+pageId+"'")) {
+      t.classList.add('active');
+    }
+  });
+}
+
+function showSection(btn, pageId, sectionId) {
+  const page = document.getElementById('page-' + pageId) || 
+               document.getElementById('page-hub_' + pageId.replace('hub_',''));
+  
+  // Find all sub-tabs in same nav
+  btn.closest('.sub-nav').querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  
+  // Find section prefix
+  const prefix = pageId.replace(/\s+/g,'_');
+  document.querySelectorAll(`[id^="${prefix}-"]`).forEach(s => s.classList.remove('active'));
+  
+  const target = document.getElementById(prefix + '-' + sectionId);
+  if(target) target.classList.add('active');
+}
+
+// Build all pages
+buildAllPage();
+buildBUPage('AHI');
+buildBUPage('HCI');
+['AHI Alsut','AHI Bintaro','AHI MAG','AHI Puri','AHI Gandaria','HCI Tangerang','HCI Bogor'].forEach(buildHubPage);
+</script>
+
+<div class="footer">Dashboard Performance & Productivity Hub — Data: Master Claude Hub HCI & AHI | *Baris dengan Status LC "New" dikecualikan dari semua perhitungan</div>
+</body>
+</html>
