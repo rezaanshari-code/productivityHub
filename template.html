@@ -5,475 +5,347 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Performance & Productivity Hub</title>
 <style>
-  :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #242736;
-    --border: #2e3147;
-    --accent-ahi: #3b82f6;
-    --accent-hci: #f59e0b;
-    --accent-all: #8b5cf6;
-    --text: #e2e8f0;
-    --text-muted: #8892a4;
-    --green: #10b981;
-    --red: #ef4444;
-    --cyan: #06b6d4;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; font-size: 14px; }
-  
-  /* NAV */
-  .navbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 8px; height: 56px; position: sticky; top: 0; z-index: 100; }
-  .navbar-brand { font-size: 16px; font-weight: 700; color: var(--text); margin-right: 16px; white-space: nowrap; }
-  .nav-tabs { display: flex; gap: 4px; overflow-x: auto; flex: 1; }
-  .nav-tab { padding: 6px 14px; border-radius: 6px; cursor: pointer; white-space: nowrap; color: var(--text-muted); font-size: 13px; font-weight: 500; transition: all .2s; border: none; background: none; }
-  .nav-tab:hover { background: var(--surface2); color: var(--text); }
-  .nav-tab.active { background: var(--accent-all); color: #fff; }
-  .nav-tab.ahi-tab.active { background: var(--accent-ahi); }
-  .nav-tab.hci-tab.active { background: var(--accent-hci); color: #000; }
-  .nav-tab.hub-tab.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-
-  /* PAGE */
-  .page { display: none; padding: 24px; max-width: 1400px; margin: 0 auto; }
-  .page.active { display: block; }
-
-  /* SECTION HEADER */
-  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-  .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-  .badge-all { background: var(--accent-all); color: #fff; }
-  .badge-ahi { background: var(--accent-ahi); color: #fff; }
-  .badge-hci { background: var(--accent-hci); color: #000; }
-  .section-title { font-size: 22px; font-weight: 700; }
-  .section-sub { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
-
-  /* KPI CARDS */
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
-  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-  .kpi-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-  .kpi-value { font-size: 24px; font-weight: 700; color: var(--text); line-height: 1; }
-  .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-  .kpi-card.accent-blue { border-top: 3px solid var(--accent-ahi); }
-  .kpi-card.accent-yellow { border-top: 3px solid var(--accent-hci); }
-  .kpi-card.accent-green { border-top: 3px solid var(--green); }
-  .kpi-card.accent-cyan { border-top: 3px solid var(--cyan); }
-  .kpi-card.accent-purple { border-top: 3px solid var(--accent-all); }
-
-  /* TABLE */
-  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
-  .table-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-  .table-title { font-weight: 600; font-size: 14px; }
-  .table-search { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text); font-size: 13px; width: 200px; }
-  .table-search:focus { outline: none; border-color: var(--accent-all); }
-  table { width: 100%; border-collapse: collapse; }
-  th { background: var(--surface2); padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
-  td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; white-space: nowrap; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--surface2); }
-  .num { text-align: right; font-variant-numeric: tabular-nums; }
-  .rank { width: 32px; color: var(--text-muted); font-weight: 700; }
-  .rank-1 { color: #fbbf24; }
-  .rank-2 { color: #94a3b8; }
-  .rank-3 { color: #cd7c3b; }
-
-  /* SUB-NAV TABS */
-  .sub-nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-  .sub-tab { padding: 6px 14px; border-radius: 6px; cursor: pointer; color: var(--text-muted); font-size: 13px; border: 1px solid var(--border); background: var(--surface); transition: all .2s; }
-  .sub-tab:hover { color: var(--text); border-color: var(--accent-all); }
-  .sub-tab.active { background: var(--surface2); color: var(--text); border-color: var(--accent-all); }
-
-  /* SECTION DIV */
-  .section-block { display: none; }
-  .section-block.active { display: block; }
-
-  /* FOOTER */
-  .footer { text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px; border-top: 1px solid var(--border); margin-top: 40px; }
-
-  /* HUB CARDS */
-  .hub-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-bottom: 24px; }
-  .hub-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; cursor: pointer; transition: all .2s; }
-  .hub-card:hover { border-color: var(--accent-all); transform: translateY(-2px); }
-  .hub-card-title { font-weight: 700; font-size: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; }
-  .hub-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
-  .hub-row-label { color: var(--text-muted); }
-  .hub-row-value { font-weight: 600; }
-
-  /* RESPONSIVE */
-  @media(max-width: 600px) {
-    .kpi-grid { grid-template-columns: 1fr 1fr; }
-    .hub-cards { grid-template-columns: 1fr; }
-    .navbar { padding: 0 12px; }
-    .page { padding: 14px; }
-  }
-  
-  .tag { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-  .tag-ahi { background: rgba(59,130,246,.2); color: var(--accent-ahi); }
-  .tag-hci { background: rgba(245,158,11,.2); color: var(--accent-hci); }
-  
-  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; }
-  .progress-fill { height: 100%; border-radius: 2px; }
-  
-  .summary-split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
-  @media(max-width:768px) { .summary-split { grid-template-columns: 1fr; } }
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#242736;--border:#2e3147;--ahi:#3b82f6;--hci:#f59e0b;--all:#8b5cf6;--text:#e2e8f0;--muted:#8892a4;--green:#10b981;--cyan:#06b6d4}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;font-size:14px}
+.navbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:8px;height:52px;position:sticky;top:0;z-index:100}
+.navbar-brand{font-size:15px;font-weight:700;white-space:nowrap;margin-right:8px}
+.nav-tabs{display:flex;gap:3px;overflow-x:auto;flex:1}
+.nav-tabs::-webkit-scrollbar{height:3px}.nav-tabs::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.nav-tab{padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;color:var(--muted);font-size:12px;font-weight:500;transition:all .15s;border:none;background:none}
+.nav-tab:hover{background:var(--surface2);color:var(--text)}
+.nav-tab.active{background:var(--all);color:#fff}
+.nav-tab.ahi.active{background:var(--ahi)}
+.nav-tab.hci.active{background:var(--hci);color:#000}
+.nav-tab.hub.active{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filter-label{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
+.date-input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px}
+.date-input:focus{outline:none;border-color:var(--all)}
+.filter-btn{padding:5px 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600}
+.btn-reset{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.btn-reset:hover{color:var(--text)}
+.presets{display:flex;gap:5px;flex-wrap:wrap}
+.preset{padding:4px 9px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer;transition:all .15s}
+.preset:hover{color:var(--text);border-color:var(--all)}
+.preset.active{background:var(--all);color:#fff;border-color:var(--all)}
+.filter-info{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.page{display:none;padding:20px;max-width:1400px;margin:0 auto}
+.page.active{display:block}
+.sec-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-all{background:var(--all);color:#fff}.badge-ahi{background:var(--ahi);color:#fff}.badge-hci{background:var(--hci);color:#000}
+.sec-title{font-size:20px;font-weight:700}
+.sec-sub{color:var(--muted);font-size:12px;margin-top:2px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+.kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.kpi-value{font-size:22px;font-weight:700;line-height:1}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.t-blue{border-top:3px solid var(--ahi)}.t-yellow{border-top:3px solid var(--hci)}.t-green{border-top:3px solid var(--green)}.t-cyan{border-top:3px solid var(--cyan)}.t-purple{border-top:3px solid var(--all)}
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
+.tbl-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.tbl-title{font-weight:600;font-size:13px}
+.tbl-search{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;color:var(--text);font-size:12px;width:170px}
+.tbl-search:focus{outline:none;border-color:var(--all)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--surface2);padding:8px 12px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.rank{width:28px;color:var(--muted);font-weight:700;font-size:11px}
+.r1{color:#fbbf24}.r2{color:#94a3b8}.r3{color:#cd7c3b}
+.sub-nav{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.sub-tab{padding:5px 12px;border-radius:6px;cursor:pointer;color:var(--muted);font-size:12px;border:1px solid var(--border);background:var(--surface);transition:all .15s}
+.sub-tab:hover{color:var(--text);border-color:var(--all)}
+.sub-tab.active{background:var(--surface2);color:var(--text);border-color:var(--all)}
+.sec-block{display:none}.sec-block.active{display:block}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+@media(max-width:900px){.summary-grid{grid-template-columns:1fr}}
+.tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
+.tag-ahi{background:rgba(59,130,246,.2);color:var(--ahi)}.tag-hci{background:rgba(245,158,11,.2);color:var(--hci)}
+.empty{text-align:center;padding:40px;color:var(--muted)}
+.footer{text-align:center;padding:14px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:24px}
+@media(max-width:600px){.kpi-grid{grid-template-columns:1fr 1fr}.page{padding:12px}}
 </style>
 </head>
 <body>
-
 <div class="navbar">
   <div class="navbar-brand">📦 Hub Dashboard</div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('all')">🌐 Semua Hub</button>
-    <button class="nav-tab ahi-tab" onclick="showPage('ahi')">🔵 BU AHI</button>
-    <button class="nav-tab hci-tab" onclick="showPage('hci')">🟡 BU HCI</button>
-    <button class="nav-tab hub-tab" onclick="showPage('hub_AHI Alsut')">AHI Alsut</button>
-    <button class="nav-tab hub-tab" onclick="showPage('hub_AHI Bintaro')">AHI Bintaro</button>
-    <button class="nav-tab hub-tab" onclick="showPage('hub_AHI MAG')">AHI MAG</button>
-    <button class="nav-tab hub-tab" onclick="showPage('hub_AHI Puri')">AHI Puri</button>
-    <button class="nav-tab hub-tab" onclick="showPage('hub_AHI Gandaria')">AHI Gandaria</button>
-    <button class="nav-tab hub-tab" onclick="showPage('hub_HCI Tangerang')">HCI Tangerang</button>
-    <button class="nav-tab hub-tab" onclick="showPage('hub_HCI Bogor')">HCI Bogor</button>
-  </div>
+  <div class="nav-tabs" id="navTabs"></div>
 </div>
-
-<div id="page-all" class="page active"></div>
-<div id="page-ahi" class="page"></div>
-<div id="page-hci" class="page"></div>
-<div id="page-hub_AHI Alsut" class="page"></div>
-<div id="page-hub_AHI Bintaro" class="page"></div>
-<div id="page-hub_AHI MAG" class="page"></div>
-<div id="page-hub_AHI Puri" class="page"></div>
-<div id="page-hub_AHI Gandaria" class="page"></div>
-<div id="page-hub_HCI Tangerang" class="page"></div>
-<div id="page-hub_HCI Bogor" class="page"></div>
+<div class="filter-bar">
+  <span class="filter-label">📅 Filter:</span>
+  <input type="date" id="dateFrom" class="date-input" onchange="applyFilter()">
+  <span style="color:var(--muted);font-size:12px">s/d</span>
+  <input type="date" id="dateTo" class="date-input" onchange="applyFilter()">
+  <button class="filter-btn btn-reset" onclick="resetFilter()">Reset</button>
+  <div class="presets">
+    <button class="preset" onclick="setPreset('today',this)">Hari Ini</button>
+    <button class="preset" onclick="setPreset('week',this)">7 Hari</button>
+    <button class="preset" onclick="setPreset('month',this)">Bulan Ini</button>
+    <button class="preset" onclick="setPreset('3month',this)">3 Bulan</button>
+    <button class="preset active" onclick="setPreset('all',this)">Semua</button>
+  </div>
+  <span class="filter-info" id="filterInfo"></span>
+</div>
+<div id="pages"></div>
+<div class="footer">Dashboard Performance & Productivity Hub &nbsp;|&nbsp; *Status LC "New" dikecualikan &nbsp;|&nbsp; Auto-update setiap 08:00 WIB</div>
 
 <script>
-const DATA = DASHBOARD_DATA_PLACEHOLDER;
+const RAW = RAW_DATA_PLACEHOLDER;
 
-function fmt(n) {
-  if(n == null || isNaN(n)) return '-';
-  return Math.round(n).toLocaleString('id-ID');
-}
-function fmtM(n) {
-  if(n == null || isNaN(n)) return '-';
-  if(n >= 1e9) return (n/1e9).toFixed(2) + ' M';
-  if(n >= 1e6) return (n/1e6).toFixed(1) + ' Jt';
-  return fmt(n);
-}
+// ── Detect hubs dynamically ───────────────────────────────────────────────────
+const HUBS = [...new Set(RAW.map(r=>r.hub))];
+const AHI_HUBS = HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='AHI');
+const HCI_HUBS = HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='HCI');
 
-function kpiCards(m, accent) {
-  const a = accent || 'blue';
-  return `
-  <div class="kpi-grid">
-    <div class="kpi-card accent-blue">
-      <div class="kpi-label">Total Trip</div>
-      <div class="kpi-value">${fmt(m.trips)}</div>
-      <div class="kpi-sub">Pengiriman aktif</div>
-    </div>
-    <div class="kpi-card accent-cyan">
-      <div class="kpi-label">Total DO</div>
-      <div class="kpi-value">${fmt(m.total_do)}</div>
-      <div class="kpi-sub">Cust: ${fmt(m.do_cust)} &nbsp;|&nbsp; Store: ${fmt(m.do_store)}</div>
-    </div>
-    <div class="kpi-card accent-green">
-      <div class="kpi-label">TAT Rata-rata</div>
-      <div class="kpi-value">${m.tat_avg}</div>
-      <div class="kpi-sub">Jam:Menit per trip</div>
-    </div>
-    <div class="kpi-card accent-yellow">
-      <div class="kpi-label">Jarak KM</div>
-      <div class="kpi-value">${fmt(m.jarak_km)}</div>
-      <div class="kpi-sub">Total km tempuh</div>
-    </div>
-    <div class="kpi-card accent-purple">
-      <div class="kpi-label">Total Cost</div>
-      <div class="kpi-value">${fmtM(m.total_cost)}</div>
-      <div class="kpi-sub">Rp ${fmt(m.total_cost)}</div>
-    </div>
-    <div class="kpi-card accent-blue">
-      <div class="kpi-label">Total UJP</div>
-      <div class="kpi-value">${fmtM(m.total_ujp)}</div>
-      <div class="kpi-sub">Rp ${fmt(m.total_ujp)}</div>
-    </div>
-    <div class="kpi-card accent-cyan">
-      <div class="kpi-label">Biaya BBM</div>
-      <div class="kpi-value">${fmtM(m.bbm_ujp)}</div>
-      <div class="kpi-sub">Rp ${fmt(m.bbm_ujp)}</div>
-    </div>
-  </div>`;
+// ── Build nav & pages ─────────────────────────────────────────────────────────
+const navTabs = document.getElementById('navTabs');
+const pagesDiv = document.getElementById('pages');
+
+function addTab(label, pageId, cls='') {
+  const b = document.createElement('button');
+  b.className = `nav-tab ${cls}`;
+  b.textContent = label;
+  b.onclick = () => showPage(pageId);
+  b.dataset.page = pageId;
+  navTabs.appendChild(b);
+}
+function addPage(id) {
+  const d = document.createElement('div');
+  d.className = 'page';
+  d.id = 'page-'+id;
+  pagesDiv.appendChild(d);
 }
 
-function jalurTable(jalurObj, searchId) {
-  const entries = Object.entries(jalurObj);
-  const rows = entries.map(([ jalur, m ], i) => `
-    <tr>
-      <td class="rank ${i<3?'rank-'+(i+1):''}">${i+1}</td>
-      <td>${jalur}</td>
-      <td class="num">${fmt(m.trips)}</td>
-      <td class="num">${fmt(m.total_do)}</td>
-      <td class="num">${fmt(m.do_cust)}</td>
-      <td class="num">${fmt(m.do_store)}</td>
-      <td class="num">${m.tat_avg}</td>
-      <td class="num">${fmt(m.jarak_km)}</td>
-      <td class="num">${fmtM(m.total_cost)}</td>
-      <td class="num">${fmtM(m.total_ujp)}</td>
-      <td class="num">${fmtM(m.bbm_ujp)}</td>
-    </tr>`).join('');
-  return `
-  <div class="table-wrap">
-    <div class="table-header">
-      <div class="table-title">📍 Analisa Per Jalur</div>
-      <input class="table-search" placeholder="Cari jalur..." oninput="filterTable(this,'${searchId}')" />
-    </div>
-    <div style="overflow-x:auto">
-    <table id="${searchId}">
-      <thead><tr>
-        <th class="rank">#</th><th>Jalur</th><th class="num">Trip</th><th class="num">Total DO</th>
-        <th class="num">DO Cust</th><th class="num">DO Store</th><th class="num">TAT</th>
-        <th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    </div>
-  </div>`;
-}
+addTab('🌐 Semua Hub','all','');
+addTab('🔵 BU AHI','ahi','ahi');
+addTab('🟡 BU HCI','hci','hci');
+HUBS.forEach((hub,i) => {
+  const bu = RAW.find(r=>r.hub===hub)?.bu||'';
+  addTab(hub, 'h'+i, 'hub');
+  addPage('h'+i);
+});
+addPage('all'); addPage('ahi'); addPage('hci');
 
-function driverTable(drivers, title, searchId) {
-  const rows = drivers.map((d, i) => `
-    <tr>
-      <td class="rank ${i<3?'rank-'+(i+1):''}">${i+1}</td>
-      <td>${d.name}</td>
-      <td class="num">${fmt(d.trips)}</td>
-      <td class="num">${fmt(d.total_do)}</td>
-      <td class="num">${fmt(d.do_cust)}</td>
-      <td class="num">${fmt(d.do_store)}</td>
-      <td class="num">${d.tat_avg}</td>
-      <td class="num">${fmt(d.jarak_km)}</td>
-      <td class="num">${fmtM(d.total_cost)}</td>
-    </tr>`).join('');
-  return `
-  <div class="table-wrap">
-    <div class="table-header">
-      <div class="table-title">${title}</div>
-      <input class="table-search" placeholder="Cari nama..." oninput="filterTable(this,'${searchId}')" />
-    </div>
-    <div style="overflow-x:auto">
-    <table id="${searchId}">
-      <thead><tr>
-        <th class="rank">#</th><th>Nama</th><th class="num">Trip</th><th class="num">Total DO</th>
-        <th class="num">DO Cust</th><th class="num">DO Store</th><th class="num">TAT</th>
-        <th class="num">KM</th><th class="num">Total Cost</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    </div>
-  </div>`;
-}
+// ── Date state ────────────────────────────────────────────────────────────────
+const allDates = [...new Set(RAW.map(r=>r.d).filter(Boolean))].sort();
+const minDate = allDates[0], maxDate = allDates[allDates.length-1];
+document.getElementById('dateFrom').value = minDate;
+document.getElementById('dateTo').value   = maxDate;
+let filterFrom = minDate, filterTo = maxDate;
 
-function filterTable(input, tableId) {
-  const q = input.value.toLowerCase();
-  const tbl = document.getElementById(tableId);
-  if(!tbl) return;
-  tbl.querySelectorAll('tbody tr').forEach(tr => {
-    tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
-}
-
-// ==================== ALL PAGE ====================
-function buildAllPage() {
-  const m = DATA.overall.metrics;
-  const ahi = DATA.bu.AHI.metrics;
-  const hci = DATA.bu.HCI.metrics;
-
-  let html = `
-  <div class="section-header">
-    <span class="badge badge-all">OVERVIEW</span>
-    <div>
-      <div class="section-title">Performance & Productivity — Semua Hub</div>
-      <div class="section-sub">Mencakup 7 Hub | AHI (5 Hub) + HCI (2 Hub) | *Status LC "New" tidak dihitung</div>
-    </div>
-  </div>
-  ${kpiCards(m)}
-
-  <div class="summary-split">
-    <div class="table-wrap">
-      <div class="table-header"><div class="table-title">📊 Perbandingan BU Hub</div></div>
-      <table>
-        <thead><tr><th>BU Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th></tr></thead>
-        <tbody>
-          <tr><td><span class="tag tag-ahi">AHI</span></td><td class="num">${fmt(ahi.trips)}</td><td class="num">${fmt(ahi.total_do)}</td><td class="num">${ahi.tat_avg}</td><td class="num">${fmt(ahi.jarak_km)}</td><td class="num">${fmtM(ahi.total_cost)}</td><td class="num">${fmtM(ahi.bbm_ujp)}</td></tr>
-          <tr><td><span class="tag tag-hci">HCI</span></td><td class="num">${fmt(hci.trips)}</td><td class="num">${fmt(hci.total_do)}</td><td class="num">${hci.tat_avg}</td><td class="num">${fmt(hci.jarak_km)}</td><td class="num">${fmtM(hci.total_cost)}</td><td class="num">${fmtM(hci.bbm_ujp)}</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="table-wrap">
-      <div class="table-header"><div class="table-title">📦 Ringkasan Per Hub</div></div>
-      <div style="overflow-x:auto"><table>
-        <thead><tr><th>Hub</th><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">Total Cost</th></tr></thead>
-        <tbody>`;
-
-  Object.entries(DATA.hubs).forEach(([name, h]) => {
-    html += `<tr>
-      <td style="cursor:pointer;color:var(--accent-ahi)" onclick="showPage('hub_${name}')">${name}</td>
-      <td><span class="tag tag-${h.bu.toLowerCase()}">${h.bu}</span></td>
-      <td class="num">${fmt(h.metrics.trips)}</td>
-      <td class="num">${fmt(h.metrics.total_do)}</td>
-      <td class="num">${h.metrics.tat_avg}</td>
-      <td class="num">${fmtM(h.metrics.total_cost)}</td>
-    </tr>`;
-  });
-  
-  html += `</tbody></table></div></div>
-  </div>
-
-  <div class="sub-nav">
-    <button class="sub-tab active" onclick="showSection(this,'all','jalur')">📍 Per Jalur</button>
-    <button class="sub-tab" onclick="showSection(this,'all','driver')">🚗 Driver</button>
-    <button class="sub-tab" onclick="showSection(this,'all','asst')">👤 Asst Driver</button>
-  </div>
-
-  <div id="all-jalur" class="section-block active">
-    ${jalurTable(DATA.overall.jalur,'tbl-all-jalur')}
-  </div>
-  <div id="all-driver" class="section-block">
-    ${driverTable(DATA.overall.drivers,'🚗 Top Driver — Semua Hub','tbl-all-driver')}
-  </div>
-  <div id="all-asst" class="section-block">
-    ${driverTable(DATA.overall.assistants,'👤 Top Asisten Driver — Semua Hub','tbl-all-asst')}
-  </div>`;
-
-  document.getElementById('page-all').innerHTML = html;
-}
-
-// ==================== BU PAGE ====================
-function buildBUPage(bu) {
-  const bud = DATA.bu[bu];
-  const m = bud.metrics;
-  const color = bu === 'AHI' ? 'ahi' : 'hci';
-  const label = bu === 'AHI' ? '🔵 BU AHI' : '🟡 BU HCI';
-  const id = bu.toLowerCase();
-
-  let html = `
-  <div class="section-header">
-    <span class="badge badge-${color}">${bu}</span>
-    <div>
-      <div class="section-title">Performance & Productivity — ${label}</div>
-      <div class="section-sub">${bud.hubs.length} Hub: ${bud.hubs.join(', ')} | *Status LC "New" tidak dihitung</div>
-    </div>
-  </div>
-  ${kpiCards(m)}
-
-  <div class="table-wrap" style="margin-bottom:24px">
-    <div class="table-header"><div class="table-title">📦 Detail Per Hub</div></div>
-    <div style="overflow-x:auto"><table>
-      <thead><tr><th>Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th></tr></thead>
-      <tbody>`;
-
-  bud.hubs.forEach(name => {
-    const h = DATA.hubs[name].metrics;
-    html += `<tr>
-      <td style="cursor:pointer;color:var(--accent-${color})" onclick="showPage('hub_${name}')">${name}</td>
-      <td class="num">${fmt(h.trips)}</td><td class="num">${fmt(h.total_do)}</td>
-      <td class="num">${fmt(h.do_cust)}</td><td class="num">${fmt(h.do_store)}</td>
-      <td class="num">${h.tat_avg}</td><td class="num">${fmt(h.jarak_km)}</td>
-      <td class="num">${fmtM(h.total_cost)}</td><td class="num">${fmtM(h.total_ujp)}</td><td class="num">${fmtM(h.bbm_ujp)}</td>
-    </tr>`;
-  });
-
-  html += `</tbody></table></div>
-  </div>
-
-  <div class="sub-nav">
-    <button class="sub-tab active" onclick="showSection(this,'${id}','jalur')">📍 Per Jalur</button>
-    <button class="sub-tab" onclick="showSection(this,'${id}','driver')">🚗 Driver</button>
-    <button class="sub-tab" onclick="showSection(this,'${id}','asst')">👤 Asst Driver</button>
-  </div>
-  <div id="${id}-jalur" class="section-block active">
-    ${jalurTable(bud.jalur,'tbl-${id}-jalur')}
-  </div>
-  <div id="${id}-driver" class="section-block">
-    ${driverTable(bud.drivers,'🚗 Top Driver — ${label}','tbl-${id}-driver')}
-  </div>
-  <div id="${id}-asst" class="section-block">
-    ${driverTable(bud.assistants,'👤 Top Asisten Driver — ${label}','tbl-${id}-asst')}
-  </div>`;
-
-  document.getElementById('page-' + bu.toLowerCase()).innerHTML = html;
-}
-
-// ==================== HUB PAGE ====================
-function buildHubPage(hubName) {
-  const h = DATA.hubs[hubName];
-  const m = h.metrics;
-  const color = h.bu === 'AHI' ? 'ahi' : 'hci';
-  const safeId = hubName.replace(/\s+/g,'_');
-
-  let html = `
-  <div class="section-header">
-    <span class="badge badge-${color}">${h.bu}</span>
-    <div>
-      <div class="section-title">Performance & Productivity — ${hubName}</div>
-      <div class="section-sub">${Object.keys(h.jalur).length} Jalur | *Status LC "New" tidak dihitung</div>
-    </div>
-  </div>
-  ${kpiCards(m)}
-
-  <div class="sub-nav">
-    <button class="sub-tab active" onclick="showSection(this,'hub_${safeId}','jalur')">📍 Per Jalur</button>
-    <button class="sub-tab" onclick="showSection(this,'hub_${safeId}','driver')">🚗 Driver</button>
-    <button class="sub-tab" onclick="showSection(this,'hub_${safeId}','asst')">👤 Asst Driver</button>
-  </div>
-  <div id="hub_${safeId}-jalur" class="section-block active">
-    ${jalurTable(h.jalur,'tbl-${safeId}-jalur')}
-  </div>
-  <div id="hub_${safeId}-driver" class="section-block">
-    ${driverTable(h.drivers,'🚗 Top Driver — ${hubName}','tbl-${safeId}-driver')}
-  </div>
-  <div id="hub_${safeId}-asst" class="section-block">
-    ${driverTable(h.assistants,'👤 Top Asisten Driver — ${hubName}','tbl-${safeId}-asst')}
-  </div>`;
-
-  document.getElementById('page-hub_' + hubName).innerHTML = html;
-}
-
-// ==================== NAV ====================
-function showPage(pageId) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  
-  const page = document.getElementById('page-' + pageId);
-  if(page) { page.classList.add('active'); }
-  
-  // Find and activate correct tab
-  const tabs = document.querySelectorAll('.nav-tab');
-  tabs.forEach(t => {
-    if(t.getAttribute('onclick') && t.getAttribute('onclick').includes("'"+pageId+"'")) {
-      t.classList.add('active');
-    }
-  });
-}
-
-function showSection(btn, pageId, sectionId) {
-  const page = document.getElementById('page-' + pageId) || 
-               document.getElementById('page-hub_' + pageId.replace('hub_',''));
-  
-  // Find all sub-tabs in same nav
-  btn.closest('.sub-nav').querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+function setPreset(p, btn) {
+  document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  
-  // Find section prefix
-  const prefix = pageId.replace(/\s+/g,'_');
-  document.querySelectorAll(`[id^="${prefix}-"]`).forEach(s => s.classList.remove('active'));
-  
-  const target = document.getElementById(prefix + '-' + sectionId);
-  if(target) target.classList.add('active');
+  const d = new Date(maxDate);
+  let from = minDate;
+  if(p==='today') from = maxDate;
+  else if(p==='week'){ d.setDate(d.getDate()-6); from=d.toISOString().split('T')[0]; }
+  else if(p==='month') from = maxDate.substring(0,7)+'-01';
+  else if(p==='3month'){ d.setMonth(d.getMonth()-2); from=d.toISOString().split('T')[0].substring(0,7)+'-01'; }
+  document.getElementById('dateFrom').value = from;
+  document.getElementById('dateTo').value   = maxDate;
+  filterFrom = from; filterTo = maxDate;
+  rebuildAll();
+}
+function applyFilter() {
+  document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
+  filterFrom = document.getElementById('dateFrom').value;
+  filterTo   = document.getElementById('dateTo').value;
+  rebuildAll();
+}
+function resetFilter() {
+  document.getElementById('dateFrom').value = minDate;
+  document.getElementById('dateTo').value   = maxDate;
+  filterFrom = minDate; filterTo = maxDate;
+  document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.preset[onclick*="all"]').classList.add('active');
+  rebuildAll();
+}
+function filtered(rows) { return rows.filter(r=>!r.d||(r.d>=filterFrom&&r.d<=filterTo)); }
+
+// ── Metrics ───────────────────────────────────────────────────────────────────
+function metrics(rows) {
+  if(!rows.length) return {trips:0,total_do:0,do_cust:0,do_store:0,total_cost:0,total_ujp:0,bbm_ujp:0,jarak_km:0,tat_avg:'N/A'};
+  const tats = rows.filter(r=>r.tat!=null);
+  const avg  = tats.length ? tats.reduce((s,r)=>s+r.tat,0)/tats.length : null;
+  const h = avg!=null?Math.floor(avg/60):0, m = avg!=null?Math.round(avg%60):0;
+  return {
+    trips: rows.length,
+    total_do:   rows.reduce((s,r)=>s+r.do,0),
+    do_cust:    rows.reduce((s,r)=>s+r.doc,0),
+    do_store:   rows.reduce((s,r)=>s+r.dos,0),
+    total_cost: rows.reduce((s,r)=>s+r.cost,0),
+    total_ujp:  rows.reduce((s,r)=>s+r.ujp,0),
+    bbm_ujp:    rows.reduce((s,r)=>s+r.bbm,0),
+    jarak_km:   rows.reduce((s,r)=>s+r.km,0),
+    tat_avg:    avg!=null?`${h}:${String(m).padStart(2,'0')}`:'N/A',
+  };
+}
+function groupBy(rows,key){ const m={}; rows.forEach(r=>{const k=r[key]||'(kosong)';if(!m[k])m[k]=[];m[k].push(r);}); return m; }
+
+// ── Format ────────────────────────────────────────────────────────────────────
+const fmt  = n => n==null||isNaN(n)?'-':Math.round(n).toLocaleString('id-ID');
+const fmtM = n => { if(!n||isNaN(n))return '-'; if(n>=1e9)return(n/1e9).toFixed(2)+' M'; if(n>=1e6)return(n/1e6).toFixed(1)+' Jt'; return fmt(n); };
+
+// ── KPI ───────────────────────────────────────────────────────────────────────
+function kpiHTML(m) {
+  return `<div class="kpi-grid">
+    <div class="kpi t-blue"><div class="kpi-label">Total Trip</div><div class="kpi-value">${fmt(m.trips)}</div><div class="kpi-sub">Pengiriman aktif</div></div>
+    <div class="kpi t-cyan"><div class="kpi-label">Total DO</div><div class="kpi-value">${fmt(m.total_do)}</div><div class="kpi-sub">Cust: ${fmt(m.do_cust)} | Store: ${fmt(m.do_store)}</div></div>
+    <div class="kpi t-green"><div class="kpi-label">TAT Rata-rata</div><div class="kpi-value">${m.tat_avg}</div><div class="kpi-sub">Jam:Menit per trip</div></div>
+    <div class="kpi t-yellow"><div class="kpi-label">Jarak KM</div><div class="kpi-value">${fmt(m.jarak_km)}</div><div class="kpi-sub">Total km tempuh</div></div>
+    <div class="kpi t-purple"><div class="kpi-label">Total Cost</div><div class="kpi-value">${fmtM(m.total_cost)}</div><div class="kpi-sub">Rp ${fmt(m.total_cost)}</div></div>
+    <div class="kpi t-blue"><div class="kpi-label">Total UJP</div><div class="kpi-value">${fmtM(m.total_ujp)}</div><div class="kpi-sub">Rp ${fmt(m.total_ujp)}</div></div>
+    <div class="kpi t-cyan"><div class="kpi-label">Biaya BBM</div><div class="kpi-value">${fmtM(m.bbm_ujp)}</div><div class="kpi-sub">Rp ${fmt(m.bbm_ujp)}</div></div>
+  </div>`;
 }
 
-// Build all pages
-buildAllPage();
-buildBUPage('AHI');
-buildBUPage('HCI');
-['AHI Alsut','AHI Bintaro','AHI MAG','AHI Puri','AHI Gandaria','HCI Tangerang','HCI Bogor'].forEach(buildHubPage);
-</script>
+// ── Tables ────────────────────────────────────────────────────────────────────
+function jalurHTML(rows,uid) {
+  const e = Object.entries(groupBy(rows,'jalur')).map(([j,rs])=>({j,m:metrics(rs)})).sort((a,b)=>b.m.trips-a.m.trips);
+  if(!e.length) return `<div class="empty">📭 Tidak ada data</div>`;
+  const tr = e.map(({j,m},i)=>`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td><td>${j}</td>
+    <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td><td class="num">${fmtM(m.total_cost)}</td><td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td></tr>`).join('');
+  return `<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📍 Analisa Per Jalur</div>
+    <input class="tbl-search" placeholder="Cari jalur..." oninput="ftbl(this,'${uid}')"></div>
+    <div style="overflow-x:auto"><table id="${uid}"><thead><tr>
+    <th class="rank">#</th><th>Jalur</th><th class="num">Trip</th><th class="num">Total DO</th>
+    <th class="num">DO Cust</th><th class="num">DO Store</th><th class="num">TAT</th>
+    <th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>
+    </tr></thead><tbody>${tr}</tbody></table></div></div>`;
+}
+function personHTML(rows,col,title,uid) {
+  const src = rows.filter(r=>r[col]&&r[col]!='nan'&&r[col]!='');
+  const e = Object.entries(groupBy(src,col)).map(([n,rs])=>({n,m:metrics(rs)})).sort((a,b)=>b.m.trips-a.m.trips).slice(0,50);
+  if(!e.length) return `<div class="empty">📭 Tidak ada data</div>`;
+  const tr = e.map(({n,m},i)=>`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td><td>${n}</td>
+    <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td><td class="num">${fmtM(m.total_cost)}</td></tr>`).join('');
+  return `<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">${title}</div>
+    <input class="tbl-search" placeholder="Cari nama..." oninput="ftbl(this,'${uid}')"></div>
+    <div style="overflow-x:auto"><table id="${uid}"><thead><tr>
+    <th class="rank">#</th><th>Nama</th><th class="num">Trip</th><th class="num">Total DO</th>
+    <th class="num">DO Cust</th><th class="num">DO Store</th><th class="num">TAT</th>
+    <th class="num">KM</th><th class="num">Total Cost</th>
+    </tr></thead><tbody>${tr}</tbody></table></div></div>`;
+}
+function ftbl(inp,id){ const q=inp.value.toLowerCase(); document.getElementById(id)?.querySelectorAll('tbody tr').forEach(tr=>tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none'); }
 
-<div class="footer">Dashboard Performance & Productivity Hub — Data: Master Claude Hub HCI & AHI | *Baris dengan Status LC "New" dikecualikan dari semua perhitungan</div>
+// ── Sub nav ───────────────────────────────────────────────────────────────────
+function subNav(pid) {
+  return `<div class="sub-nav">
+    <button class="sub-tab active" onclick="showSub(this,'${pid}','j')">📍 Per Jalur</button>
+    <button class="sub-tab" onclick="showSub(this,'${pid}','d')">🚗 Driver</button>
+    <button class="sub-tab" onclick="showSub(this,'${pid}','a')">👤 Asst Driver</button>
+  </div>`;
+}
+function showSub(btn,pid,sec) {
+  btn.closest('.sub-nav').querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll(`[id^="${pid}-"]`).forEach(s=>s.classList.remove('active'));
+  document.getElementById(`${pid}-${sec}`)?.classList.add('active');
+}
+function secBlocks(pid,rows) {
+  return `${subNav(pid)}
+  <div id="${pid}-j" class="sec-block active">${jalurHTML(rows,'t'+pid+'j')}</div>
+  <div id="${pid}-d" class="sec-block">${personHTML(rows,'drv','🚗 Top Driver','t'+pid+'d')}</div>
+  <div id="${pid}-a" class="sec-block">${personHTML(rows,'ast','👤 Top Asisten Driver','t'+pid+'a')}</div>`;
+}
+
+// ── Hub comparison table ──────────────────────────────────────────────────────
+function hubTableHTML(fRows, hubList, color) {
+  const rows = hubList.map(hub => {
+    const hr = fRows.filter(r=>r.hub===hub), m = metrics(hr);
+    const idx = HUBS.indexOf(hub);
+    return `<tr><td style="cursor:pointer;color:var(--${color})" onclick="showPage('h${idx}')">${hub}</td>
+      <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td>
+      <td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+      <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
+      <td class="num">${fmtM(m.total_cost)}</td><td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td></tr>`;
+  }).join('');
+  return `<div class="tbl-wrap" style="margin-bottom:20px">
+    <div class="tbl-head"><div class="tbl-title">📦 Detail Per Hub</div></div>
+    <div style="overflow-x:auto"><table><thead><tr>
+    <th>Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
+    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>
+    </tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+// ── Build pages ───────────────────────────────────────────────────────────────
+function buildPage(pid, rows, badgeCls, badgeLabel, title, sub, extra='') {
+  const fRows = filtered(rows);
+  document.getElementById('filterInfo').textContent = `${fRows.length.toLocaleString('id-ID')} dari ${RAW.length.toLocaleString('id-ID')} trip`;
+  document.getElementById('page-'+pid).innerHTML = `
+    <div class="sec-header">
+      <span class="badge ${badgeCls}">${badgeLabel}</span>
+      <div><div class="sec-title">${title}</div><div class="sec-sub">${sub}</div></div>
+    </div>
+    ${kpiHTML(metrics(fRows))}
+    ${extra}
+    ${secBlocks(pid, fRows)}`;
+}
+
+function rebuildAll() {
+  // All
+  const fAll = filtered(RAW);
+  const maF = metrics(filtered(RAW.filter(r=>r.bu==='AHI')));
+  const mhF = metrics(filtered(RAW.filter(r=>r.bu==='HCI')));
+  const buCompare = `<div class="summary-grid">
+    <div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📊 BU AHI vs HCI</div></div>
+    <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag tag-ahi">AHI</span></td><td class="num">${fmt(maF.trips)}</td><td class="num">${fmt(maF.total_do)}</td><td class="num">${maF.tat_avg}</td><td class="num">${fmt(maF.jarak_km)}</td><td class="num">${fmtM(maF.total_cost)}</td><td class="num">${fmtM(maF.bbm_ujp)}</td></tr>
+      <tr><td><span class="tag tag-hci">HCI</span></td><td class="num">${fmt(mhF.trips)}</td><td class="num">${fmt(mhF.total_do)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td><td class="num">${fmtM(mhF.total_cost)}</td><td class="num">${fmtM(mhF.bbm_ujp)}</td></tr>
+    </tbody></table></div>
+    <div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📦 Ringkasan Per Hub</div></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Hub</th><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">Total Cost</th></tr></thead>
+    <tbody>${HUBS.map((hub,i)=>{const hr=fAll.filter(r=>r.hub===hub),m=metrics(hr),bu=RAW.find(r=>r.hub===hub)?.bu||'';
+      return `<tr><td style="cursor:pointer;color:var(--ahi)" onclick="showPage('h${i}')">${hub}</td>
+      <td><span class="tag tag-${bu.toLowerCase()}">${bu}</span></td>
+      <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td>
+      <td class="num">${m.tat_avg}</td><td class="num">${fmtM(m.total_cost)}</td></tr>`;}).join('')}
+    </tbody></table></div></div></div>`;
+  buildPage('all', RAW, 'badge-all','OVERVIEW','Performance & Productivity — Semua Hub',
+    `${HUBS.length} Hub | AHI (${AHI_HUBS.length}) + HCI (${HCI_HUBS.length}) | *Status LC "New" tidak dihitung`, buCompare);
+
+  // AHI
+  buildPage('ahi', RAW.filter(r=>r.bu==='AHI'), 'badge-ahi','AHI',
+    'Performance & Productivity — BU AHI',
+    `${AHI_HUBS.length} Hub AHI`,
+    hubTableHTML(filtered(RAW.filter(r=>r.bu==='AHI')), AHI_HUBS, 'ahi'));
+
+  // HCI
+  buildPage('hci', RAW.filter(r=>r.bu==='HCI'), 'badge-hci','HCI',
+    'Performance & Productivity — BU HCI',
+    `${HCI_HUBS.length} Hub HCI`,
+    hubTableHTML(filtered(RAW.filter(r=>r.bu==='HCI')), HCI_HUBS, 'hci'));
+
+  // Per hub
+  HUBS.forEach((hub,i) => {
+    const bu = RAW.find(r=>r.hub===hub)?.bu||'';
+    buildPage(`h${i}`, RAW.filter(r=>r.hub===hub), `badge-${bu.toLowerCase()}`, bu,
+      `Performance & Productivity — ${hub}`, `BU ${bu}`);
+  });
+
+  document.getElementById('filterInfo').textContent =
+    `${filtered(RAW).length.toLocaleString('id-ID')} dari ${RAW.length.toLocaleString('id-ID')} trip`;
+}
+
+// ── Nav ───────────────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id)?.classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>{ if(t.dataset.page===id) t.classList.add('active'); });
+}
+
+rebuildAll();
+showPage('all');
+</script>
 </body>
 </html>
