@@ -1,12 +1,9 @@
 name: Update Dashboard Data
 
 on:
-  # Setiap hari jam 08:00 WIB (01:00 UTC)
   schedule:
-    - cron: "0 1 * * *"
-
-  # Trigger manual dari tab Actions
-  workflow_dispatch:
+    - cron: "0 1 * * *"   # Setiap hari 08:00 WIB (01:00 UTC)
+  workflow_dispatch:        # Bisa trigger manual dari tab Actions
 
 jobs:
   update-data:
@@ -26,16 +23,16 @@ jobs:
       - name: Install dependencies
         run: pip install pandas
 
-      - name: Generate data.json dari Google Sheets
+      - name: Generate index.html dari Google Sheets
         env:
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: python scripts/generate_data.py
 
-      - name: Commit & push data.json
+      - name: Commit & push index.html terbaru
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/data.json
-          git diff --staged --quiet || git commit -m "chore: auto-update data.json [$(TZ='Asia/Jakarta' date '+%Y-%m-%d %H:%M WIB')]"
+          git add docs/index.html
+          git diff --staged --quiet || git commit -m "chore: auto-update dashboard [$(TZ='Asia/Jakarta' date '+%Y-%m-%d %H:%M WIB')]"
           git push
