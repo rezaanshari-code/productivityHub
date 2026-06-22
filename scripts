@@ -1,44 +1,36 @@
 """
 generate_data.py
-Fetch semua sheet dari Google Spreadsheet pakai API Key (tidak perlu Service Account).
-Syarat: Spreadsheet sudah di-set "Anyone with link can view"
+- Ambil semua sheet dari Google Spreadsheet via API Key
+- Proses data (exclude Status LC = New)
+- Inject ke template.html → generate docs/index.html otomatis
+Tidak perlu upload manual apapun!
 """
 
-import os, json
+import os, json, urllib.request
 import pandas as pd
-import urllib.request
 
-# ── Config ───────────────────────────────────────────────────────────────────
 SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID", "1-2oAckm4nZjcj0y6ToLrVNlNL1VxJyIiwHosB9QW-dk")
-API_KEY        = os.environ.get("GOOGLE_API_KEY")   # dari GitHub Secret
+API_KEY        = os.environ.get("GOOGLE_API_KEY")
 
-# ── Ambil daftar sheet + gid via Sheets API v4 ───────────────────────────────
+# ── Ambil daftar sheet ────────────────────────────────────────────────────────
 def get_sheet_list():
-    url = (
-        f"https://sheets.googleapis.com/v4/spreadsheets/{SPREADSHEET_ID}"
-        f"?fields=sheets.properties&key={API_KEY}"
-    )
+    url = (f"https://sheets.googleapis.com/v4/spreadsheets/{SPREADSHEET_ID}"
+           f"?fields=sheets.properties&key={API_KEY}")
     with urllib.request.urlopen(url) as r:
         meta = json.loads(r.read())
-    sheets = []
-    for s in meta["sheets"]:
-        props = s["properties"]
-        sheets.append({"title": props["title"], "gid": props["sheetId"]})
-    return sheets
+    return [{"title": s["properties"]["title"], "gid": s["properties"]["sheetId"]}
+            for s in meta["sheets"]]
 
-# ── Baca tiap sheet sebagai CSV ───────────────────────────────────────────────
+# ── Baca sheet sebagai CSV ────────────────────────────────────────────────────
 def read_sheet_csv(gid):
-    url = (
-        f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}"
-        f"/export?format=csv&gid={gid}"
-    )
+    url = (f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}"
+           f"/export?format=csv&gid={gid}")
     return pd.read_csv(url)
 
 # ── Clean data ────────────────────────────────────────────────────────────────
 def clean_df(df):
     if "Status LC" in df.columns:
         df = df[df["Status LC"] != "New"].copy()
-
     numeric_cols = [
         "Total DO Cust","Total DO Store","Total DO",
         "Tol (UJP)","Parkir (UJP)","BBM (UJP)","Others (UJP)",
@@ -48,15 +40,11 @@ def clean_df(df):
     for col in numeric_cols:
         if col in df.columns:
             df[col] = pd.to_numeric(
-                df[col].astype(str).str.replace(",","").str.strip(), errors="coerce"
-            )
-
+                df[col].astype(str).str.replace(",","").str.strip(), errors="coerce")
     if "Jalur" in df.columns:
-        df["Jalur"] = (
-            df["Jalur"].astype(str).str.replace("\xa0"," ").str.strip()
-            .replace({"nan":"(Tidak Ada Jalur)","-":"(Tidak Ada Jalur)","":"(Tidak Ada Jalur)"})
-        )
-
+        df["Jalur"] = (df["Jalur"].astype(str)
+            .str.replace("\xa0"," ").str.strip()
+            .replace({"nan":"(Tidak Ada Jalur)","-":"(Tidak Ada Jalur)","":"(Tidak Ada Jalur)"}))
     def tat_to_min(v):
         v = str(v).strip()
         if ":" in v:
@@ -64,10 +52,8 @@ def clean_df(df):
             try: return int(p[0])*60 + int(p[1])
             except: return None
         return None
-
     if "TAT" in df.columns:
         df["TAT_minutes"] = df["TAT"].apply(tat_to_min)
-
     return df
 
 # ── Metrics ───────────────────────────────────────────────────────────────────
@@ -106,26 +92,26 @@ def get_persons(df, col, top=50):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    print("🔄  Mengambil daftar sheet …")
+    print("🔄  Mengambil daftar sheet...")
     sheet_list = get_sheet_list()
-    print(f"   Ditemukan {len(sheet_list)} sheet: {[s['title'] for s in sheet_list]}")
+    print(f"   {len(sheet_list)} sheet ditemukan: {[s['title'] for s in sheet_list]}")
 
     all_data = {}
     for s in sheet_list:
         name, gid = s["title"], s["gid"]
-        print(f"   📄  Reading: {name} (gid={gid})")
+        print(f"   📄  {name} (gid={gid})")
         try:
             df = read_sheet_csv(gid)
             df = clean_df(df)
             if "BU Hub" not in df.columns or len(df) == 0:
-                print(f"   ⚠️   Skip {name} (kosong / tidak ada kolom BU Hub)")
+                print(f"   ⚠️   Skip {name}")
                 continue
             all_data[name] = df
             print(f"   ✅  {name}: {len(df)} baris valid")
         except Exception as e:
-            print(f"   ❌  Gagal baca {name}: {e}")
+            print(f"   ❌  Gagal: {e}")
 
-    # Build dashboard data
+    # Build dashboard structure
     dashboard = {"hubs":{}, "bu":{"AHI":{},"HCI":{}}, "overall":{}}
 
     for sheet, df in all_data.items():
@@ -158,12 +144,22 @@ def main():
         "assistants": get_persons(all_combined, "Nama Asst to Driver"),
     }
 
-    os.makedirs("public", exist_ok=True)
-    with open("public/data.json","w", encoding="utf-8") as f:
-        json.dump(dashboard, f, ensure_ascii=False)
+    # ── Inject data ke template → hasilkan index.html ──────────────────────
+    template_path = "docs/template.html"
+    output_path   = "docs/index.html"
 
-    print(f"\n✅  public/data.json tersimpan")
+    with open(template_path, "r", encoding="utf-8") as f:
+        template = f.read()
+
+    data_json = json.dumps(dashboard, ensure_ascii=False)
+    final_html = template.replace("DASHBOARD_DATA_PLACEHOLDER", data_json)
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(final_html)
+
+    print(f"\n✅  {output_path} berhasil di-generate!")
     print(f"   Total trips: {dashboard['overall']['metrics']['trips']:,}")
+    print(f"   File size: {os.path.getsize(output_path):,} bytes")
 
 if __name__ == "__main__":
     main()
