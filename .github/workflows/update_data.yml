@@ -1,0 +1,135 @@
+name: Update Dashboard Data
+
+on:
+  schedule:
+    - cron: "0 1 * * *"   # Setiap hari 08:00 WIB
+  workflow_dispatch:        # Run manual dari tab Actions
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install pandas
+
+      - name: Generate index.html dari Google Sheets
+        env:
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          python3 - << 'PYEOF'
+          import os, json, urllib.request, math
+          import pandas as pd
+
+          SPREADSHEET_ID = os.environ["SPREADSHEET_ID"]
+          API_KEY        = os.environ["GOOGLE_API_KEY"]
+
+          def get_sheets():
+              url = (f"https://sheets.googleapis.com/v4/spreadsheets/{SPREADSHEET_ID}"
+                     f"?fields=sheets.properties&key={API_KEY}")
+              with urllib.request.urlopen(url) as r:
+                  meta = json.loads(r.read())
+              return [{"title": s["properties"]["title"], "gid": s["properties"]["sheetId"]}
+                      for s in meta["sheets"]]
+
+          def read_sheet(gid):
+              url = (f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}"
+                     f"/export?format=csv&gid={gid}")
+              return pd.read_csv(url)
+
+          def clean(df):
+              if "Status LC" in df.columns:
+                  df = df[df["Status LC"] != "New"].copy()
+              for col in ["Total DO Cust","Total DO Store","Total DO","BBM (UJP)",
+                          "Total Cost UJP","Total Cost","Jarak (KM)"]:
+                  if col in df.columns:
+                      df[col] = pd.to_numeric(
+                          df[col].astype(str).str.replace(",","").str.strip(),
+                          errors="coerce").fillna(0)
+              if "Jalur" in df.columns:
+                  df["Jalur"] = (df["Jalur"].astype(str).str.replace("\xa0"," ").str.strip()
+                      .replace({"nan":"(Tidak Ada Jalur)","-":"(Tidak Ada Jalur)","":"(Tidak Ada Jalur)"}))
+              def tat(v):
+                  v = str(v).strip()
+                  if ":" in v:
+                      p = v.split(":")
+                      try: return int(p[0])*60+int(p[1])
+                      except: return None
+                  return None
+              if "TAT" in df.columns:
+                  df["TAT_min"] = df["TAT"].apply(tat)
+              if "Delivery Date" in df.columns:
+                  df["Delivery Date"] = pd.to_datetime(df["Delivery Date"], errors="coerce")
+              return df
+
+          print("Mengambil data dari Google Sheets...")
+          sheets = get_sheets()
+          print(f"{len(sheets)} sheet: {[s['title'] for s in sheets]}")
+
+          rows = []
+          for s in sheets:
+              name, gid = s["title"], s["gid"]
+              try:
+                  df = clean(read_sheet(gid))
+                  if "BU Hub" not in df.columns or len(df)==0:
+                      print(f"Skip {name}"); continue
+                  for _, r in df.iterrows():
+                      dt  = r.get("Delivery Date")
+                      tat = r.get("TAT_min")
+                      rows.append({
+                          "d":    dt.strftime("%Y-%m-%d") if pd.notna(dt) else None,
+                          "hub":  name,
+                          "bu":   str(r.get("BU Hub","")),
+                          "jalur":str(r.get("Jalur","(Tidak Ada Jalur)")),
+                          "drv":  str(r.get("Nama Driver","")).strip(),
+                          "ast":  str(r.get("Nama Asst to Driver","")).strip(),
+                          "do":   int(r["Total DO"]),
+                          "doc":  int(r["Total DO Cust"]),
+                          "dos":  int(r["Total DO Store"]),
+                          "cost": round(float(r["Total Cost"]),2),
+                          "ujp":  round(float(r["Total Cost UJP"]),2),
+                          "bbm":  round(float(r["BBM (UJP)"]),2),
+                          "km":   round(float(r["Jarak (KM)"]),2),
+                          "tat":  round(float(tat),1) if tat is not None else None,
+                      })
+                  print(f"OK {name}: {len(df)} baris")
+              except Exception as e:
+                  print(f"GAGAL {name}: {e}")
+
+          for r in rows:
+              if r["tat"] is not None:
+                  try:
+                      if math.isnan(r["tat"]): r["tat"] = None
+                  except: r["tat"] = None
+              for k in ["drv","ast"]:
+                  if r[k] in ["nan","NaN"]: r[k] = ""
+
+          print(f"Total rows: {len(rows)}")
+
+          with open("docs/template.html","r",encoding="utf-8") as f:
+              template = f.read()
+
+          final = template.replace("RAW_DATA_PLACEHOLDER", json.dumps(rows, ensure_ascii=False))
+
+          os.makedirs("docs", exist_ok=True)
+          with open("docs/index.html","w",encoding="utf-8") as f:
+              f.write(final)
+
+          print(f"DONE: docs/index.html ({os.path.getsize('docs/index.html')//1024} KB)")
+          PYEOF
+
+      - name: Commit & push index.html
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/index.html
+          git diff --staged --quiet || git commit -m "auto-update dashboard [$(TZ='Asia/Jakarta' date '+%Y-%m-%d %H:%M WIB')]"
+          git push
