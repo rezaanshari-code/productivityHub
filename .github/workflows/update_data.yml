@@ -47,11 +47,23 @@ jobs:
               if "Status LC" in df.columns:
                   df = df[df["Status LC"] != "New"].copy()
               for col in ["Total DO Cust","Total DO Store","Total DO","BBM (UJP)",
-                          "Total Cost UJP","Total Cost","Jarak (KM)","Jumlah DP"]:
+                          "Total Cost UJP","Total Cost","Jarak (KM)","Jumlah DP",
+                          "Cost VR","Cost MPP Fee","Cost Ovt","Cost Insentif"]:
                   if col in df.columns:
                       df[col] = pd.to_numeric(
                           df[col].astype(str).str.replace(",","").str.strip(),
                           errors="coerce").fillna(0)
+              # Auto-compute Total Cost jika null (formula Excel tidak terhitung)
+              if "Total Cost" in df.columns:
+                  mask = df["Total Cost"] == 0
+                  if mask.any():
+                      df.loc[mask, "Total Cost"] = (
+                          df.loc[mask, "Total Cost UJP"].fillna(0) +
+                          df.loc[mask, "Cost VR"].fillna(0) +
+                          df.loc[mask, "Cost MPP Fee"].fillna(0) +
+                          df.loc[mask, "Cost Ovt"].fillna(0) +
+                          df.loc[mask, "Cost Insentif"].fillna(0)
+                      )
               if "Jalur" in df.columns:
                   df["Jalur"] = (df["Jalur"].astype(str).str.replace("\xa0"," ").str.strip()
                       .replace({"nan":"(Tidak Ada Jalur)","-":"(Tidak Ada Jalur)","":"(Tidak Ada Jalur)"}))
