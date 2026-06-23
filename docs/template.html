@@ -5,104 +5,155 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Performance & Productivity Hub</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#242736;--border:#2e3147;--ahi:#3b82f6;--hci:#f59e0b;--all:#8b5cf6;--text:#e2e8f0;--muted:#8892a4;--green:#10b981;--cyan:#06b6d4;--red:#ef4444;--sidebar:220px}
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#242736;--border:#2e3147;--ahi:#dc2626;--hci:#1e3a8a;--all:#8b5cf6;--text:#e2e8f0;--muted:#8892a4;--green:#10b981;--cyan:#06b6d4;--red:#ef4444;--sidebar:220px}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;font-size:14px;display:flex;flex-direction:column;height:100vh;overflow:hidden}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;height:52px;flex-shrink:0}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;height:48px;flex-shrink:0}
 .topbar-brand{font-size:15px;font-weight:700}
-.filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
-.filter-label{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
-.date-input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px}
+
+/* FILTER BAR */
+.filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:6px 16px;display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filter-label{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;min-width:90px}
+.date-input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px}
 .date-input:focus{outline:none;border-color:var(--all)}
-.filter-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;background:var(--surface2);color:var(--muted)}
+.date-input-prev{background:var(--surface2);border:1px dashed var(--border);border-radius:6px;padding:4px 8px;color:var(--muted);font-size:12px}
+.filter-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:11px;font-weight:600;background:var(--surface2);color:var(--muted)}
 .filter-btn:hover{color:var(--text)}
-.presets{display:flex;gap:5px;flex-wrap:wrap}
-.preset{padding:4px 9px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer;transition:all .15s}
+.presets{display:flex;gap:4px;flex-wrap:wrap}
+.preset{padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer;transition:all .15s}
 .preset:hover{color:var(--text);border-color:var(--all)}
 .preset.active{background:var(--all);color:#fff;border-color:var(--all)}
 .filter-info{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.prev-label{font-size:11px;color:var(--muted);font-style:italic}
+
+/* LAYOUT */
 .layout{display:flex;flex:1;overflow:hidden}
 .sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;padding:8px 0}
 .sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 .sidebar-group-label{padding:8px 14px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
-.sidebar-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;color:var(--muted);font-size:12px;font-weight:500;transition:all .15s;border-left:3px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-item{display:flex;align-items:center;gap:8px;padding:6px 14px;cursor:pointer;color:var(--muted);font-size:12px;font-weight:500;transition:all .15s;border-left:3px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sidebar-item:hover{background:var(--surface2);color:var(--text)}
-.sidebar-item.active{background:var(--surface2);color:var(--text);border-left-color:var(--all)}
-.sidebar-item.active.ahi{border-left-color:var(--ahi)}
-.sidebar-item.active.hci{border-left-color:var(--hci)}
+.sidebar-item.active{background:var(--surface2);color:var(--text)}
+.sidebar-item.active.ahi{border-left-color:var(--ahi);color:#f87171}
+.sidebar-item.active.hci{border-left-color:var(--hci);color:#93c5fd}
+.sidebar-item.active.all-item{border-left-color:var(--all)}
 .sidebar-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .dot-all{background:var(--all)}.dot-ahi{background:var(--ahi)}.dot-hci{background:var(--hci)}
-.content{flex:1;overflow-y:auto;padding:20px}
+
+.content{flex:1;overflow-y:auto;padding:16px}
 .content::-webkit-scrollbar{width:6px}.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 .page-wrap{max-width:1400px;margin:0 auto}
-.sec-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+
+/* HEADER */
+.sec-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.badge-all{background:var(--all);color:#fff}.badge-ahi{background:var(--ahi);color:#fff}.badge-hci{background:var(--hci);color:#000}
-.sec-title{font-size:20px;font-weight:700}
-.sec-sub{color:var(--muted);font-size:12px;margin-top:2px}
-.page-tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--border)}
-.page-tab{padding:8px 18px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;border-top:none;border-left:none;border-right:none;transition:all .15s}
+.badge-all{background:var(--all);color:#fff}
+.badge-ahi{background:var(--ahi);color:#fff}
+.badge-hci{background:var(--hci);color:#fff}
+.sec-title{font-size:18px;font-weight:700}
+.sec-sub{color:var(--muted);font-size:11px;margin-top:2px}
+
+/* PAGE TABS */
+.page-tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--border)}
+.page-tab{padding:7px 16px;cursor:pointer;color:var(--muted);font-size:12px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;border-top:none;border-left:none;border-right:none;transition:all .15s}
 .page-tab:hover{color:var(--text)}
 .page-tab.active{color:var(--text);border-bottom-color:var(--all)}
 .tab-pane{display:none}.tab-pane.active{display:block}
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:18px}
 .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px}
 .kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.kpi-value{font-size:20px;font-weight:700;line-height:1}
-.kpi-sub{font-size:10px;color:var(--muted);margin-top:3px}
-.t-blue{border-top:3px solid var(--ahi)}.t-yellow{border-top:3px solid var(--hci)}.t-green{border-top:3px solid var(--green)}.t-cyan{border-top:3px solid var(--cyan)}.t-purple{border-top:3px solid var(--all)}.t-red{border-top:3px solid var(--red)}
-.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
+.kpi-value{font-size:19px;font-weight:700;line-height:1}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.kpi-delta{font-size:11px;font-weight:600;margin-top:3px}
+.delta-up{color:#10b981}.delta-down{color:#ef4444}.delta-flat{color:var(--muted)}
+.t-blue{border-top:3px solid var(--hci)}.t-yellow{border-top:3px solid #f59e0b}.t-green{border-top:3px solid var(--green)}.t-cyan{border-top:3px solid var(--cyan)}.t-purple{border-top:3px solid var(--all)}.t-red{border-top:3px solid var(--ahi)}
+
+/* TABLE */
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:18px}
 .tbl-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
 .tbl-title{font-weight:600;font-size:13px}
-.tbl-search{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;color:var(--text);font-size:12px;width:170px}
+.tbl-search{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;color:var(--text);font-size:12px;width:160px}
 .tbl-search:focus{outline:none;border-color:var(--all)}
 table{width:100%;border-collapse:collapse}
-th{background:var(--surface2);padding:8px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
-td{padding:8px 10px;border-bottom:1px solid var(--border);font-size:11px;white-space:nowrap}
+th{background:var(--surface2);padding:7px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--border);font-size:11px;white-space:nowrap}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:var(--surface2)}
 .num{text-align:right;font-variant-numeric:tabular-nums}
-.rank{width:26px;color:var(--muted);font-weight:700;font-size:11px}
+.rank{width:24px;color:var(--muted);font-weight:700;font-size:11px}
 .r1{color:#fbbf24}.r2{color:#94a3b8}.r3{color:#cd7c3b}
-.sub-nav{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.hub-tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600}
+.hub-ahi{background:rgba(220,38,38,.15);color:#f87171}
+.hub-hci{background:rgba(30,58,138,.2);color:#93c5fd}
+.d-up{color:#10b981;font-weight:600}.d-dn{color:#ef4444;font-weight:600}.d-fl{color:var(--muted)}
+
+/* SUB NAV */
+.sub-nav{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .sub-tab{padding:5px 12px;border-radius:6px;cursor:pointer;color:var(--muted);font-size:12px;border:1px solid var(--border);background:var(--surface);transition:all .15s}
 .sub-tab:hover{color:var(--text);border-color:var(--all)}
 .sub-tab.active{background:var(--surface2);color:var(--text);border-color:var(--all)}
 .sec-block{display:none}.sec-block.show{display:block}
-.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
-.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
-.chart-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
-.chart-wrap{position:relative;height:220px}
-.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
-@media(max-width:900px){.summary-grid{grid-template-columns:1fr}.chart-grid{grid-template-columns:1fr}}
+
+/* CHARTS */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+.chart-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.chart-wrap{position:relative;height:200px}
+
+/* MAP */
+.map-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:18px}
+.map-header{padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600;font-size:13px}
+#hubMap{height:320px;width:100%}
+.leaflet-container{background:#1a1d27!important}
+
+/* SUMMARY */
+.summary-col{display:flex;flex-direction:column;gap:14px;margin-bottom:18px}
 .tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
-.tag-ahi{background:rgba(59,130,246,.2);color:var(--ahi)}.tag-hci{background:rgba(245,158,11,.2);color:var(--hci)}
-.empty{text-align:center;padding:40px;color:var(--muted)}
-.footer{text-align:center;padding:8px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);flex-shrink:0}
+.tag-ahi{background:rgba(220,38,38,.15);color:#f87171}
+.tag-hci{background:rgba(30,58,138,.2);color:#93c5fd}
 .ratio-val{color:var(--cyan);font-weight:600}
-.spinner{display:flex;align-items:center;justify-content:center;padding:60px;color:var(--muted);font-size:13px;gap:10px}
-.spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--all);border-radius:50%;animation:sp .7s linear infinite}
+.empty{text-align:center;padding:40px;color:var(--muted)}
+.footer{text-align:center;padding:7px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);flex-shrink:0}
+.spin-wrap{display:flex;align-items:center;justify-content:center;padding:50px;color:var(--muted);font-size:13px;gap:10px}
+.spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--all);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
+@media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="topbar"><div class="topbar-brand">📦 Hub Dashboard</div></div>
+
 <div class="filter-bar">
-  <span class="filter-label">📅 Filter:</span>
-  <input type="date" id="dateFrom" class="date-input" onchange="applyFilter()">
-  <span style="color:var(--muted);font-size:12px">s/d</span>
-  <input type="date" id="dateTo" class="date-input" onchange="applyFilter()">
-  <button class="filter-btn" onclick="resetFilter()">Reset</button>
-  <div class="presets">
-    <button class="preset" onclick="setPreset('today',this)">Hari Ini</button>
-    <button class="preset" onclick="setPreset('week',this)">7 Hari</button>
-    <button class="preset" onclick="setPreset('month',this)">Bulan Ini</button>
-    <button class="preset" onclick="setPreset('3month',this)">3 Bulan</button>
-    <button class="preset active" onclick="setPreset('all',this)">Semua</button>
+  <div class="filter-row">
+    <span class="filter-label">📅 Periode:</span>
+    <input type="date" id="dateFrom" class="date-input" onchange="onFilterChange()">
+    <span style="color:var(--muted);font-size:12px">s/d</span>
+    <input type="date" id="dateTo" class="date-input" onchange="onFilterChange()">
+    <button class="filter-btn" onclick="resetFilter()">Reset</button>
+    <div class="presets">
+      <button class="preset" onclick="setPreset('today',this)">Hari Ini</button>
+      <button class="preset" onclick="setPreset('week',this)">7 Hari</button>
+      <button class="preset" onclick="setPreset('month',this)">Bulan Ini</button>
+      <button class="preset" onclick="setPreset('3month',this)">3 Bulan</button>
+      <button class="preset active" onclick="setPreset('all',this)">Semua</button>
+    </div>
+    <span class="filter-info" id="filterInfo"></span>
   </div>
-  <span class="filter-info" id="filterInfo"></span>
+  <div class="filter-row">
+    <span class="filter-label">📊 Pembanding:</span>
+    <input type="date" id="prevFrom" class="date-input-prev" readonly>
+    <span style="color:var(--muted);font-size:12px">s/d</span>
+    <input type="date" id="prevTo" class="date-input-prev" readonly>
+    <span class="prev-label" id="prevLabel">Otomatis: periode bulan sebelumnya (apple-to-apple)</span>
+  </div>
 </div>
+
 <div class="layout">
   <div class="sidebar" id="sidebar"></div>
   <div class="content" id="mainContent"></div>
@@ -112,28 +163,60 @@ tr:hover td{background:var(--surface2)}
 <script>
 const RAW = RAW_DATA_PLACEHOLDER;
 
-// ── Pre-index data for fast lookup ────────────────────────────────────────────
+// ── Hub coordinates for map ───────────────────────────────────────────────────
+const HUB_COORDS = {
+  'AHI Alsut':      [-6.2297, 106.6541],
+  'AHI Bintaro':    [-6.2942, 106.7342],
+  'AHI MAG':        [-6.1456, 106.9091],
+  'AHI Puri':       [-6.1789, 106.7236],
+  'AHI Gandaria':   [-6.2487, 106.7797],
+  'AHI Kasablanka': [-6.2248, 106.8398],
+  'AHI Depok':      [-6.4025, 106.7942],
+  'AHI Cibubur':    [-6.3691, 106.8773],
+  'AHI Terasutera': [-6.2350, 106.6600],
+  'AHI AYB':        [-6.1950, 106.8264],
+  'AHI IBCC':       [-6.9175, 107.6191],
+  'AHI Paskal':     [-6.9024, 107.5986],
+  'AHI Semarang':   [-6.9932, 110.4203],
+  'AHI Yogyakarta': [-7.7956, 110.3695],
+  'AHI Malang':     [-7.9797, 112.6304],
+  'AHI Palembang':  [-2.9761, 104.7754],
+  'AHI Kuta':       [-8.7215, 115.1698],
+  'AHI Denpasar':   [-8.6705, 115.2126],
+  'HCI Tangerang':  [-6.1781, 106.6297],
+  'HCI Bogor':      [-6.5971, 106.8060],
+  'HCI Utara':      [-6.1345, 106.8956],
+  'HCI Bandung':    [-6.9175, 107.6191],
+  'HCI Tasik':      [-7.3273, 108.2207],
+  'HCI Semarang':   [-6.9932, 110.4003],
+  'HCI Yogya':      [-7.8014, 110.3647],
+  'HCI Kediri':     [-7.8480, 111.9675],
+  'HCI Malang':     [-7.9666, 112.6326],
+  'HCI Bali':       [-8.4095, 115.1889],
+  'HCI Banyumas':   [-7.4222, 109.2350],
+  'HCI Pekanbaru':  [0.5071,  101.4478],
+};
+
+// ── Pre-index ─────────────────────────────────────────────────────────────────
 const HUBS     = [...new Set(RAW.map(r=>r.hub))];
 const AHI_HUBS = HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='AHI');
 const HCI_HUBS = HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='HCI');
-
-// Pre-group by hub for O(1) lookup
-const BY_HUB = {};
+const BY_HUB   = {};
 HUBS.forEach(h=>BY_HUB[h]=[]);
 RAW.forEach(r=>BY_HUB[r.hub].push(r));
 
 const NAV = [
-  {id:'all',  label:'🌐 ALL Hub',      cls:'',    dot:'dot-all'},
-  {id:'hci',  label:'🟡 ALL HUB HCI', cls:'hci', dot:'dot-hci', group:'HCI'},
+  {id:'all', label:'🌐 ALL Hub', cls:'all-item', dot:'dot-all'},
+  {id:'hci', label:'🔵 ALL HUB HCI', cls:'hci', dot:'dot-hci', group:'HCI'},
   ...HCI_HUBS.map((h,i)=>({id:'hci_'+i, label:'Hub '+h, cls:'hci', dot:'dot-hci', hub:h})),
-  {id:'ahi',  label:'🔵 ALL HUB AHI', cls:'ahi', dot:'dot-ahi', group:'AHI'},
+  {id:'ahi', label:'🔴 ALL HUB AHI', cls:'ahi', dot:'dot-ahi', group:'AHI'},
   ...AHI_HUBS.map((h,i)=>({id:'ahi_'+i, label:'Hub '+h, cls:'ahi', dot:'dot-ahi', hub:h})),
 ];
 const HUB_PAGE={};
 HCI_HUBS.forEach((h,i)=>HUB_PAGE[h]='hci_'+i);
 AHI_HUBS.forEach((h,i)=>HUB_PAGE[h]='ahi_'+i);
 
-// ── Sidebar ───────────────────────────────────────────────────────────────────
+// ── Build sidebar ─────────────────────────────────────────────────────────────
 const sidebar=document.getElementById('sidebar');
 NAV.forEach(n=>{
   if(n.group){const l=document.createElement('div');l.className='sidebar-group-label';l.textContent=n.group==='HCI'?'BU HCI':'BU AHI';sidebar.appendChild(l);}
@@ -148,7 +231,27 @@ const allDates=[...new Set(RAW.map(r=>r.d).filter(Boolean))].sort();
 const minDate=allDates[0], maxDate=allDates[allDates.length-1];
 document.getElementById('dateFrom').value=minDate;
 document.getElementById('dateTo').value=maxDate;
-let filterFrom=minDate, filterTo=maxDate, curPid='all';
+let filterFrom=minDate, filterTo=maxDate, prevFrom='', prevTo='', curPid='all';
+
+function calcPrevPeriod(from, to){
+  // Same dates, previous month
+  const f=new Date(from), t=new Date(to);
+  f.setMonth(f.getMonth()-1); t.setMonth(t.getMonth()-1);
+  return {
+    from: f.toISOString().split('T')[0],
+    to:   t.toISOString().split('T')[0]
+  };
+}
+
+function updatePrevPeriod(){
+  const p=calcPrevPeriod(filterFrom,filterTo);
+  prevFrom=p.from; prevTo=p.to;
+  document.getElementById('prevFrom').value=prevFrom;
+  document.getElementById('prevTo').value=prevTo;
+  // Days info
+  const days=Math.round((new Date(filterTo)-new Date(filterFrom))/86400000)+1;
+  document.getElementById('prevLabel').textContent=`Otomatis: ${days} hari sebelumnya (apple-to-apple)`;
+}
 
 function setPreset(p,btn){
   document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
@@ -157,23 +260,27 @@ function setPreset(p,btn){
   else if(p==='week'){d.setDate(d.getDate()-6);from=d.toISOString().split('T')[0];}
   else if(p==='month')from=maxDate.substring(0,7)+'-01';
   else if(p==='3month'){d.setMonth(d.getMonth()-2);from=d.toISOString().split('T')[0].substring(0,7)+'-01';}
-  document.getElementById('dateFrom').value=from;document.getElementById('dateTo').value=maxDate;
-  filterFrom=from;filterTo=maxDate;showPage(curPid);
+  document.getElementById('dateFrom').value=from;
+  document.getElementById('dateTo').value=maxDate;
+  filterFrom=from;filterTo=maxDate;
+  updatePrevPeriod();showPage(curPid);
 }
-function applyFilter(){
+function onFilterChange(){
   document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
   filterFrom=document.getElementById('dateFrom').value;
   filterTo=document.getElementById('dateTo').value;
-  showPage(curPid);
+  updatePrevPeriod();showPage(curPid);
 }
 function resetFilter(){
-  document.getElementById('dateFrom').value=minDate;document.getElementById('dateTo').value=maxDate;
+  document.getElementById('dateFrom').value=minDate;
+  document.getElementById('dateTo').value=maxDate;
   filterFrom=minDate;filterTo=maxDate;
   document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
   document.querySelector('.preset[onclick*="all"]').classList.add('active');
-  showPage(curPid);
+  updatePrevPeriod();showPage(curPid);
 }
 function filt(rows){return rows.filter(r=>!r.d||(r.d>=filterFrom&&r.d<=filterTo));}
+function filtPrev(rows){return rows.filter(r=>!r.d||(r.d>=prevFrom&&r.d<=prevTo));}
 
 // ── Metrics ───────────────────────────────────────────────────────────────────
 function metrics(rows){
@@ -190,66 +297,136 @@ function metrics(rows){
     bbm_per_trip:n?Math.round(bbm/n):0,km_per_trip:n?+(km/n).toFixed(1):0,
   };
 }
+
 function grpBy(rows,key){const m={};for(const r of rows){const k=r[key]||'(kosong)';if(!m[k])m[k]=[];m[k].push(r);}return m;}
 const fmt=n=>n==null||isNaN(n)?'-':Math.round(n).toLocaleString('id-ID');
 const fmtD=n=>n==null||isNaN(n)?'-':Number(n).toLocaleString('id-ID',{maximumFractionDigits:1});
 const fmtM=n=>{if(!n||isNaN(n))return '-';if(n>=1e9)return(n/1e9).toFixed(2)+' M';if(n>=1e6)return(n/1e6).toFixed(1)+' Jt';if(n>=1e3)return(n/1e3).toFixed(0)+' Rb';return fmt(n);};
 
-// ── HTML helpers ──────────────────────────────────────────────────────────────
-const rThs=`<th class="num">DO/Trip</th><th class="num">DP/Trip</th><th class="num">UJP/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>`;
-const rTds=m=>`<td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtD(m.dp_per_trip)}</td><td class="num ratio-val">${fmtM(m.ujp_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td><td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td>`;
+function delta(cur,prev){
+  if(!prev||prev===0)return'';
+  const pct=((cur-prev)/prev*100);
+  const sign=pct>0?'▲':'▼';
+  const cls=pct>0?'delta-up':'delta-down';
+  return`<div class="${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs prev</div>`;
+}
+function deltaCell(cur,prev){
+  if(!prev||prev===0)return`<td class="num d-fl">-</td>`;
+  const pct=((cur-prev)/prev*100);
+  const cls=pct>0?'d-up':'d-dn';
+  const sign=pct>0?'▲':'▼';
+  return`<td class="num ${cls}">${sign}${Math.abs(pct).toFixed(0)}%</td>`;
+}
 
-function kpiHTML(m){return`<div class="kpi-grid">
-  <div class="kpi t-blue"><div class="kpi-label">Total Trip</div><div class="kpi-value">${fmt(m.trips)}</div><div class="kpi-sub">Pengiriman aktif</div></div>
-  <div class="kpi t-cyan"><div class="kpi-label">Total DO</div><div class="kpi-value">${fmt(m.total_do)}</div><div class="kpi-sub">Cust: ${fmt(m.do_cust)} | Store: ${fmt(m.do_store)}</div></div>
-  <div class="kpi t-green"><div class="kpi-label">TAT Rata-rata</div><div class="kpi-value">${m.tat_avg}</div><div class="kpi-sub">Jam:Menit per trip</div></div>
-  <div class="kpi t-yellow"><div class="kpi-label">Jarak KM</div><div class="kpi-value">${fmt(m.jarak_km)}</div><div class="kpi-sub">${fmtD(m.km_per_trip)} km/trip</div></div>
-  <div class="kpi t-purple"><div class="kpi-label">Total Cost</div><div class="kpi-value">${fmtM(m.total_cost)}</div><div class="kpi-sub">${fmtM(m.cost_per_trip)}/trip</div></div>
-  <div class="kpi t-blue"><div class="kpi-label">Total UJP</div><div class="kpi-value">${fmtM(m.total_ujp)}</div><div class="kpi-sub">${fmtM(m.ujp_per_trip)}/trip</div></div>
-  <div class="kpi t-cyan"><div class="kpi-label">Biaya BBM</div><div class="kpi-value">${fmtM(m.bbm_ujp)}</div><div class="kpi-sub">${fmtM(m.bbm_per_trip)}/trip</div></div>
-  <div class="kpi t-green"><div class="kpi-label">DO/Trip</div><div class="kpi-value">${fmtD(m.do_per_trip)}</div><div class="kpi-sub">Rata-rata per trip</div></div>
-  <div class="kpi t-red"><div class="kpi-label">DP/Trip</div><div class="kpi-value">${fmtD(m.dp_per_trip)}</div><div class="kpi-sub">Rata-rata per trip</div></div>
-</div>`;}
+// ── KPI ───────────────────────────────────────────────────────────────────────
+function kpiHTML(m, mp){
+  const d=(k)=>mp?delta(m[k],mp[k]):'';
+  return`<div class="kpi-grid">
+    <div class="kpi t-hci"><div class="kpi-label">Total Trip</div><div class="kpi-value">${fmt(m.trips)}</div>${d('trips')}<div class="kpi-sub">Pengiriman aktif</div></div>
+    <div class="kpi t-cyan"><div class="kpi-label">Total DO</div><div class="kpi-value">${fmt(m.total_do)}</div>${d('total_do')}<div class="kpi-sub">Cust: ${fmt(m.do_cust)} | Store: ${fmt(m.do_store)}</div></div>
+    <div class="kpi t-green"><div class="kpi-label">TAT Rata-rata</div><div class="kpi-value">${m.tat_avg}</div><div class="kpi-sub">Jam:Menit per trip</div></div>
+    <div class="kpi t-yellow"><div class="kpi-label">Jarak KM</div><div class="kpi-value">${fmt(m.jarak_km)}</div>${d('jarak_km')}<div class="kpi-sub">${fmtD(m.km_per_trip)} km/trip</div></div>
+    <div class="kpi t-purple"><div class="kpi-label">Total Cost</div><div class="kpi-value">${fmtM(m.total_cost)}</div>${d('total_cost')}<div class="kpi-sub">${fmtM(m.cost_per_trip)}/trip</div></div>
+    <div class="kpi t-hci"><div class="kpi-label">Total UJP</div><div class="kpi-value">${fmtM(m.total_ujp)}</div>${d('total_ujp')}<div class="kpi-sub">${fmtM(m.ujp_per_trip)}/trip</div></div>
+    <div class="kpi t-cyan"><div class="kpi-label">Biaya BBM</div><div class="kpi-value">${fmtM(m.bbm_ujp)}</div>${d('bbm_ujp')}<div class="kpi-sub">${fmtM(m.bbm_per_trip)}/trip</div></div>
+    <div class="kpi t-green"><div class="kpi-label">DO/Trip</div><div class="kpi-value">${fmtD(m.do_per_trip)}</div>${d('do_per_trip')}<div class="kpi-sub">Rata-rata per trip</div></div>
+    <div class="kpi t-red"><div class="kpi-label">DP/Trip</div><div class="kpi-value">${fmtD(m.dp_per_trip)}</div>${d('dp_per_trip')}<div class="kpi-sub">Rata-rata per trip</div></div>
+  </div>`;
+}
 
-function jalurHTML(rows,uid){
-  const e=Object.entries(grpBy(rows,'jalur')).map(([j,rs])=>({j,m:metrics(rs)})).sort((a,b)=>b.m.trips-a.m.trips);
-  if(!e.length)return`<div class="empty">📭 Tidak ada data</div>`;
+// ── Ratio headers/cells ───────────────────────────────────────────────────────
+const rThs=`<th class="num">DO/Trip</th><th class="num">DP/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>`;
+const rTds=m=>`<td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtD(m.dp_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td><td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td>`;
+
+// ── Jalur table ───────────────────────────────────────────────────────────────
+function jalurHTML(rows, prevRows, uid, showHub){
+  let entries;
+  if(showHub){
+    // Group by hub+jalur
+    const grp={};
+    rows.forEach(r=>{const k=r.hub+'__'+r.jalur;if(!grp[k])grp[k]={hub:r.hub,jalur:r.jalur,rows:[]};grp[k].rows.push(r);});
+    entries=Object.values(grp).map(g=>({hub:g.hub,j:g.jalur,m:metrics(g.rows),prevM:prevRows?metrics(prevRows.filter(r=>r.hub===g.hub&&r.jalur===g.jalur)):null}));
+  } else {
+    const grp=grpBy(rows,'jalur');
+    entries=Object.entries(grp).map(([j,rs])=>({j,m:metrics(rs),prevM:prevRows?metrics(prevRows.filter(r=>r.jalur===j)):null}));
+  }
+  entries.sort((a,b)=>b.m.trips-a.m.trips);
+  if(!entries.length)return`<div class="empty">📭 Tidak ada data</div>`;
+  const hubTh=showHub?'<th>Hub</th>':'';
+  const tr=entries.map(({hub,j,m,prevM},i)=>{
+    const hubCell=showHub?`<td><span class="hub-tag hub-${(RAW.find(r=>r.hub===hub)?.bu||'ahi').toLowerCase()}">${hub.replace(/^(AHI|HCI)\s/,'$1 ')}</span></td>`:'';
+    return`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td>${hubCell}<td>${j}</td>
+    <td class="num">${fmt(m.trips)}</td>${deltaCell(m.trips,prevM?.trips)}
+    <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
+    <td class="num">${fmtM(m.total_cost)}</td>${deltaCell(m.total_cost,prevM?.total_cost)}
+    <td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>
+    ${rTds(m)}</tr>`;}).join('');
   return`<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📍 Analisa Per Jalur</div>
     <input class="tbl-search" placeholder="Cari jalur..." oninput="ftbl(this,'${uid}')"></div>
     <div style="overflow-x:auto"><table id="${uid}"><thead><tr>
-    <th class="rank">#</th><th>Jalur</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
-    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>${rThs}
-    </tr></thead><tbody>${e.map(({j,m},i)=>`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td><td>${j}</td>
-    <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
-    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td><td class="num">${fmtM(m.total_cost)}</td><td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>
-    ${rTds(m)}</tr>`).join('')}</tbody></table></div></div>`;
+    <th class="rank">#</th>${hubTh}<th>Jalur</th>
+    <th class="num">Trip</th><th class="num">Δ</th>
+    <th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
+    <th class="num">TAT</th><th class="num">KM</th>
+    <th class="num">Total Cost</th><th class="num">Δ</th>
+    <th class="num">Total UJP</th><th class="num">BBM</th>${rThs}
+    </tr></thead><tbody>${tr}</tbody></table></div></div>`;
 }
-function personHTML(rows,col,title,uid){
-  const src=rows.filter(r=>r[col]&&r[col]!='nan'&&r[col]!='');
-  const e=Object.entries(grpBy(src,col)).map(([n,rs])=>({n,m:metrics(rs)})).sort((a,b)=>b.m.trips-a.m.trips).slice(0,50);
-  if(!e.length)return`<div class="empty">📭 Tidak ada data</div>`;
+
+// ── Person table ──────────────────────────────────────────────────────────────
+function personHTML(rows, prevRows, col, title, uid, showHub){
+  let entries;
+  if(showHub){
+    const grp={};
+    rows.filter(r=>r[col]&&r[col]!='nan'&&r[col]!='').forEach(r=>{
+      const k=r.hub+'__'+r[col];if(!grp[k])grp[k]={hub:r.hub,name:r[col],rows:[]};grp[k].rows.push(r);});
+    entries=Object.values(grp).map(g=>({hub:g.hub,n:g.name,m:metrics(g.rows),prevM:prevRows?metrics(prevRows.filter(r=>r.hub===g.hub&&r[col]===g.name)):null}));
+  } else {
+    const src=rows.filter(r=>r[col]&&r[col]!='nan'&&r[col]!='');
+    entries=Object.entries(grpBy(src,col)).map(([n,rs])=>({n,m:metrics(rs),prevM:prevRows?metrics(prevRows.filter(r=>r[col]===n)):null}));
+  }
+  entries.sort((a,b)=>b.m.trips-a.m.trips);
+  entries=entries.slice(0,50);
+  if(!entries.length)return`<div class="empty">📭 Tidak ada data</div>`;
+  const hubTh=showHub?'<th>Hub</th>':'';
+  const tr=entries.map(({hub,n,m,prevM},i)=>{
+    const hubCell=showHub?`<td><span class="hub-tag hub-${(RAW.find(r=>r.hub===hub)?.bu||'ahi').toLowerCase()}">${hub.replace(/^(AHI|HCI)\s/,'$1 ')}</span></td>`:'';
+    return`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td>${hubCell}<td>${n}</td>
+    <td class="num">${fmt(m.trips)}</td>${deltaCell(m.trips,prevM?.trips)}
+    <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
+    <td class="num">${fmtM(m.total_cost)}</td>${rTds(m)}</tr>`;}).join('');
   return`<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">${title}</div>
     <input class="tbl-search" placeholder="Cari nama..." oninput="ftbl(this,'${uid}')"></div>
     <div style="overflow-x:auto"><table id="${uid}"><thead><tr>
-    <th class="rank">#</th><th>Nama</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
+    <th class="rank">#</th>${hubTh}<th>Nama</th>
+    <th class="num">Trip</th><th class="num">Δ</th>
+    <th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
     <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th>${rThs}
-    </tr></thead><tbody>${e.map(({n,m},i)=>`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td><td>${n}</td>
-    <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
-    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td><td class="num">${fmtM(m.total_cost)}</td>${rTds(m)}</tr>`).join('')}
+    </tr></thead><tbody>${tr}</tbody></table></div></div>`;
+}
+
+function ftbl(inp,id){const q=inp.value.toLowerCase();document.getElementById(id)?.querySelectorAll('tbody tr').forEach(tr=>tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none');}
+
+// ── Hub table ─────────────────────────────────────────────────────────────────
+function hubTblHTML(fRows,prevRows,hList,color){
+  return`<div class="tbl-wrap" style="margin-bottom:18px"><div class="tbl-head"><div class="tbl-title">📦 Detail Per Hub</div></div>
+    <div style="overflow-x:auto"><table><thead><tr>
+    <th>Hub</th><th class="num">Trip</th><th class="num">Δ</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
+    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Δ</th><th class="num">Total UJP</th><th class="num">BBM</th>${rThs}
+    </tr></thead><tbody>${hList.map(hub=>{
+      const m=metrics(fRows.filter(r=>r.hub===hub));
+      const mp=prevRows?metrics(prevRows.filter(r=>r.hub===hub)):null;
+      const pid=HUB_PAGE[hub];
+      return`<tr><td style="cursor:pointer;color:var(--${color})" onclick="showPage('${pid}')">Hub ${hub}</td>
+      <td class="num">${fmt(m.trips)}</td>${deltaCell(m.trips,mp?.trips)}
+      <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+      <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
+      <td class="num">${fmtM(m.total_cost)}</td>${deltaCell(m.total_cost,mp?.total_cost)}
+      <td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>${rTds(m)}</tr>`;}).join('')}
     </tbody></table></div></div>`;
 }
-function hubTblHTML(fRows,hList,color){
-  return`<div class="tbl-wrap" style="margin-bottom:20px"><div class="tbl-head"><div class="tbl-title">📦 Detail Per Hub</div></div>
-    <div style="overflow-x:auto"><table><thead><tr>
-    <th>Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
-    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>${rThs}
-    </tr></thead><tbody>${hList.map(hub=>{const m=metrics(fRows.filter(r=>r.hub===hub)),pid=HUB_PAGE[hub];
-    return`<tr><td style="cursor:pointer;color:var(--${color})" onclick="showPage('${pid}')">Hub ${hub}</td>
-    <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
-    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td><td class="num">${fmtM(m.total_cost)}</td><td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>
-    ${rTds(m)}</tr>`;}).join('')}</tbody></table></div></div>`;
-}
-function ftbl(inp,id){const q=inp.value.toLowerCase();document.getElementById(id)?.querySelectorAll('tbody tr').forEach(tr=>tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none');}
 
 // ── Sub tabs ──────────────────────────────────────────────────────────────────
 function showSub(btn,pid,sec){
@@ -264,35 +441,65 @@ function mkC(id,type,labels,datasets,opts={}){
   if(CI[id]){CI[id].destroy();delete CI[id];}
   const ctx=document.getElementById(id)?.getContext('2d');if(!ctx)return;
   CI[id]=new Chart(ctx,{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{labels:{color:'#8892a4',font:{size:11}}}},
-    scales:type==='doughnut'?{}:{x:{ticks:{color:'#8892a4',font:{size:10}},grid:{color:'#2e3147'}},y:{ticks:{color:'#8892a4',font:{size:10}},grid:{color:'#2e3147'}}},
+    plugins:{legend:{labels:{color:'#8892a4',font:{size:10}}}},
+    scales:type==='doughnut'?{}:{x:{ticks:{color:'#8892a4',font:{size:9}},grid:{color:'#2e3147'}},y:{ticks:{color:'#8892a4',font:{size:9}},grid:{color:'#2e3147'}}},
     ...opts}});
 }
-const CLR=['#3b82f6','#f59e0b','#10b981','#8b5cf6','#ef4444','#06b6d4','#f97316','#ec4899','#84cc16','#14b8a6','#a855f7','#eab308','#6366f1','#22c55e'];
+const CLR=['#3b82f6','#f59e0b','#10b981','#8b5cf6','#ef4444','#06b6d4','#f97316','#ec4899','#84cc16','#14b8a6','#a855f7','#eab308'];
 
 function renderCharts(pid,fRows,hubList){
-  const bm={};fRows.forEach(r=>{if(!r.d)return;const k=r.d.substring(0,7);if(!bm[k])bm[k]={t:0,c:0};bm[k].t++;bm[k].c+=r.cost;});
+  const bm={};
+  fRows.forEach(r=>{if(!r.d)return;const k=r.d.substring(0,7);if(!bm[k])bm[k]={t:0,c:0};bm[k].t++;bm[k].c+=r.cost;});
   const months=Object.keys(bm).sort();
   const hm=(hubList||HUBS).map(h=>({h,m:metrics(fRows.filter(r=>r.hub===h))}));
   const hasHub=hm.length>1;
-  mkC(pid+'c1','bar',months,[{label:'Trip',data:months.map(k=>bm[k].t),backgroundColor:'#3b82f6',borderRadius:4}]);
-  mkC(pid+'c2','bar',months,[{label:'Cost (Jt)',data:months.map(k=>Math.round(bm[k].c/1e6)),backgroundColor:'#8b5cf6',borderRadius:4}]);
+  mkC(pid+'c1','bar',months,[{label:'Trip',data:months.map(k=>bm[k].t),backgroundColor:'#1e3a8a',borderRadius:3}]);
+  mkC(pid+'c2','bar',months,[{label:'Cost (Jt)',data:months.map(k=>Math.round(bm[k].c/1e6)),backgroundColor:'#8b5cf6',borderRadius:3}]);
   const dc=fRows.reduce((s,r)=>s+r.doc,0),ds=fRows.reduce((s,r)=>s+r.dos,0);
-  mkC(pid+'c3','doughnut',['DO Cust','DO Store'],[{data:[dc,ds],backgroundColor:['#3b82f6','#f59e0b'],borderWidth:0}]);
+  mkC(pid+'c3','doughnut',['DO Cust','DO Store'],[{data:[dc,ds],backgroundColor:['#1e3a8a','#dc2626'],borderWidth:0}]);
   if(hasHub){
     const lb=hm.map(x=>x.h.replace(/^(AHI|HCI)\s/,''));
-    mkC(pid+'c4','bar',lb,[{label:'Trip',data:hm.map(x=>x.m.trips),backgroundColor:CLR,borderRadius:4}],{plugins:{legend:{display:false}}});
-    mkC(pid+'c5','bar',lb,[{label:'Cost/Trip (Rb)',data:hm.map(x=>Math.round(x.m.cost_per_trip/1e3)),backgroundColor:CLR,borderRadius:4}],{plugins:{legend:{display:false}}});
+    mkC(pid+'c4','bar',lb,[{label:'Trip',data:hm.map(x=>x.m.trips),backgroundColor:CLR,borderRadius:3}],{plugins:{legend:{display:false}}});
+    mkC(pid+'c5','bar',lb,[{label:'Cost/Trip (Rb)',data:hm.map(x=>Math.round(x.m.cost_per_trip/1e3)),backgroundColor:CLR,borderRadius:3}],{plugins:{legend:{display:false}}});
   }
 }
 
-// ── Page tab switch ───────────────────────────────────────────────────────────
 function switchTab(btn,pid,tab){
   btn.closest('.page-tabs').querySelectorAll('.page-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
   document.querySelectorAll('.tab-pane[data-pid="'+pid+'"]').forEach(t=>t.classList.remove('active'));
   const pane=document.getElementById(pid+'_tab_'+tab);
   if(pane){pane.classList.add('active');
-    if(tab==='insight'){const n=NAV.find(x=>x.id===pid);renderCharts(pid,filt(getRows(pid)),getHList(pid));}}
+    if(tab==='insight')renderCharts(pid,filt(getRows(pid)),getHList(pid));}
+}
+
+// ── Map ───────────────────────────────────────────────────────────────────────
+let mapInst=null;
+function renderMap(fRows){
+  if(!document.getElementById('hubMap'))return;
+  if(mapInst){mapInst.remove();mapInst=null;}
+  mapInst=L.map('hubMap',{zoomControl:true,scrollWheelZoom:false}).setView([-6.5,110.0],5);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    attribution:'©OpenStreetMap ©CartoDB',maxZoom:18}).addTo(mapInst);
+
+  HUBS.forEach(hub=>{
+    const coords=HUB_COORDS[hub];
+    if(!coords)return;
+    const hubRows=filt(BY_HUB[hub]||[]);
+    const m=metrics(hubRows);
+    const bu=RAW.find(r=>r.hub===hub)?.bu||'AHI';
+    const color=bu==='HCI'?'#93c5fd':'#f87171';
+    const r=Math.max(8,Math.min(20,6+m.trips/100));
+    const circle=L.circleMarker(coords,{radius:r,fillColor:color,color:'#fff',weight:1,opacity:.8,fillOpacity:.7})
+      .bindPopup(`<div style="font-family:Segoe UI;min-width:160px">
+        <b style="color:${color}">${hub}</b><br>
+        <span style="color:#666">BU ${bu}</span><hr style="margin:4px 0;border-color:#eee">
+        Trip: <b>${fmt(m.trips)}</b><br>
+        Total DO: <b>${fmt(m.total_do)}</b><br>
+        Total Cost: <b>${fmtM(m.total_cost)}</b><br>
+        TAT: <b>${m.tat_avg}</b>
+      </div>`)
+      .addTo(mapInst);
+  });
 }
 
 // ── Data helpers ──────────────────────────────────────────────────────────────
@@ -309,15 +516,12 @@ function getHList(pid){
   if(pid==='hci')return HCI_HUBS;
   return null;
 }
+function isMultiHub(pid){return pid==='all'||pid==='ahi'||pid==='hci';}
 
-// ── Main showPage — instant header, deferred content ─────────────────────────
+// ── Show page ─────────────────────────────────────────────────────────────────
 function showPage(pid){
   curPid=pid;
-  // Update sidebar
-  document.querySelectorAll('.sidebar-item').forEach(el=>{
-    el.classList.toggle('active',el.dataset.pid===pid);
-  });
-
+  document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.toggle('active',el.dataset.pid===pid));
   const nav=NAV.find(n=>n.id===pid)||{};
   const isHub=!!nav.hub;
   let badgeCls='badge-all',badgeLbl='ALL HUB',title='ALL Hub',sub=`${HUBS.length} Hub`;
@@ -325,7 +529,6 @@ function showPage(pid){
   else if(pid==='hci'){badgeCls='badge-hci';badgeLbl='HCI';title='ALL HUB HCI';sub=`${HCI_HUBS.length} Hub HCI`;}
   else if(isHub){const bu=RAW.find(r=>r.hub===nav.hub)?.bu||'';badgeCls=`badge-${bu.toLowerCase()}`;badgeLbl=bu;title=`Hub ${nav.hub}`;sub=`BU ${bu}`;}
 
-  // ① Render header + tabs + spinner IMMEDIATELY
   document.getElementById('mainContent').innerHTML=`<div class="page-wrap">
     <div class="sec-header"><span class="badge ${badgeCls}">${badgeLbl}</span>
       <div><div class="sec-title">${title} — Performance & Productivity</div><div class="sec-sub">${sub} | *Status LC "New" tidak dihitung</div></div>
@@ -335,62 +538,60 @@ function showPage(pid){
       <button class="page-tab" onclick="switchTab(this,'${pid}','insight')">💡 Insight</button>
     </div>
     <div id="${pid}_tab_overview" class="tab-pane active" data-pid="${pid}">
-      <div class="spinner"><div class="spin"></div> Memuat data...</div>
+      <div class="spin-wrap"><div class="spin"></div> Memuat data...</div>
     </div>
     <div id="${pid}_tab_insight" class="tab-pane" data-pid="${pid}"></div>
   </div>`;
   document.getElementById('mainContent').scrollTop=0;
 
-  // ② Render actual content async (next frame)
   requestAnimationFrame(()=>{
     const rows=getRows(pid);
     const hList=getHList(pid);
     const fRows=filt(rows);
-    const m=metrics(fRows);
+    const pRows=filtPrev(rows);
+    const m=metrics(fRows), mp=metrics(pRows);
+    const showHub=isMultiHub(pid);
 
-    // Update filter info
     document.getElementById('filterInfo').textContent=
       `${filt(RAW).length.toLocaleString('id-ID')} dari ${RAW.length.toLocaleString('id-ID')} trip`;
 
-    // Extra table for all/ahi/hci
+    // Extra tables
     let extra='';
     if(pid==='all'){
-      const maF=metrics(filt(RAW.filter(r=>r.bu==='AHI')));
-      const mhF=metrics(filt(RAW.filter(r=>r.bu==='HCI')));
-      extra=`<div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px">
-        <div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📊 ALL HUB AHI vs HCI</div></div>
-        <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th>${rThs}</tr></thead>
+      const maF=metrics(filt(RAW.filter(r=>r.bu==='AHI'))),maP=metrics(filtPrev(RAW.filter(r=>r.bu==='AHI')));
+      const mhF=metrics(filt(RAW.filter(r=>r.bu==='HCI'))),mhP=metrics(filtPrev(RAW.filter(r=>r.bu==='HCI')));
+      extra=`<div class="tbl-wrap" style="margin-bottom:18px"><div class="tbl-head"><div class="tbl-title">📊 ALL HUB AHI vs ALL HUB HCI</div></div>
+        <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Δ</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Δ</th><th class="num">BBM</th>${rThs}</tr></thead>
         <tbody>
-          <tr><td><span class="tag tag-ahi">AHI</span></td><td class="num">${fmt(maF.trips)}</td><td class="num">${fmt(maF.total_do)}</td><td class="num">${maF.tat_avg}</td><td class="num">${fmt(maF.jarak_km)}</td><td class="num">${fmtM(maF.total_cost)}</td><td class="num">${fmtM(maF.bbm_ujp)}</td>${rTds(maF)}</tr>
-          <tr><td><span class="tag tag-hci">HCI</span></td><td class="num">${fmt(mhF.trips)}</td><td class="num">${fmt(mhF.total_do)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td><td class="num">${fmtM(mhF.total_cost)}</td><td class="num">${fmtM(mhF.bbm_ujp)}</td>${rTds(mhF)}</tr>
+          <tr><td><span class="tag tag-ahi">AHI</span></td><td class="num">${fmt(maF.trips)}</td>${deltaCell(maF.trips,maP.trips)}<td class="num">${fmt(maF.total_do)}</td><td class="num">${maF.tat_avg}</td><td class="num">${fmt(maF.jarak_km)}</td><td class="num">${fmtM(maF.total_cost)}</td>${deltaCell(maF.total_cost,maP.total_cost)}<td class="num">${fmtM(maF.bbm_ujp)}</td>${rTds(maF)}</tr>
+          <tr><td><span class="tag tag-hci">HCI</span></td><td class="num">${fmt(mhF.trips)}</td>${deltaCell(mhF.trips,mhP.trips)}<td class="num">${fmt(mhF.total_do)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td><td class="num">${fmtM(mhF.total_cost)}</td>${deltaCell(mhF.total_cost,mhP.total_cost)}<td class="num">${fmtM(mhF.bbm_ujp)}</td>${rTds(mhF)}</tr>
         </tbody></table></div>
-        <div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📦 Ringkasan Per Hub</div></div>
-        <div style="overflow-x:auto"><table><thead><tr><th>Hub</th><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">Total Cost</th><th class="num">Cost/Trip</th></tr></thead>
-        <tbody>${[...HCI_HUBS,...AHI_HUBS].map(hub=>{const hm=metrics(fRows.filter(r=>r.hub===hub)),bu=RAW.find(r=>r.hub===hub)?.bu||'',hpid=HUB_PAGE[hub];
-          return`<tr><td style="cursor:pointer;color:var(--ahi)" onclick="showPage('${hpid}')">Hub ${hub}</td>
-          <td><span class="tag tag-${bu.toLowerCase()}">${bu}</span></td>
-          <td class="num">${fmt(hm.trips)}</td><td class="num">${fmt(hm.total_do)}</td>
-          <td class="num">${hm.tat_avg}</td><td class="num">${fmtM(hm.total_cost)}</td><td class="num ratio-val">${fmtM(hm.cost_per_trip)}</td></tr>`;}).join('')}
-        </tbody></table></div></div></div>`;
+        ${hubTblHTML(fRows,pRows,[...HCI_HUBS,...AHI_HUBS],'ahi')}`;
     } else if(pid==='ahi'||pid==='hci'){
-      extra=hubTblHTML(fRows,hList,pid==='ahi'?'ahi':'hci');
+      extra=hubTblHTML(fRows,pRows,hList,pid==='ahi'?'ahi':'hci');
     }
 
-    // Build overview content
-    const overviewHTML=`${kpiHTML(m)}${extra}
+    // Map (only for ALL Hub page)
+    const mapHTML=pid==='all'?`<div class="map-card"><div class="map-header">🗺️ Peta Lokasi Hub</div><div id="hubMap"></div></div>`:'';
+
+    const overviewHTML=`${mapHTML}${kpiHTML(m,mp)}${extra}
       <div class="sub-nav">
         <button class="sub-tab active" onclick="showSub(this,'${pid}','j')">📍 Per Jalur</button>
         <button class="sub-tab" onclick="showSub(this,'${pid}','d')">🚗 Driver</button>
         <button class="sub-tab" onclick="showSub(this,'${pid}','a')">👤 Asst Driver</button>
       </div>
-      <div id="${pid}_j" class="sec-block show">${jalurHTML(fRows,'tJ'+pid)}</div>
-      <div id="${pid}_d" class="sec-block">${personHTML(fRows,'drv','🚗 Top Driver','tD'+pid)}</div>
-      <div id="${pid}_a" class="sec-block">${personHTML(fRows,'ast','👤 Top Asisten Driver','tA'+pid)}</div>`;
+      <div id="${pid}_j" class="sec-block show">${jalurHTML(fRows,pRows,'tJ'+pid,showHub)}</div>
+      <div id="${pid}_d" class="sec-block">${personHTML(fRows,pRows,'drv','🚗 Top Driver','tD'+pid,showHub)}</div>
+      <div id="${pid}_a" class="sec-block">${personHTML(fRows,pRows,'ast','👤 Top Asisten Driver','tA'+pid,showHub)}</div>`;
 
     document.getElementById(pid+'_tab_overview').innerHTML=overviewHTML;
 
-    // Insight placeholder (render on demand)
-    const hasHub=(hList||[]).length>1;
+    // Render map after DOM ready
+    if(pid==='all') setTimeout(()=>renderMap(fRows), 100);
+
+    // Insight HTML
+    const hm=(hList||HUBS).map(h=>({h,m:metrics(fRows.filter(r=>r.hub===h))}));
+    const hasHub=hm.length>1;
     document.getElementById(pid+'_tab_insight').innerHTML=`
       <div class="chart-grid">
         <div class="chart-card"><div class="chart-title">📈 Trend Trip per Bulan</div><div class="chart-wrap"><canvas id="${pid}c1"></canvas></div></div>
@@ -402,19 +603,20 @@ function showPage(pid){
       </div>
       ${hasHub?`<div class="chart-grid">
         <div class="chart-card"><div class="chart-title">💵 Cost/Trip per Hub (Rb)</div><div class="chart-wrap"><canvas id="${pid}c5"></canvas></div></div>
-        <div class="chart-card"><div class="chart-title">📊 Ratio per Hub</div>
-          <div style="overflow-x:auto;max-height:220px"><table><thead><tr>
+        <div class="chart-card"><div class="chart-title">📊 Ratio Summary per Hub</div>
+          <div style="overflow-x:auto;max-height:200px"><table><thead><tr>
             <th>Hub</th><th class="num">DO/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>
-          </tr></thead><tbody>${(hList||HUBS).map(h=>{const hm=metrics(fRows.filter(r=>r.hub===h));return`<tr>
-            <td style="cursor:pointer;color:var(--ahi);font-size:11px" onclick="showPage('${HUB_PAGE[h]||''}')">${h}</td>
-            <td class="num ratio-val">${fmtD(hm.do_per_trip)}</td><td class="num ratio-val">${fmtM(hm.cost_per_trip)}</td>
-            <td class="num ratio-val">${fmtM(hm.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(hm.km_per_trip)}</td></tr>`;}).join('')}
+          </tr></thead><tbody>${hm.map(({h,m})=>`<tr>
+            <td style="cursor:pointer;color:#93c5fd;font-size:11px" onclick="showPage('${HUB_PAGE[h]||''}')">${h}</td>
+            <td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td>
+            <td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td></tr>`).join('')}
           </tbody></table></div>
-        </div>
-      </div>`:''}`;
+        </div></div>`:''}`;
   });
 }
 
+// ── Init ──────────────────────────────────────────────────────────────────────
+updatePrevPeriod();
 showPage('all');
 </script>
 </body>
