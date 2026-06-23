@@ -2,8 +2,8 @@ name: Update Dashboard Data
 
 on:
   schedule:
-    - cron: "0 1 * * *"   # Setiap hari 08:00 WIB
-  workflow_dispatch:        # Run manual dari tab Actions
+    - cron: "0 1 * * *"
+  workflow_dispatch:
 
 jobs:
   update-data:
@@ -13,11 +13,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - run: pip install pandas
 
       - name: Generate index.html dari Google Sheets
@@ -49,7 +47,7 @@ jobs:
               if "Status LC" in df.columns:
                   df = df[df["Status LC"] != "New"].copy()
               for col in ["Total DO Cust","Total DO Store","Total DO","BBM (UJP)",
-                          "Total Cost UJP","Total Cost","Jarak (KM)"]:
+                          "Total Cost UJP","Total Cost","Jarak (KM)","Jumlah DP"]:
                   if col in df.columns:
                       df[col] = pd.to_numeric(
                           df[col].astype(str).str.replace(",","").str.strip(),
@@ -94,6 +92,7 @@ jobs:
                           "do":   int(r["Total DO"]),
                           "doc":  int(r["Total DO Cust"]),
                           "dos":  int(r["Total DO Store"]),
+                          "dp":   int(r.get("Jumlah DP", 0)),
                           "cost": round(float(r["Total Cost"]),2),
                           "ujp":  round(float(r["Total Cost UJP"]),2),
                           "bbm":  round(float(r["BBM (UJP)"]),2),
@@ -118,7 +117,6 @@ jobs:
               template = f.read()
 
           final = template.replace("RAW_DATA_PLACEHOLDER", json.dumps(rows, ensure_ascii=False))
-
           os.makedirs("docs", exist_ok=True)
           with open("docs/index.html","w",encoding="utf-8") as f:
               f.write(final)
