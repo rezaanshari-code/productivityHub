@@ -357,7 +357,7 @@ function showPage(pid){
     if(pid==='all'){
       const maF=metrics(filt(RAW.filter(r=>r.bu==='AHI')));
       const mhF=metrics(filt(RAW.filter(r=>r.bu==='HCI')));
-      extra=`<div class="summary-grid">
+      extra=`<div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px">
         <div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📊 ALL HUB AHI vs HCI</div></div>
         <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th>${rThs}</tr></thead>
         <tbody>
