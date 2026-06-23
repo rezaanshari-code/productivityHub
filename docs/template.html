@@ -8,27 +8,36 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#242736;--border:#2e3147;--ahi:#dc2626;--hci:#1e3a8a;--all:#8b5cf6;--text:#e2e8f0;--muted:#8892a4;--green:#10b981;--cyan:#06b6d4;--red:#ef4444;--sidebar:220px}
+:root{
+  --bg:#0d1117;--surface:#161b27;--surface2:#1e2535;--border:#2a3347;
+  --ahi:#dc2626;--hci:#1e3a8a;--all:#7c3aed;
+  --sky:#38bdf8;--mint:#34d399;--amber:#fbbf24;--rose:#fb7185;--violet:#a78bfa;
+  --text:#f1f5f9;--muted:#8892a4;--green:#10b981;--cyan:#06b6d4;--red:#ef4444;
+  --sidebar:220px
+}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;font-size:14px;display:flex;flex-direction:column;height:100vh;overflow:hidden}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;height:48px;flex-shrink:0}
-.topbar-brand{font-size:15px;font-weight:700}
+
+/* TOPBAR */
+.topbar{background:linear-gradient(135deg,#1e2535,#161b27);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;height:48px;flex-shrink:0}
+.topbar-brand{font-size:15px;font-weight:700;background:linear-gradient(90deg,var(--sky),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 
 /* FILTER BAR */
 .filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:6px 16px;display:flex;flex-direction:column;gap:5px;flex-shrink:0}
-.filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.filter-label{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;min-width:90px}
-.date-input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px}
-.date-input:focus{outline:none;border-color:var(--all)}
-.date-input-prev{background:var(--surface2);border:1px dashed var(--border);border-radius:6px;padding:4px 8px;color:var(--muted);font-size:12px}
+.filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.filter-label{font-size:11px;color:var(--sky);font-weight:700;white-space:nowrap;min-width:86px}
+.date-input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;transition:border-color .15s}
+.date-input:focus{outline:none;border-color:var(--sky)}
+.date-input-prev{background:var(--surface2);border:1px dashed #4ade8060;border-radius:6px;padding:4px 8px;color:var(--mint);font-size:12px;transition:border-color .15s}
+.date-input-prev:focus{outline:none;border-color:var(--mint)}
 .filter-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:11px;font-weight:600;background:var(--surface2);color:var(--muted)}
-.filter-btn:hover{color:var(--text)}
+.filter-btn:hover{color:var(--text);border-color:var(--sky)}
 .presets{display:flex;gap:4px;flex-wrap:wrap}
 .preset{padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer;transition:all .15s}
-.preset:hover{color:var(--text);border-color:var(--all)}
-.preset.active{background:var(--all);color:#fff;border-color:var(--all)}
+.preset:hover{color:var(--text);border-color:var(--sky)}
+.preset.active{background:var(--sky);color:#0d1117;border-color:var(--sky);font-weight:700}
 .filter-info{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap}
-.prev-label{font-size:11px;color:var(--muted);font-style:italic}
+.prev-label{font-size:10px;color:#4ade80;font-style:italic}
 
 /* LAYOUT */
 .layout{display:flex;flex:1;overflow:hidden}
@@ -37,12 +46,11 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;fo
 .sidebar-group-label{padding:8px 14px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
 .sidebar-item{display:flex;align-items:center;gap:8px;padding:6px 14px;cursor:pointer;color:var(--muted);font-size:12px;font-weight:500;transition:all .15s;border-left:3px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sidebar-item:hover{background:var(--surface2);color:var(--text)}
-.sidebar-item.active{background:var(--surface2);color:var(--text)}
-.sidebar-item.active.ahi{border-left-color:var(--ahi);color:#f87171}
-.sidebar-item.active.hci{border-left-color:var(--hci);color:#93c5fd}
-.sidebar-item.active.all-item{border-left-color:var(--all)}
+.sidebar-item.active.ahi{border-left-color:var(--ahi);background:var(--surface2);color:#fca5a5}
+.sidebar-item.active.hci{border-left-color:var(--hci);background:var(--surface2);color:#93c5fd}
+.sidebar-item.active.all-item{border-left-color:var(--sky);background:var(--surface2);color:var(--sky)}
 .sidebar-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.dot-all{background:var(--all)}.dot-ahi{background:var(--ahi)}.dot-hci{background:var(--hci)}
+.dot-all{background:var(--sky)}.dot-ahi{background:var(--ahi)}.dot-hci{background:var(--hci)}
 
 .content{flex:1;overflow-y:auto;padding:16px}
 .content::-webkit-scrollbar{width:6px}.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -51,77 +59,88 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;fo
 /* HEADER */
 .sec-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.badge-all{background:var(--all);color:#fff}
+.badge-all{background:linear-gradient(135deg,var(--sky),var(--violet));color:#fff}
 .badge-ahi{background:var(--ahi);color:#fff}
 .badge-hci{background:var(--hci);color:#fff}
-.sec-title{font-size:18px;font-weight:700}
+.sec-title{font-size:18px;font-weight:700;color:var(--text)}
 .sec-sub{color:var(--muted);font-size:11px;margin-top:2px}
 
 /* PAGE TABS */
-.page-tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--border)}
+.page-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border)}
 .page-tab{padding:7px 16px;cursor:pointer;color:var(--muted);font-size:12px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;border-top:none;border-left:none;border-right:none;transition:all .15s}
 .page-tab:hover{color:var(--text)}
-.page-tab.active{color:var(--text);border-bottom-color:var(--all)}
+.page-tab.active{color:var(--sky);border-bottom-color:var(--sky)}
 .tab-pane{display:none}.tab-pane.active{display:block}
 
 /* KPI */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:18px}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;transition:transform .15s,box-shadow .15s}
+.kpi:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.kpi-value{font-size:19px;font-weight:700;line-height:1}
-.kpi-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.kpi-value{font-size:20px;font-weight:700;line-height:1;color:var(--text)}
 .kpi-delta{font-size:11px;font-weight:600;margin-top:3px}
-.delta-up{color:#10b981}.delta-down{color:#ef4444}.delta-flat{color:var(--muted)}
-.t-blue{border-top:3px solid var(--hci)}.t-yellow{border-top:3px solid #f59e0b}.t-green{border-top:3px solid var(--green)}.t-cyan{border-top:3px solid var(--cyan)}.t-purple{border-top:3px solid var(--all)}.t-red{border-top:3px solid var(--ahi)}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.d-up{color:#4ade80;font-weight:600}.d-dn{color:#f87171;font-weight:600}.d-fl{color:var(--muted)}
+.t-sky{border-top:3px solid var(--sky)}
+.t-mint{border-top:3px solid var(--mint)}
+.t-amber{border-top:3px solid var(--amber)}
+.t-rose{border-top:3px solid var(--rose)}
+.t-violet{border-top:3px solid var(--violet)}
+.t-cyan{border-top:3px solid var(--cyan)}
+.t-green{border-top:3px solid var(--green)}
+.t-red{border-top:3px solid var(--red)}
 
 /* TABLE */
-.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:18px}
-.tbl-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.tbl-title{font-weight:600;font-size:13px}
-.tbl-search{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;color:var(--text);font-size:12px;width:160px}
-.tbl-search:focus{outline:none;border-color:var(--all)}
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.tbl-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,var(--surface2),var(--surface))}
+.tbl-title{font-weight:600;font-size:13px;color:var(--sky)}
+.tbl-search{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 9px;color:var(--text);font-size:12px;width:160px}
+.tbl-search:focus{outline:none;border-color:var(--sky)}
 table{width:100%;border-collapse:collapse}
-th{background:var(--surface2);padding:7px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
-td{padding:7px 10px;border-bottom:1px solid var(--border);font-size:11px;white-space:nowrap}
+th{background:var(--surface2);padding:7px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--sky);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--border);font-size:11px;white-space:nowrap;color:var(--text)}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:var(--surface2)}
 .num{text-align:right;font-variant-numeric:tabular-nums}
 .rank{width:24px;color:var(--muted);font-weight:700;font-size:11px}
 .r1{color:#fbbf24}.r2{color:#94a3b8}.r3{color:#cd7c3b}
-.hub-tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600}
-.hub-ahi{background:rgba(220,38,38,.15);color:#f87171}
-.hub-hci{background:rgba(30,58,138,.2);color:#93c5fd}
-.d-up{color:#10b981;font-weight:600}.d-dn{color:#ef4444;font-weight:600}.d-fl{color:var(--muted)}
+.hub-tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700}
+.hub-ahi{background:rgba(220,38,38,.2);color:#fca5a5}
+.hub-hci{background:rgba(56,189,248,.15);color:#7dd3fc}
+.ratio-val{color:var(--sky);font-weight:600}
+.inline-delta{font-size:10px;font-weight:700;margin-left:4px}
+
+/* HUB LINK COLORS */
+.hub-link-ahi{cursor:pointer;color:#fca5a5 !important;font-weight:600}
+.hub-link-hci{cursor:pointer;color:#7dd3fc !important;font-weight:600}
 
 /* SUB NAV */
 .sub-nav{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .sub-tab{padding:5px 12px;border-radius:6px;cursor:pointer;color:var(--muted);font-size:12px;border:1px solid var(--border);background:var(--surface);transition:all .15s}
-.sub-tab:hover{color:var(--text);border-color:var(--all)}
-.sub-tab.active{background:var(--surface2);color:var(--text);border-color:var(--all)}
+.sub-tab:hover{color:var(--text);border-color:var(--sky)}
+.sub-tab.active{background:rgba(56,189,248,.15);color:var(--sky);border-color:var(--sky)}
 .sec-block{display:none}.sec-block.show{display:block}
 
 /* CHARTS */
-.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
 .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
-.chart-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.chart-title{font-size:11px;font-weight:700;color:var(--sky);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
 .chart-wrap{position:relative;height:200px}
 
 /* MAP */
-.map-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:18px}
-.map-header{padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600;font-size:13px}
-#hubMap{height:320px;width:100%}
-.leaflet-container{background:#1a1d27!important}
+.map-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.map-header{padding:10px 14px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px;color:var(--sky);background:linear-gradient(135deg,var(--surface2),var(--surface))}
+#hubMap{height:300px;width:100%}
 
-/* SUMMARY */
-.summary-col{display:flex;flex-direction:column;gap:14px;margin-bottom:18px}
-.tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
-.tag-ahi{background:rgba(220,38,38,.15);color:#f87171}
-.tag-hci{background:rgba(30,58,138,.2);color:#93c5fd}
-.ratio-val{color:var(--cyan);font-weight:600}
+/* MISC */
+.summary-col{display:flex;flex-direction:column;gap:14px;margin-bottom:16px}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700}
+.tag-ahi{background:rgba(220,38,38,.2);color:#fca5a5}
+.tag-hci{background:rgba(56,189,248,.15);color:#7dd3fc}
 .empty{text-align:center;padding:40px;color:var(--muted)}
-.footer{text-align:center;padding:7px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);flex-shrink:0}
+.footer{text-align:center;padding:7px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface)}
 .spin-wrap{display:flex;align-items:center;justify-content:center;padding:50px;color:var(--muted);font-size:13px;gap:10px}
-.spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--all);border-radius:50%;animation:sp .7s linear infinite}
+.spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--sky);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
 </style>
@@ -147,10 +166,10 @@ tr:hover td{background:var(--surface2)}
   </div>
   <div class="filter-row">
     <span class="filter-label">📊 Pembanding:</span>
-    <input type="date" id="prevFrom" class="date-input-prev" readonly>
-    <span style="color:var(--muted);font-size:12px">s/d</span>
-    <input type="date" id="prevTo" class="date-input-prev" readonly>
-    <span class="prev-label" id="prevLabel">Otomatis: periode bulan sebelumnya (apple-to-apple)</span>
+    <input type="date" id="prevFrom" class="date-input-prev" onchange="onPrevFilterChange()">
+    <span style="color:#4ade80;font-size:12px">s/d</span>
+    <input type="date" id="prevTo" class="date-input-prev" onchange="onPrevFilterChange()">
+    <span class="prev-label" id="prevLabel">⟳ Otomatis: periode bulan sebelumnya (apple-to-apple)</span>
   </div>
 </div>
 
@@ -163,60 +182,35 @@ tr:hover td{background:var(--surface2)}
 <script>
 const RAW = RAW_DATA_PLACEHOLDER;
 
-// ── Hub coordinates for map ───────────────────────────────────────────────────
 const HUB_COORDS = {
-  'AHI Alsut':      [-6.2297, 106.6541],
-  'AHI Bintaro':    [-6.2942, 106.7342],
-  'AHI MAG':        [-6.1456, 106.9091],
-  'AHI Puri':       [-6.1789, 106.7236],
-  'AHI Gandaria':   [-6.2487, 106.7797],
-  'AHI Kasablanka': [-6.2248, 106.8398],
-  'AHI Depok':      [-6.4025, 106.7942],
-  'AHI Cibubur':    [-6.3691, 106.8773],
-  'AHI Terasutera': [-6.2350, 106.6600],
-  'AHI AYB':        [-6.1950, 106.8264],
-  'AHI IBCC':       [-6.9175, 107.6191],
-  'AHI Paskal':     [-6.9024, 107.5986],
-  'AHI Semarang':   [-6.9932, 110.4203],
-  'AHI Yogyakarta': [-7.7956, 110.3695],
-  'AHI Malang':     [-7.9797, 112.6304],
-  'AHI Palembang':  [-2.9761, 104.7754],
-  'AHI Kuta':       [-8.7215, 115.1698],
-  'AHI Denpasar':   [-8.6705, 115.2126],
-  'HCI Tangerang':  [-6.1781, 106.6297],
-  'HCI Bogor':      [-6.5971, 106.8060],
-  'HCI Utara':      [-6.1345, 106.8956],
-  'HCI Bandung':    [-6.9175, 107.6191],
-  'HCI Tasik':      [-7.3273, 108.2207],
-  'HCI Semarang':   [-6.9932, 110.4003],
-  'HCI Yogya':      [-7.8014, 110.3647],
-  'HCI Kediri':     [-7.8480, 111.9675],
-  'HCI Malang':     [-7.9666, 112.6326],
-  'HCI Bali':       [-8.4095, 115.1889],
-  'HCI Banyumas':   [-7.4222, 109.2350],
-  'HCI Pekanbaru':  [0.5071,  101.4478],
+  'AHI Alsut':[-6.2297,106.6541],'AHI Bintaro':[-6.2942,106.7342],'AHI MAG':[-6.1456,106.9091],
+  'AHI Puri':[-6.1789,106.7236],'AHI Gandaria':[-6.2487,106.7797],'AHI Kasablanka':[-6.2248,106.8398],
+  'AHI Depok':[-6.4025,106.7942],'AHI Cibubur':[-6.3691,106.8773],'AHI Terasutera':[-6.2350,106.6600],
+  'AHI AYB':[-6.1950,106.8264],'AHI IBCC':[-6.9175,107.6191],'AHI Paskal':[-6.9024,107.5986],
+  'AHI Semarang':[-6.9932,110.4203],'AHI Yogyakarta':[-7.7956,110.3695],'AHI Malang':[-7.9797,112.6304],
+  'AHI Palembang':[-2.9761,104.7754],'AHI Kuta':[-8.7215,115.1698],'AHI Denpasar':[-8.6705,115.2126],
+  'HCI Tangerang':[-6.1781,106.6297],'HCI Bogor':[-6.5971,106.8060],'HCI Utara':[-6.1345,106.8956],
+  'HCI Bandung':[-6.9175,107.6191],'HCI Tasik':[-7.3273,108.2207],'HCI Semarang':[-6.9932,110.4003],
+  'HCI Yogya':[-7.8014,110.3647],'HCI Kediri':[-7.8480,111.9675],'HCI Malang':[-7.9666,112.6326],
+  'HCI Bali':[-8.4095,115.1889],'HCI Banyumas':[-7.4222,109.2350],'HCI Pekanbaru':[0.5071,101.4478],
 };
 
-// ── Pre-index ─────────────────────────────────────────────────────────────────
-const HUBS     = [...new Set(RAW.map(r=>r.hub))];
-const AHI_HUBS = HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='AHI');
-const HCI_HUBS = HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='HCI');
-const BY_HUB   = {};
-HUBS.forEach(h=>BY_HUB[h]=[]);
-RAW.forEach(r=>BY_HUB[r.hub].push(r));
+const HUBS=[...new Set(RAW.map(r=>r.hub))];
+const AHI_HUBS=HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='AHI');
+const HCI_HUBS=HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='HCI');
+const BY_HUB={};HUBS.forEach(h=>BY_HUB[h]=[]);RAW.forEach(r=>BY_HUB[r.hub].push(r));
 
-const NAV = [
-  {id:'all', label:'🌐 ALL Hub', cls:'all-item', dot:'dot-all'},
-  {id:'hci', label:'🔵 ALL HUB HCI', cls:'hci', dot:'dot-hci', group:'HCI'},
-  ...HCI_HUBS.map((h,i)=>({id:'hci_'+i, label:'Hub '+h, cls:'hci', dot:'dot-hci', hub:h})),
-  {id:'ahi', label:'🔴 ALL HUB AHI', cls:'ahi', dot:'dot-ahi', group:'AHI'},
-  ...AHI_HUBS.map((h,i)=>({id:'ahi_'+i, label:'Hub '+h, cls:'ahi', dot:'dot-ahi', hub:h})),
+const NAV=[
+  {id:'all',label:'🌐 ALL Hub',cls:'all-item',dot:'dot-all'},
+  {id:'hci',label:'🔵 ALL HUB HCI',cls:'hci',dot:'dot-hci',group:'HCI'},
+  ...HCI_HUBS.map((h,i)=>({id:'hci_'+i,label:'Hub '+h,cls:'hci',dot:'dot-hci',hub:h})),
+  {id:'ahi',label:'🔴 ALL HUB AHI',cls:'ahi',dot:'dot-ahi',group:'AHI'},
+  ...AHI_HUBS.map((h,i)=>({id:'ahi_'+i,label:'Hub '+h,cls:'ahi',dot:'dot-ahi',hub:h})),
 ];
 const HUB_PAGE={};
 HCI_HUBS.forEach((h,i)=>HUB_PAGE[h]='hci_'+i);
 AHI_HUBS.forEach((h,i)=>HUB_PAGE[h]='ahi_'+i);
 
-// ── Build sidebar ─────────────────────────────────────────────────────────────
 const sidebar=document.getElementById('sidebar');
 NAV.forEach(n=>{
   if(n.group){const l=document.createElement('div');l.className='sidebar-group-label';l.textContent=n.group==='HCI'?'BU HCI':'BU AHI';sidebar.appendChild(l);}
@@ -226,33 +220,32 @@ NAV.forEach(n=>{
   el.onclick=()=>showPage(n.id);sidebar.appendChild(el);
 });
 
-// ── Date filter ───────────────────────────────────────────────────────────────
+// ── Date state ────────────────────────────────────────────────────────────────
 const allDates=[...new Set(RAW.map(r=>r.d).filter(Boolean))].sort();
-const minDate=allDates[0], maxDate=allDates[allDates.length-1];
+const minDate=allDates[0],maxDate=allDates[allDates.length-1];
 document.getElementById('dateFrom').value=minDate;
 document.getElementById('dateTo').value=maxDate;
-let filterFrom=minDate, filterTo=maxDate, prevFrom='', prevTo='', curPid='all';
+let filterFrom=minDate,filterTo=maxDate,prevFrom='',prevTo='',curPid='all';
 
-function calcPrevPeriod(from, to){
-  // Same dates, previous month
-  const f=new Date(from), t=new Date(to);
-  f.setMonth(f.getMonth()-1); t.setMonth(t.getMonth()-1);
-  return {
-    from: f.toISOString().split('T')[0],
-    to:   t.toISOString().split('T')[0]
-  };
+function calcPrev(from,to){
+  const f=new Date(from),t=new Date(to);
+  f.setMonth(f.getMonth()-1);t.setMonth(t.getMonth()-1);
+  return{from:f.toISOString().split('T')[0],to:t.toISOString().split('T')[0]};
 }
-
 function updatePrevPeriod(){
-  const p=calcPrevPeriod(filterFrom,filterTo);
-  prevFrom=p.from; prevTo=p.to;
+  const p=calcPrev(filterFrom,filterTo);
+  prevFrom=p.from;prevTo=p.to;
   document.getElementById('prevFrom').value=prevFrom;
   document.getElementById('prevTo').value=prevTo;
-  // Days info
   const days=Math.round((new Date(filterTo)-new Date(filterFrom))/86400000)+1;
-  document.getElementById('prevLabel').textContent=`Otomatis: ${days} hari sebelumnya (apple-to-apple)`;
+  document.getElementById('prevLabel').textContent=`⟳ Otomatis: ${days} hari sebelumnya (apple-to-apple)`;
 }
-
+function onPrevFilterChange(){
+  prevFrom=document.getElementById('prevFrom').value;
+  prevTo=document.getElementById('prevTo').value;
+  document.getElementById('prevLabel').textContent='✏️ Periode pembanding diubah manual';
+  showPage(curPid);
+}
 function setPreset(p,btn){
   document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
   const d=new Date(maxDate);let from=minDate;
@@ -260,10 +253,8 @@ function setPreset(p,btn){
   else if(p==='week'){d.setDate(d.getDate()-6);from=d.toISOString().split('T')[0];}
   else if(p==='month')from=maxDate.substring(0,7)+'-01';
   else if(p==='3month'){d.setMonth(d.getMonth()-2);from=d.toISOString().split('T')[0].substring(0,7)+'-01';}
-  document.getElementById('dateFrom').value=from;
-  document.getElementById('dateTo').value=maxDate;
-  filterFrom=from;filterTo=maxDate;
-  updatePrevPeriod();showPage(curPid);
+  document.getElementById('dateFrom').value=from;document.getElementById('dateTo').value=maxDate;
+  filterFrom=from;filterTo=maxDate;updatePrevPeriod();showPage(curPid);
 }
 function onFilterChange(){
   document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
@@ -272,8 +263,7 @@ function onFilterChange(){
   updatePrevPeriod();showPage(curPid);
 }
 function resetFilter(){
-  document.getElementById('dateFrom').value=minDate;
-  document.getElementById('dateTo').value=maxDate;
+  document.getElementById('dateFrom').value=minDate;document.getElementById('dateTo').value=maxDate;
   filterFrom=minDate;filterTo=maxDate;
   document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
   document.querySelector('.preset[onclick*="all"]').classList.add('active');
@@ -297,136 +287,137 @@ function metrics(rows){
     bbm_per_trip:n?Math.round(bbm/n):0,km_per_trip:n?+(km/n).toFixed(1):0,
   };
 }
-
 function grpBy(rows,key){const m={};for(const r of rows){const k=r[key]||'(kosong)';if(!m[k])m[k]=[];m[k].push(r);}return m;}
 const fmt=n=>n==null||isNaN(n)?'-':Math.round(n).toLocaleString('id-ID');
 const fmtD=n=>n==null||isNaN(n)?'-':Number(n).toLocaleString('id-ID',{maximumFractionDigits:1});
 const fmtM=n=>{if(!n||isNaN(n))return '-';if(n>=1e9)return(n/1e9).toFixed(2)+' M';if(n>=1e6)return(n/1e6).toFixed(1)+' Jt';if(n>=1e3)return(n/1e3).toFixed(0)+' Rb';return fmt(n);};
 
-function delta(cur,prev){
-  if(!prev||prev===0)return'';
-  const pct=((cur-prev)/prev*100);
-  const sign=pct>0?'▲':'▼';
-  const cls=pct>0?'delta-up':'delta-down';
-  return`<div class="${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs prev</div>`;
-}
-function deltaCell(cur,prev){
-  if(!prev||prev===0)return`<td class="num d-fl">-</td>`;
-  const pct=((cur-prev)/prev*100);
+// ── Inline delta ──────────────────────────────────────────────────────────────
+function inlineDelta(cur,prev){
+  if(!prev||prev===0||!cur)return'';
+  const pct=(cur-prev)/prev*100;
   const cls=pct>0?'d-up':'d-dn';
   const sign=pct>0?'▲':'▼';
-  return`<td class="num ${cls}">${sign}${Math.abs(pct).toFixed(0)}%</td>`;
+  return`<span class="inline-delta ${cls}">${sign}${Math.abs(pct).toFixed(0)}%</span>`;
+}
+function deltaKPI(cur,prev,key){
+  if(!prev||!prev[key]||prev[key]===0)return'';
+  const pct=(cur[key]-prev[key])/prev[key]*100;
+  const cls=pct>0?'d-up':'d-dn';
+  const sign=pct>0?'▲':'▼';
+  return`<div class="kpi-delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs prev</div>`;
 }
 
 // ── KPI ───────────────────────────────────────────────────────────────────────
-function kpiHTML(m, mp){
-  const d=(k)=>mp?delta(m[k],mp[k]):'';
+function kpiHTML(m,mp){
+  const d=(k)=>mp?deltaKPI(m,mp,k):'';
   return`<div class="kpi-grid">
-    <div class="kpi t-hci"><div class="kpi-label">Total Trip</div><div class="kpi-value">${fmt(m.trips)}</div>${d('trips')}<div class="kpi-sub">Pengiriman aktif</div></div>
-    <div class="kpi t-cyan"><div class="kpi-label">Total DO</div><div class="kpi-value">${fmt(m.total_do)}</div>${d('total_do')}<div class="kpi-sub">Cust: ${fmt(m.do_cust)} | Store: ${fmt(m.do_store)}</div></div>
-    <div class="kpi t-green"><div class="kpi-label">TAT Rata-rata</div><div class="kpi-value">${m.tat_avg}</div><div class="kpi-sub">Jam:Menit per trip</div></div>
-    <div class="kpi t-yellow"><div class="kpi-label">Jarak KM</div><div class="kpi-value">${fmt(m.jarak_km)}</div>${d('jarak_km')}<div class="kpi-sub">${fmtD(m.km_per_trip)} km/trip</div></div>
-    <div class="kpi t-purple"><div class="kpi-label">Total Cost</div><div class="kpi-value">${fmtM(m.total_cost)}</div>${d('total_cost')}<div class="kpi-sub">${fmtM(m.cost_per_trip)}/trip</div></div>
-    <div class="kpi t-hci"><div class="kpi-label">Total UJP</div><div class="kpi-value">${fmtM(m.total_ujp)}</div>${d('total_ujp')}<div class="kpi-sub">${fmtM(m.ujp_per_trip)}/trip</div></div>
-    <div class="kpi t-cyan"><div class="kpi-label">Biaya BBM</div><div class="kpi-value">${fmtM(m.bbm_ujp)}</div>${d('bbm_ujp')}<div class="kpi-sub">${fmtM(m.bbm_per_trip)}/trip</div></div>
-    <div class="kpi t-green"><div class="kpi-label">DO/Trip</div><div class="kpi-value">${fmtD(m.do_per_trip)}</div>${d('do_per_trip')}<div class="kpi-sub">Rata-rata per trip</div></div>
-    <div class="kpi t-red"><div class="kpi-label">DP/Trip</div><div class="kpi-value">${fmtD(m.dp_per_trip)}</div>${d('dp_per_trip')}<div class="kpi-sub">Rata-rata per trip</div></div>
+    <div class="kpi t-sky"><div class="kpi-label">Total Trip</div><div class="kpi-value">${fmt(m.trips)}</div>${d('trips')}<div class="kpi-sub">Pengiriman aktif</div></div>
+    <div class="kpi t-mint"><div class="kpi-label">Total DO</div><div class="kpi-value">${fmt(m.total_do)}</div>${d('total_do')}<div class="kpi-sub">Cust: ${fmt(m.do_cust)} | Store: ${fmt(m.do_store)}</div></div>
+    <div class="kpi t-amber"><div class="kpi-label">Jumlah DP</div><div class="kpi-value">${fmt(m.total_dp)}</div>${d('total_dp')}<div class="kpi-sub">${fmtD(m.dp_per_trip)} DP/trip</div></div>
+    <div class="kpi t-violet"><div class="kpi-label">TAT Rata-rata</div><div class="kpi-value">${m.tat_avg}</div><div class="kpi-sub">Jam:Menit per trip</div></div>
+    <div class="kpi t-rose"><div class="kpi-label">Jarak KM</div><div class="kpi-value">${fmt(m.jarak_km)}</div>${d('jarak_km')}<div class="kpi-sub">${fmtD(m.km_per_trip)} km/trip</div></div>
+    <div class="kpi t-cyan"><div class="kpi-label">Total Cost</div><div class="kpi-value">${fmtM(m.total_cost)}</div>${d('total_cost')}<div class="kpi-sub">${fmtM(m.cost_per_trip)}/trip</div></div>
+    <div class="kpi t-sky"><div class="kpi-label">Total UJP</div><div class="kpi-value">${fmtM(m.total_ujp)}</div>${d('total_ujp')}<div class="kpi-sub">${fmtM(m.ujp_per_trip)}/trip</div></div>
+    <div class="kpi t-green"><div class="kpi-label">Biaya BBM</div><div class="kpi-value">${fmtM(m.bbm_ujp)}</div>${d('bbm_ujp')}<div class="kpi-sub">${fmtM(m.bbm_per_trip)}/trip</div></div>
+    <div class="kpi t-mint"><div class="kpi-label">DO/Trip</div><div class="kpi-value">${fmtD(m.do_per_trip)}</div>${d('do_per_trip')}<div class="kpi-sub">Rata-rata per trip</div></div>
   </div>`;
 }
 
-// ── Ratio headers/cells ───────────────────────────────────────────────────────
-const rThs=`<th class="num">DO/Trip</th><th class="num">DP/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>`;
-const rTds=m=>`<td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtD(m.dp_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td><td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td>`;
+// ── Table helpers ─────────────────────────────────────────────────────────────
+const rThs=`<th class="num">Jml DP</th><th class="num">DO/Trip</th><th class="num">DP/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>`;
+const rTds=m=>`<td class="num ratio-val">${fmt(m.total_dp)}</td><td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtD(m.dp_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td><td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td>`;
+
+function getBU(hub){return RAW.find(r=>r.hub===hub)?.bu||'AHI';}
 
 // ── Jalur table ───────────────────────────────────────────────────────────────
-function jalurHTML(rows, prevRows, uid, showHub){
+function jalurHTML(rows,prevRows,uid,showHub){
   let entries;
   if(showHub){
-    // Group by hub+jalur
     const grp={};
     rows.forEach(r=>{const k=r.hub+'__'+r.jalur;if(!grp[k])grp[k]={hub:r.hub,jalur:r.jalur,rows:[]};grp[k].rows.push(r);});
-    entries=Object.values(grp).map(g=>({hub:g.hub,j:g.jalur,m:metrics(g.rows),prevM:prevRows?metrics(prevRows.filter(r=>r.hub===g.hub&&r.jalur===g.jalur)):null}));
+    entries=Object.values(grp).map(g=>({hub:g.hub,j:g.jalur,m:metrics(g.rows),pm:prevRows?metrics(prevRows.filter(r=>r.hub===g.hub&&r.jalur===g.jalur)):null}));
   } else {
-    const grp=grpBy(rows,'jalur');
-    entries=Object.entries(grp).map(([j,rs])=>({j,m:metrics(rs),prevM:prevRows?metrics(prevRows.filter(r=>r.jalur===j)):null}));
+    entries=Object.entries(grpBy(rows,'jalur')).map(([j,rs])=>({j,m:metrics(rs),pm:prevRows?metrics(prevRows.filter(r=>r.jalur===j)):null}));
   }
   entries.sort((a,b)=>b.m.trips-a.m.trips);
-  if(!entries.length)return`<div class="empty">📭 Tidak ada data</div>`;
+  if(!entries.length)return`<div class="empty">📭 Tidak ada data untuk periode ini</div>`;
   const hubTh=showHub?'<th>Hub</th>':'';
-  const tr=entries.map(({hub,j,m,prevM},i)=>{
-    const hubCell=showHub?`<td><span class="hub-tag hub-${(RAW.find(r=>r.hub===hub)?.bu||'ahi').toLowerCase()}">${hub.replace(/^(AHI|HCI)\s/,'$1 ')}</span></td>`:'';
+  const tr=entries.map(({hub,j,m,pm},i)=>{
+    const bu=hub?getBU(hub):'';
+    const hubCell=showHub?`<td><span class="hub-tag hub-${bu.toLowerCase()}">${hub}</span></td>`:'';
     return`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td>${hubCell}<td>${j}</td>
-    <td class="num">${fmt(m.trips)}</td>${deltaCell(m.trips,prevM?.trips)}
+    <td class="num">${fmt(m.trips)}${inlineDelta(m.trips,pm?.trips)}</td>
     <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
     <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
-    <td class="num">${fmtM(m.total_cost)}</td>${deltaCell(m.total_cost,prevM?.total_cost)}
+    <td class="num">${fmtM(m.total_cost)}${inlineDelta(m.total_cost,pm?.total_cost)}</td>
     <td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>
     ${rTds(m)}</tr>`;}).join('');
   return`<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📍 Analisa Per Jalur</div>
     <input class="tbl-search" placeholder="Cari jalur..." oninput="ftbl(this,'${uid}')"></div>
     <div style="overflow-x:auto"><table id="${uid}"><thead><tr>
     <th class="rank">#</th>${hubTh}<th>Jalur</th>
-    <th class="num">Trip</th><th class="num">Δ</th>
-    <th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
-    <th class="num">TAT</th><th class="num">KM</th>
-    <th class="num">Total Cost</th><th class="num">Δ</th>
+    <th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
+    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th>
     <th class="num">Total UJP</th><th class="num">BBM</th>${rThs}
     </tr></thead><tbody>${tr}</tbody></table></div></div>`;
 }
 
 // ── Person table ──────────────────────────────────────────────────────────────
-function personHTML(rows, prevRows, col, title, uid, showHub){
+function personHTML(rows,prevRows,col,title,uid,showHub){
   let entries;
   if(showHub){
     const grp={};
     rows.filter(r=>r[col]&&r[col]!='nan'&&r[col]!='').forEach(r=>{
       const k=r.hub+'__'+r[col];if(!grp[k])grp[k]={hub:r.hub,name:r[col],rows:[]};grp[k].rows.push(r);});
-    entries=Object.values(grp).map(g=>({hub:g.hub,n:g.name,m:metrics(g.rows),prevM:prevRows?metrics(prevRows.filter(r=>r.hub===g.hub&&r[col]===g.name)):null}));
+    entries=Object.values(grp).map(g=>({hub:g.hub,n:g.name,m:metrics(g.rows),pm:prevRows?metrics(prevRows.filter(r=>r.hub===g.hub&&r[col]===g.name)):null}));
   } else {
     const src=rows.filter(r=>r[col]&&r[col]!='nan'&&r[col]!='');
-    entries=Object.entries(grpBy(src,col)).map(([n,rs])=>({n,m:metrics(rs),prevM:prevRows?metrics(prevRows.filter(r=>r[col]===n)):null}));
+    entries=Object.entries(grpBy(src,col)).map(([n,rs])=>({n,m:metrics(rs),pm:prevRows?metrics(prevRows.filter(r=>r[col]===n)):null}));
   }
-  entries.sort((a,b)=>b.m.trips-a.m.trips);
-  entries=entries.slice(0,50);
-  if(!entries.length)return`<div class="empty">📭 Tidak ada data</div>`;
+  entries.sort((a,b)=>b.m.trips-a.m.trips);entries=entries.slice(0,50);
+  if(!entries.length)return`<div class="empty">📭 Tidak ada data untuk periode ini</div>`;
   const hubTh=showHub?'<th>Hub</th>':'';
-  const tr=entries.map(({hub,n,m,prevM},i)=>{
-    const hubCell=showHub?`<td><span class="hub-tag hub-${(RAW.find(r=>r.hub===hub)?.bu||'ahi').toLowerCase()}">${hub.replace(/^(AHI|HCI)\s/,'$1 ')}</span></td>`:'';
+  const tr=entries.map(({hub,n,m,pm},i)=>{
+    const bu=hub?getBU(hub):'';
+    const hubCell=showHub?`<td><span class="hub-tag hub-${bu.toLowerCase()}">${hub}</span></td>`:'';
     return`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td>${hubCell}<td>${n}</td>
-    <td class="num">${fmt(m.trips)}</td>${deltaCell(m.trips,prevM?.trips)}
+    <td class="num">${fmt(m.trips)}${inlineDelta(m.trips,pm?.trips)}</td>
     <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
     <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
-    <td class="num">${fmtM(m.total_cost)}</td>${rTds(m)}</tr>`;}).join('');
+    <td class="num">${fmtM(m.total_cost)}${inlineDelta(m.total_cost,pm?.total_cost)}</td>
+    ${rTds(m)}</tr>`;}).join('');
   return`<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">${title}</div>
     <input class="tbl-search" placeholder="Cari nama..." oninput="ftbl(this,'${uid}')"></div>
     <div style="overflow-x:auto"><table id="${uid}"><thead><tr>
     <th class="rank">#</th>${hubTh}<th>Nama</th>
-    <th class="num">Trip</th><th class="num">Δ</th>
-    <th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
+    <th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
     <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th>${rThs}
     </tr></thead><tbody>${tr}</tbody></table></div></div>`;
 }
 
-function ftbl(inp,id){const q=inp.value.toLowerCase();document.getElementById(id)?.querySelectorAll('tbody tr').forEach(tr=>tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none');}
-
 // ── Hub table ─────────────────────────────────────────────────────────────────
-function hubTblHTML(fRows,prevRows,hList,color){
-  return`<div class="tbl-wrap" style="margin-bottom:18px"><div class="tbl-head"><div class="tbl-title">📦 Detail Per Hub</div></div>
+function hubTblHTML(fRows,pRows,hList){
+  return`<div class="tbl-wrap" style="margin-bottom:16px"><div class="tbl-head"><div class="tbl-title">📦 Detail Per Hub</div></div>
     <div style="overflow-x:auto"><table><thead><tr>
-    <th>Hub</th><th class="num">Trip</th><th class="num">Δ</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
-    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Δ</th><th class="num">Total UJP</th><th class="num">BBM</th>${rThs}
+    <th>Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Jml DP</th><th class="num">DO Cust</th><th class="num">DO Store</th>
+    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>${rThs}
     </tr></thead><tbody>${hList.map(hub=>{
       const m=metrics(fRows.filter(r=>r.hub===hub));
-      const mp=prevRows?metrics(prevRows.filter(r=>r.hub===hub)):null;
-      const pid=HUB_PAGE[hub];
-      return`<tr><td style="cursor:pointer;color:var(--${color})" onclick="showPage('${pid}')">Hub ${hub}</td>
-      <td class="num">${fmt(m.trips)}</td>${deltaCell(m.trips,mp?.trips)}
-      <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+      const pm=pRows?metrics(pRows.filter(r=>r.hub===hub)):null;
+      const bu=getBU(hub);const pid=HUB_PAGE[hub];
+      const cls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';
+      return`<tr><td class="${cls}" onclick="showPage('${pid}')">Hub ${hub}</td>
+      <td class="num">${fmt(m.trips)}${inlineDelta(m.trips,pm?.trips)}</td>
+      <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.total_dp)}</td>
+      <td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
       <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
-      <td class="num">${fmtM(m.total_cost)}</td>${deltaCell(m.total_cost,mp?.total_cost)}
+      <td class="num">${fmtM(m.total_cost)}${inlineDelta(m.total_cost,pm?.total_cost)}</td>
       <td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>${rTds(m)}</tr>`;}).join('')}
     </tbody></table></div></div>`;
 }
+
+function ftbl(inp,id){const q=inp.value.toLowerCase();document.getElementById(id)?.querySelectorAll('tbody tr').forEach(tr=>tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none');}
 
 // ── Sub tabs ──────────────────────────────────────────────────────────────────
 function showSub(btn,pid,sec){
@@ -442,34 +433,31 @@ function mkC(id,type,labels,datasets,opts={}){
   const ctx=document.getElementById(id)?.getContext('2d');if(!ctx)return;
   CI[id]=new Chart(ctx,{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
     plugins:{legend:{labels:{color:'#8892a4',font:{size:10}}}},
-    scales:type==='doughnut'?{}:{x:{ticks:{color:'#8892a4',font:{size:9}},grid:{color:'#2e3147'}},y:{ticks:{color:'#8892a4',font:{size:9}},grid:{color:'#2e3147'}}},
+    scales:type==='doughnut'?{}:{x:{ticks:{color:'#8892a4',font:{size:9}},grid:{color:'#2a3347'}},y:{ticks:{color:'#8892a4',font:{size:9}},grid:{color:'#2a3347'}}},
     ...opts}});
 }
-const CLR=['#3b82f6','#f59e0b','#10b981','#8b5cf6','#ef4444','#06b6d4','#f97316','#ec4899','#84cc16','#14b8a6','#a855f7','#eab308'];
+const CLR=['#38bdf8','#fb7185','#34d399','#a78bfa','#fbbf24','#06b6d4','#f97316','#ec4899','#84cc16','#14b8a6','#a855f7'];
 
 function renderCharts(pid,fRows,hubList){
-  const bm={};
-  fRows.forEach(r=>{if(!r.d)return;const k=r.d.substring(0,7);if(!bm[k])bm[k]={t:0,c:0};bm[k].t++;bm[k].c+=r.cost;});
+  const bm={};fRows.forEach(r=>{if(!r.d)return;const k=r.d.substring(0,7);if(!bm[k])bm[k]={t:0,c:0};bm[k].t++;bm[k].c+=r.cost;});
   const months=Object.keys(bm).sort();
   const hm=(hubList||HUBS).map(h=>({h,m:metrics(fRows.filter(r=>r.hub===h))}));
   const hasHub=hm.length>1;
-  mkC(pid+'c1','bar',months,[{label:'Trip',data:months.map(k=>bm[k].t),backgroundColor:'#1e3a8a',borderRadius:3}]);
-  mkC(pid+'c2','bar',months,[{label:'Cost (Jt)',data:months.map(k=>Math.round(bm[k].c/1e6)),backgroundColor:'#8b5cf6',borderRadius:3}]);
+  mkC(pid+'c1','bar',months,[{label:'Trip',data:months.map(k=>bm[k].t),backgroundColor:'#38bdf8',borderRadius:3}]);
+  mkC(pid+'c2','bar',months,[{label:'Cost (Jt)',data:months.map(k=>Math.round(bm[k].c/1e6)),backgroundColor:'#a78bfa',borderRadius:3}]);
   const dc=fRows.reduce((s,r)=>s+r.doc,0),ds=fRows.reduce((s,r)=>s+r.dos,0);
-  mkC(pid+'c3','doughnut',['DO Cust','DO Store'],[{data:[dc,ds],backgroundColor:['#1e3a8a','#dc2626'],borderWidth:0}]);
+  mkC(pid+'c3','doughnut',['DO Cust','DO Store'],[{data:[dc,ds],backgroundColor:['#38bdf8','#fb7185'],borderWidth:0}]);
   if(hasHub){
     const lb=hm.map(x=>x.h.replace(/^(AHI|HCI)\s/,''));
     mkC(pid+'c4','bar',lb,[{label:'Trip',data:hm.map(x=>x.m.trips),backgroundColor:CLR,borderRadius:3}],{plugins:{legend:{display:false}}});
     mkC(pid+'c5','bar',lb,[{label:'Cost/Trip (Rb)',data:hm.map(x=>Math.round(x.m.cost_per_trip/1e3)),backgroundColor:CLR,borderRadius:3}],{plugins:{legend:{display:false}}});
   }
 }
-
 function switchTab(btn,pid,tab){
   btn.closest('.page-tabs').querySelectorAll('.page-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
   document.querySelectorAll('.tab-pane[data-pid="'+pid+'"]').forEach(t=>t.classList.remove('active'));
   const pane=document.getElementById(pid+'_tab_'+tab);
-  if(pane){pane.classList.add('active');
-    if(tab==='insight')renderCharts(pid,filt(getRows(pid)),getHList(pid));}
+  if(pane){pane.classList.add('active');if(tab==='insight')renderCharts(pid,filt(getRows(pid)),getHList(pid));}
 }
 
 // ── Map ───────────────────────────────────────────────────────────────────────
@@ -478,43 +466,32 @@ function renderMap(fRows){
   if(!document.getElementById('hubMap'))return;
   if(mapInst){mapInst.remove();mapInst=null;}
   mapInst=L.map('hubMap',{zoomControl:true,scrollWheelZoom:false}).setView([-6.5,110.0],5);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
-    attribution:'©OpenStreetMap ©CartoDB',maxZoom:18}).addTo(mapInst);
-
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'©OSM ©CartoDB',maxZoom:18}).addTo(mapInst);
   HUBS.forEach(hub=>{
-    const coords=HUB_COORDS[hub];
-    if(!coords)return;
-    const hubRows=filt(BY_HUB[hub]||[]);
-    const m=metrics(hubRows);
-    const bu=RAW.find(r=>r.hub===hub)?.bu||'AHI';
-    const color=bu==='HCI'?'#93c5fd':'#f87171';
-    const r=Math.max(8,Math.min(20,6+m.trips/100));
-    const circle=L.circleMarker(coords,{radius:r,fillColor:color,color:'#fff',weight:1,opacity:.8,fillOpacity:.7})
-      .bindPopup(`<div style="font-family:Segoe UI;min-width:160px">
-        <b style="color:${color}">${hub}</b><br>
-        <span style="color:#666">BU ${bu}</span><hr style="margin:4px 0;border-color:#eee">
+    const coords=HUB_COORDS[hub];if(!coords)return;
+    const m=metrics(filt(BY_HUB[hub]||[]));
+    const bu=getBU(hub);
+    const color=bu==='HCI'?'#38bdf8':'#fb7185';
+    const r=Math.max(8,Math.min(22,6+m.trips/80));
+    L.circleMarker(coords,{radius:r,fillColor:color,color:'#fff',weight:1.5,opacity:.9,fillOpacity:.75})
+      .bindPopup(`<div style="font-family:Segoe UI;min-width:160px;font-size:12px">
+        <b style="color:${color};font-size:13px">${hub}</b><br>
+        <span style="color:#888">BU ${bu}</span><hr style="margin:4px 0;border-color:#ddd">
         Trip: <b>${fmt(m.trips)}</b><br>
         Total DO: <b>${fmt(m.total_do)}</b><br>
         Total Cost: <b>${fmtM(m.total_cost)}</b><br>
         TAT: <b>${m.tat_avg}</b>
-      </div>`)
-      .addTo(mapInst);
+      </div>`).addTo(mapInst);
   });
 }
 
 // ── Data helpers ──────────────────────────────────────────────────────────────
 function getRows(pid){
-  if(pid==='all')return RAW;
-  if(pid==='ahi')return RAW.filter(r=>r.bu==='AHI');
-  if(pid==='hci')return RAW.filter(r=>r.bu==='HCI');
-  const n=NAV.find(x=>x.id===pid);
-  return n?.hub?BY_HUB[n.hub]||[]:RAW;
+  if(pid==='all')return RAW;if(pid==='ahi')return RAW.filter(r=>r.bu==='AHI');if(pid==='hci')return RAW.filter(r=>r.bu==='HCI');
+  const n=NAV.find(x=>x.id===pid);return n?.hub?BY_HUB[n.hub]||[]:RAW;
 }
 function getHList(pid){
-  if(pid==='all')return[...HCI_HUBS,...AHI_HUBS];
-  if(pid==='ahi')return AHI_HUBS;
-  if(pid==='hci')return HCI_HUBS;
-  return null;
+  if(pid==='all')return[...HCI_HUBS,...AHI_HUBS];if(pid==='ahi')return AHI_HUBS;if(pid==='hci')return HCI_HUBS;return null;
 }
 function isMultiHub(pid){return pid==='all'||pid==='ahi'||pid==='hci';}
 
@@ -527,7 +504,7 @@ function showPage(pid){
   let badgeCls='badge-all',badgeLbl='ALL HUB',title='ALL Hub',sub=`${HUBS.length} Hub`;
   if(pid==='ahi'){badgeCls='badge-ahi';badgeLbl='AHI';title='ALL HUB AHI';sub=`${AHI_HUBS.length} Hub AHI`;}
   else if(pid==='hci'){badgeCls='badge-hci';badgeLbl='HCI';title='ALL HUB HCI';sub=`${HCI_HUBS.length} Hub HCI`;}
-  else if(isHub){const bu=RAW.find(r=>r.hub===nav.hub)?.bu||'';badgeCls=`badge-${bu.toLowerCase()}`;badgeLbl=bu;title=`Hub ${nav.hub}`;sub=`BU ${bu}`;}
+  else if(isHub){const bu=getBU(nav.hub);badgeCls=`badge-${bu.toLowerCase()}`;badgeLbl=bu;title=`Hub ${nav.hub}`;sub=`BU ${bu}`;}
 
   document.getElementById('mainContent').innerHTML=`<div class="page-wrap">
     <div class="sec-header"><span class="badge ${badgeCls}">${badgeLbl}</span>
@@ -545,11 +522,9 @@ function showPage(pid){
   document.getElementById('mainContent').scrollTop=0;
 
   requestAnimationFrame(()=>{
-    const rows=getRows(pid);
-    const hList=getHList(pid);
-    const fRows=filt(rows);
-    const pRows=filtPrev(rows);
-    const m=metrics(fRows), mp=metrics(pRows);
+    const rows=getRows(pid),hList=getHList(pid);
+    const fRows=filt(rows),pRows=filtPrev(rows);
+    const m=metrics(fRows),mp=metrics(pRows);
     const showHub=isMultiHub(pid);
 
     document.getElementById('filterInfo').textContent=
@@ -560,21 +535,26 @@ function showPage(pid){
     if(pid==='all'){
       const maF=metrics(filt(RAW.filter(r=>r.bu==='AHI'))),maP=metrics(filtPrev(RAW.filter(r=>r.bu==='AHI')));
       const mhF=metrics(filt(RAW.filter(r=>r.bu==='HCI'))),mhP=metrics(filtPrev(RAW.filter(r=>r.bu==='HCI')));
-      extra=`<div class="tbl-wrap" style="margin-bottom:18px"><div class="tbl-head"><div class="tbl-title">📊 ALL HUB AHI vs ALL HUB HCI</div></div>
-        <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Δ</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Δ</th><th class="num">BBM</th>${rThs}</tr></thead>
+      extra=`<div class="tbl-wrap" style="margin-bottom:16px"><div class="tbl-head"><div class="tbl-title">📊 ALL HUB AHI vs ALL HUB HCI</div></div>
+        <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Jml DP</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th>${rThs}</tr></thead>
         <tbody>
-          <tr><td><span class="tag tag-ahi">AHI</span></td><td class="num">${fmt(maF.trips)}</td>${deltaCell(maF.trips,maP.trips)}<td class="num">${fmt(maF.total_do)}</td><td class="num">${maF.tat_avg}</td><td class="num">${fmt(maF.jarak_km)}</td><td class="num">${fmtM(maF.total_cost)}</td>${deltaCell(maF.total_cost,maP.total_cost)}<td class="num">${fmtM(maF.bbm_ujp)}</td>${rTds(maF)}</tr>
-          <tr><td><span class="tag tag-hci">HCI</span></td><td class="num">${fmt(mhF.trips)}</td>${deltaCell(mhF.trips,mhP.trips)}<td class="num">${fmt(mhF.total_do)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td><td class="num">${fmtM(mhF.total_cost)}</td>${deltaCell(mhF.total_cost,mhP.total_cost)}<td class="num">${fmtM(mhF.bbm_ujp)}</td>${rTds(mhF)}</tr>
+          <tr><td><span class="tag tag-ahi">AHI</span></td>
+          <td class="num">${fmt(maF.trips)}${inlineDelta(maF.trips,maP.trips)}</td>
+          <td class="num">${fmt(maF.total_do)}</td><td class="num">${fmt(maF.total_dp)}</td><td class="num">${maF.tat_avg}</td><td class="num">${fmt(maF.jarak_km)}</td>
+          <td class="num">${fmtM(maF.total_cost)}${inlineDelta(maF.total_cost,maP.total_cost)}</td><td class="num">${fmtM(maF.bbm_ujp)}</td>${rTds(maF)}</tr>
+          <tr><td><span class="tag tag-hci">HCI</span></td>
+          <td class="num">${fmt(mhF.trips)}${inlineDelta(mhF.trips,mhP.trips)}</td>
+          <td class="num">${fmt(mhF.total_do)}</td><td class="num">${fmt(mhF.total_dp)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td>
+          <td class="num">${fmtM(mhF.total_cost)}${inlineDelta(mhF.total_cost,mhP.total_cost)}</td><td class="num">${fmtM(mhF.bbm_ujp)}</td>${rTds(mhF)}</tr>
         </tbody></table></div>
-        ${hubTblHTML(fRows,pRows,[...HCI_HUBS,...AHI_HUBS],'ahi')}`;
+        ${hubTblHTML(fRows,pRows,[...HCI_HUBS,...AHI_HUBS])}`;
     } else if(pid==='ahi'||pid==='hci'){
-      extra=hubTblHTML(fRows,pRows,hList,pid==='ahi'?'ahi':'hci');
+      extra=hubTblHTML(fRows,pRows,hList);
     }
 
-    // Map (only for ALL Hub page)
     const mapHTML=pid==='all'?`<div class="map-card"><div class="map-header">🗺️ Peta Lokasi Hub</div><div id="hubMap"></div></div>`:'';
 
-    const overviewHTML=`${mapHTML}${kpiHTML(m,mp)}${extra}
+    document.getElementById(pid+'_tab_overview').innerHTML=`${mapHTML}${kpiHTML(m,mp)}${extra}
       <div class="sub-nav">
         <button class="sub-tab active" onclick="showSub(this,'${pid}','j')">📍 Per Jalur</button>
         <button class="sub-tab" onclick="showSub(this,'${pid}','d')">🚗 Driver</button>
@@ -584,12 +564,8 @@ function showPage(pid){
       <div id="${pid}_d" class="sec-block">${personHTML(fRows,pRows,'drv','🚗 Top Driver','tD'+pid,showHub)}</div>
       <div id="${pid}_a" class="sec-block">${personHTML(fRows,pRows,'ast','👤 Top Asisten Driver','tA'+pid,showHub)}</div>`;
 
-    document.getElementById(pid+'_tab_overview').innerHTML=overviewHTML;
+    if(pid==='all')setTimeout(()=>renderMap(fRows),100);
 
-    // Render map after DOM ready
-    if(pid==='all') setTimeout(()=>renderMap(fRows), 100);
-
-    // Insight HTML
     const hm=(hList||HUBS).map(h=>({h,m:metrics(fRows.filter(r=>r.hub===h))}));
     const hasHub=hm.length>1;
     document.getElementById(pid+'_tab_insight').innerHTML=`
@@ -603,19 +579,18 @@ function showPage(pid){
       </div>
       ${hasHub?`<div class="chart-grid">
         <div class="chart-card"><div class="chart-title">💵 Cost/Trip per Hub (Rb)</div><div class="chart-wrap"><canvas id="${pid}c5"></canvas></div></div>
-        <div class="chart-card"><div class="chart-title">📊 Ratio Summary per Hub</div>
+        <div class="chart-card"><div class="chart-title">📊 Ratio per Hub</div>
           <div style="overflow-x:auto;max-height:200px"><table><thead><tr>
             <th>Hub</th><th class="num">DO/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>
-          </tr></thead><tbody>${hm.map(({h,m})=>`<tr>
-            <td style="cursor:pointer;color:#93c5fd;font-size:11px" onclick="showPage('${HUB_PAGE[h]||''}')">${h}</td>
+          </tr></thead><tbody>${hm.map(({h,m})=>{const bu=getBU(h),cls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';return`<tr>
+            <td class="${cls}" onclick="showPage('${HUB_PAGE[h]||''}')">${h}</td>
             <td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td>
-            <td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td></tr>`).join('')}
+            <td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td></tr>`;}).join('')}
           </tbody></table></div>
         </div></div>`:''}`;
   });
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
 updatePrevPeriod();
 showPage('all');
 </script>
