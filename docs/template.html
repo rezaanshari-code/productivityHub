@@ -35,18 +35,17 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;fo
 .dot-all{background:var(--all)}.dot-ahi{background:var(--ahi)}.dot-hci{background:var(--hci)}
 .content{flex:1;overflow-y:auto;padding:20px}
 .content::-webkit-scrollbar{width:6px}.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-.page{display:none;max-width:1400px;margin:0 auto}
-.page.active{display:block}
-.page-tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0}
-.page-tab{padding:8px 18px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none}
-.page-tab:hover{color:var(--text)}
-.page-tab.active{color:var(--text);border-bottom-color:var(--all)}
-.tab-content{display:none}.tab-content.active{display:block}
+.page-wrap{max-width:1400px;margin:0 auto}
 .sec-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
 .badge-all{background:var(--all);color:#fff}.badge-ahi{background:var(--ahi);color:#fff}.badge-hci{background:var(--hci);color:#000}
 .sec-title{font-size:20px;font-weight:700}
 .sec-sub{color:var(--muted);font-size:12px;margin-top:2px}
+.page-tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.page-tab{padding:8px 18px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;border-top:none;border-left:none;border-right:none;transition:all .15s}
+.page-tab:hover{color:var(--text)}
+.page-tab.active{color:var(--text);border-bottom-color:var(--all)}
+.tab-pane{display:none}.tab-pane.active{display:block}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px}
 .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px}
 .kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
@@ -70,20 +69,21 @@ tr:hover td{background:var(--surface2)}
 .sub-tab{padding:5px 12px;border-radius:6px;cursor:pointer;color:var(--muted);font-size:12px;border:1px solid var(--border);background:var(--surface);transition:all .15s}
 .sub-tab:hover{color:var(--text);border-color:var(--all)}
 .sub-tab.active{background:var(--surface2);color:var(--text);border-color:var(--all)}
+.sec-block{display:none}.sec-block.show{display:block}
 .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
-.chart-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
-@media(max-width:1100px){.chart-grid-3{grid-template-columns:1fr 1fr}}
-@media(max-width:700px){.chart-grid,.chart-grid-3{grid-template-columns:1fr}}
 .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
 .chart-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
 .chart-wrap{position:relative;height:220px}
 .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
-@media(max-width:900px){.summary-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.summary-grid{grid-template-columns:1fr}.chart-grid{grid-template-columns:1fr}}
 .tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
 .tag-ahi{background:rgba(59,130,246,.2);color:var(--ahi)}.tag-hci{background:rgba(245,158,11,.2);color:var(--hci)}
 .empty{text-align:center;padding:40px;color:var(--muted)}
 .footer{text-align:center;padding:8px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);flex-shrink:0}
 .ratio-val{color:var(--cyan);font-weight:600}
+.spinner{display:flex;align-items:center;justify-content:center;padding:60px;color:var(--muted);font-size:13px;gap:10px}
+.spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--all);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -105,36 +105,42 @@ tr:hover td{background:var(--surface2)}
 </div>
 <div class="layout">
   <div class="sidebar" id="sidebar"></div>
-  <div class="content" id="mainContent"><div id="pages"></div></div>
+  <div class="content" id="mainContent"></div>
 </div>
 <div class="footer">Dashboard Performance & Productivity Hub &nbsp;|&nbsp; *Status LC "New" dikecualikan &nbsp;|&nbsp; Auto-update 08:00 WIB</div>
 
 <script>
 const RAW = RAW_DATA_PLACEHOLDER;
 
+// ── Pre-index data for fast lookup ────────────────────────────────────────────
 const HUBS     = [...new Set(RAW.map(r=>r.hub))];
 const AHI_HUBS = HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='AHI');
 const HCI_HUBS = HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='HCI');
+
+// Pre-group by hub for O(1) lookup
+const BY_HUB = {};
+HUBS.forEach(h=>BY_HUB[h]=[]);
+RAW.forEach(r=>BY_HUB[r.hub].push(r));
+
 const NAV = [
-  {id:'all', label:'🌐 ALL Hub', cls:'', dotCls:'dot-all'},
-  {id:'hci', label:'🟡 ALL HUB HCI', cls:'hci', dotCls:'dot-hci', group:'HCI'},
-  ...HCI_HUBS.map((h,i)=>({id:'hci_'+i, label:'Hub '+h, cls:'hci', dotCls:'dot-hci', hub:h})),
-  {id:'ahi', label:'🔵 ALL HUB AHI', cls:'ahi', dotCls:'dot-ahi', group:'AHI'},
-  ...AHI_HUBS.map((h,i)=>({id:'ahi_'+i, label:'Hub '+h, cls:'ahi', dotCls:'dot-ahi', hub:h})),
+  {id:'all',  label:'🌐 ALL Hub',      cls:'',    dot:'dot-all'},
+  {id:'hci',  label:'🟡 ALL HUB HCI', cls:'hci', dot:'dot-hci', group:'HCI'},
+  ...HCI_HUBS.map((h,i)=>({id:'hci_'+i, label:'Hub '+h, cls:'hci', dot:'dot-hci', hub:h})),
+  {id:'ahi',  label:'🔵 ALL HUB AHI', cls:'ahi', dot:'dot-ahi', group:'AHI'},
+  ...AHI_HUBS.map((h,i)=>({id:'ahi_'+i, label:'Hub '+h, cls:'ahi', dot:'dot-ahi', hub:h})),
 ];
 const HUB_PAGE={};
 HCI_HUBS.forEach((h,i)=>HUB_PAGE[h]='hci_'+i);
 AHI_HUBS.forEach((h,i)=>HUB_PAGE[h]='ahi_'+i);
 
-// ── Build sidebar & page containers ──────────────────────────────────────────
-const sidebar=document.getElementById('sidebar'), pagesDiv=document.getElementById('pages');
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+const sidebar=document.getElementById('sidebar');
 NAV.forEach(n=>{
   if(n.group){const l=document.createElement('div');l.className='sidebar-group-label';l.textContent=n.group==='HCI'?'BU HCI':'BU AHI';sidebar.appendChild(l);}
-  const item=document.createElement('div');
-  item.className=`sidebar-item ${n.cls}`;item.dataset.page=n.id;
-  item.innerHTML=`<span class="sidebar-dot ${n.dotCls}"></span>${n.label}`;
-  item.onclick=()=>showPage(n.id);sidebar.appendChild(item);
-  const page=document.createElement('div');page.className='page';page.id='page-'+n.id;pagesDiv.appendChild(page);
+  const el=document.createElement('div');
+  el.className=`sidebar-item ${n.cls}`;el.dataset.pid=n.id;
+  el.innerHTML=`<span class="sidebar-dot ${n.dot}"></span>${n.label}`;
+  el.onclick=()=>showPage(n.id);sidebar.appendChild(el);
 });
 
 // ── Date filter ───────────────────────────────────────────────────────────────
@@ -142,7 +148,7 @@ const allDates=[...new Set(RAW.map(r=>r.d).filter(Boolean))].sort();
 const minDate=allDates[0], maxDate=allDates[allDates.length-1];
 document.getElementById('dateFrom').value=minDate;
 document.getElementById('dateTo').value=maxDate;
-let filterFrom=minDate, filterTo=maxDate, currentPage='all';
+let filterFrom=minDate, filterTo=maxDate, curPid='all';
 
 function setPreset(p,btn){
   document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
@@ -152,297 +158,263 @@ function setPreset(p,btn){
   else if(p==='month')from=maxDate.substring(0,7)+'-01';
   else if(p==='3month'){d.setMonth(d.getMonth()-2);from=d.toISOString().split('T')[0].substring(0,7)+'-01';}
   document.getElementById('dateFrom').value=from;document.getElementById('dateTo').value=maxDate;
-  filterFrom=from;filterTo=maxDate;rebuildCurrentPage();
+  filterFrom=from;filterTo=maxDate;showPage(curPid);
 }
 function applyFilter(){
   document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
   filterFrom=document.getElementById('dateFrom').value;
   filterTo=document.getElementById('dateTo').value;
-  rebuildCurrentPage();
+  showPage(curPid);
 }
 function resetFilter(){
   document.getElementById('dateFrom').value=minDate;document.getElementById('dateTo').value=maxDate;
   filterFrom=minDate;filterTo=maxDate;
   document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
   document.querySelector('.preset[onclick*="all"]').classList.add('active');
-  rebuildCurrentPage();
+  showPage(curPid);
 }
-function filtered(rows){return rows.filter(r=>!r.d||(r.d>=filterFrom&&r.d<=filterTo));}
+function filt(rows){return rows.filter(r=>!r.d||(r.d>=filterFrom&&r.d<=filterTo));}
 
 // ── Metrics ───────────────────────────────────────────────────────────────────
 function metrics(rows){
-  if(!rows.length)return{trips:0,total_do:0,do_cust:0,do_store:0,total_dp:0,total_cost:0,total_ujp:0,bbm_ujp:0,jarak_km:0,tat_avg:'N/A',do_per_trip:0,dp_per_trip:0,ujp_per_trip:0,cost_per_trip:0,bbm_per_trip:0,km_per_trip:0};
-  const tats=rows.filter(r=>r.tat!=null);
-  const avg=tats.length?tats.reduce((s,r)=>s+r.tat,0)/tats.length:null;
-  const h=avg!=null?Math.floor(avg/60):0,m=avg!=null?Math.round(avg%60):0;
   const n=rows.length;
-  const total_do=rows.reduce((s,r)=>s+r.do,0);
-  const total_dp=rows.reduce((s,r)=>s+(r.dp||0),0);
-  const total_cost=rows.reduce((s,r)=>s+r.cost,0);
-  const total_ujp=rows.reduce((s,r)=>s+r.ujp,0);
-  const bbm_ujp=rows.reduce((s,r)=>s+r.bbm,0);
-  const jarak_km=rows.reduce((s,r)=>s+r.km,0);
-  return{trips:n,total_do,do_cust:rows.reduce((s,r)=>s+r.doc,0),do_store:rows.reduce((s,r)=>s+r.dos,0),
-    total_dp,total_cost,total_ujp,bbm_ujp,jarak_km,
+  if(!n)return{trips:0,total_do:0,do_cust:0,do_store:0,total_dp:0,total_cost:0,total_ujp:0,bbm_ujp:0,jarak_km:0,tat_avg:'N/A',do_per_trip:0,dp_per_trip:0,ujp_per_trip:0,cost_per_trip:0,bbm_per_trip:0,km_per_trip:0};
+  let tdo=0,dc=0,ds=0,dp=0,cost=0,ujp=0,bbm=0,km=0,tatS=0,tatN=0;
+  for(const r of rows){tdo+=r.do;dc+=r.doc;ds+=r.dos;dp+=(r.dp||0);cost+=r.cost;ujp+=r.ujp;bbm+=r.bbm;km+=r.km;if(r.tat!=null){tatS+=r.tat;tatN++;}}
+  const avg=tatN?tatS/tatN:null;
+  const h=avg!=null?Math.floor(avg/60):0,m=avg!=null?Math.round(avg%60):0;
+  return{trips:n,total_do:tdo,do_cust:dc,do_store:ds,total_dp:dp,total_cost:cost,total_ujp:ujp,bbm_ujp:bbm,jarak_km:km,
     tat_avg:avg!=null?`${h}:${String(m).padStart(2,'0')}`:'N/A',
-    do_per_trip:n?+(total_do/n).toFixed(1):0,dp_per_trip:n?+(total_dp/n).toFixed(1):0,
-    ujp_per_trip:n?Math.round(total_ujp/n):0,cost_per_trip:n?Math.round(total_cost/n):0,
-    bbm_per_trip:n?Math.round(bbm_ujp/n):0,km_per_trip:n?+(jarak_km/n).toFixed(1):0,
+    do_per_trip:n?+(tdo/n).toFixed(1):0,dp_per_trip:n?+(dp/n).toFixed(1):0,
+    ujp_per_trip:n?Math.round(ujp/n):0,cost_per_trip:n?Math.round(cost/n):0,
+    bbm_per_trip:n?Math.round(bbm/n):0,km_per_trip:n?+(km/n).toFixed(1):0,
   };
 }
-function groupBy(rows,key){const m={};rows.forEach(r=>{const k=r[key]||'(kosong)';if(!m[k])m[k]=[];m[k].push(r);});return m;}
+function grpBy(rows,key){const m={};for(const r of rows){const k=r[key]||'(kosong)';if(!m[k])m[k]=[];m[k].push(r);}return m;}
 const fmt=n=>n==null||isNaN(n)?'-':Math.round(n).toLocaleString('id-ID');
 const fmtD=n=>n==null||isNaN(n)?'-':Number(n).toLocaleString('id-ID',{maximumFractionDigits:1});
 const fmtM=n=>{if(!n||isNaN(n))return '-';if(n>=1e9)return(n/1e9).toFixed(2)+' M';if(n>=1e6)return(n/1e6).toFixed(1)+' Jt';if(n>=1e3)return(n/1e3).toFixed(0)+' Rb';return fmt(n);};
 
-// ── KPI ───────────────────────────────────────────────────────────────────────
-function kpiHTML(m){
-  return `<div class="kpi-grid">
-    <div class="kpi t-blue"><div class="kpi-label">Total Trip</div><div class="kpi-value">${fmt(m.trips)}</div><div class="kpi-sub">Pengiriman aktif</div></div>
-    <div class="kpi t-cyan"><div class="kpi-label">Total DO</div><div class="kpi-value">${fmt(m.total_do)}</div><div class="kpi-sub">Cust: ${fmt(m.do_cust)} | Store: ${fmt(m.do_store)}</div></div>
-    <div class="kpi t-green"><div class="kpi-label">TAT Rata-rata</div><div class="kpi-value">${m.tat_avg}</div><div class="kpi-sub">Jam:Menit per trip</div></div>
-    <div class="kpi t-yellow"><div class="kpi-label">Jarak KM</div><div class="kpi-value">${fmt(m.jarak_km)}</div><div class="kpi-sub">${fmtD(m.km_per_trip)} km/trip</div></div>
-    <div class="kpi t-purple"><div class="kpi-label">Total Cost</div><div class="kpi-value">${fmtM(m.total_cost)}</div><div class="kpi-sub">${fmtM(m.cost_per_trip)}/trip</div></div>
-    <div class="kpi t-blue"><div class="kpi-label">Total UJP</div><div class="kpi-value">${fmtM(m.total_ujp)}</div><div class="kpi-sub">${fmtM(m.ujp_per_trip)}/trip</div></div>
-    <div class="kpi t-cyan"><div class="kpi-label">Biaya BBM</div><div class="kpi-value">${fmtM(m.bbm_ujp)}</div><div class="kpi-sub">${fmtM(m.bbm_per_trip)}/trip</div></div>
-    <div class="kpi t-green"><div class="kpi-label">DO/Trip</div><div class="kpi-value">${fmtD(m.do_per_trip)}</div><div class="kpi-sub">Rata-rata DO per trip</div></div>
-    <div class="kpi t-red"><div class="kpi-label">DP/Trip</div><div class="kpi-value">${fmtD(m.dp_per_trip)}</div><div class="kpi-sub">Rata-rata DP per trip</div></div>
-  </div>`;
-}
+// ── HTML helpers ──────────────────────────────────────────────────────────────
+const rThs=`<th class="num">DO/Trip</th><th class="num">DP/Trip</th><th class="num">UJP/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>`;
+const rTds=m=>`<td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtD(m.dp_per_trip)}</td><td class="num ratio-val">${fmtM(m.ujp_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td><td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td>`;
 
-// ── Tables ────────────────────────────────────────────────────────────────────
-const ratioThs=`<th class="num">DO/Trip</th><th class="num">DP/Trip</th><th class="num">UJP/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>`;
-function ratioTds(m){return `<td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtD(m.dp_per_trip)}</td><td class="num ratio-val">${fmtM(m.ujp_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td><td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td>`;}
+function kpiHTML(m){return`<div class="kpi-grid">
+  <div class="kpi t-blue"><div class="kpi-label">Total Trip</div><div class="kpi-value">${fmt(m.trips)}</div><div class="kpi-sub">Pengiriman aktif</div></div>
+  <div class="kpi t-cyan"><div class="kpi-label">Total DO</div><div class="kpi-value">${fmt(m.total_do)}</div><div class="kpi-sub">Cust: ${fmt(m.do_cust)} | Store: ${fmt(m.do_store)}</div></div>
+  <div class="kpi t-green"><div class="kpi-label">TAT Rata-rata</div><div class="kpi-value">${m.tat_avg}</div><div class="kpi-sub">Jam:Menit per trip</div></div>
+  <div class="kpi t-yellow"><div class="kpi-label">Jarak KM</div><div class="kpi-value">${fmt(m.jarak_km)}</div><div class="kpi-sub">${fmtD(m.km_per_trip)} km/trip</div></div>
+  <div class="kpi t-purple"><div class="kpi-label">Total Cost</div><div class="kpi-value">${fmtM(m.total_cost)}</div><div class="kpi-sub">${fmtM(m.cost_per_trip)}/trip</div></div>
+  <div class="kpi t-blue"><div class="kpi-label">Total UJP</div><div class="kpi-value">${fmtM(m.total_ujp)}</div><div class="kpi-sub">${fmtM(m.ujp_per_trip)}/trip</div></div>
+  <div class="kpi t-cyan"><div class="kpi-label">Biaya BBM</div><div class="kpi-value">${fmtM(m.bbm_ujp)}</div><div class="kpi-sub">${fmtM(m.bbm_per_trip)}/trip</div></div>
+  <div class="kpi t-green"><div class="kpi-label">DO/Trip</div><div class="kpi-value">${fmtD(m.do_per_trip)}</div><div class="kpi-sub">Rata-rata per trip</div></div>
+  <div class="kpi t-red"><div class="kpi-label">DP/Trip</div><div class="kpi-value">${fmtD(m.dp_per_trip)}</div><div class="kpi-sub">Rata-rata per trip</div></div>
+</div>`;}
 
 function jalurHTML(rows,uid){
-  const e=Object.entries(groupBy(rows,'jalur')).map(([j,rs])=>({j,m:metrics(rs)})).sort((a,b)=>b.m.trips-a.m.trips);
+  const e=Object.entries(grpBy(rows,'jalur')).map(([j,rs])=>({j,m:metrics(rs)})).sort((a,b)=>b.m.trips-a.m.trips);
   if(!e.length)return`<div class="empty">📭 Tidak ada data</div>`;
-  const tr=e.map(({j,m},i)=>`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td><td>${j}</td>
-    <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
-    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td><td class="num">${fmtM(m.total_cost)}</td><td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>
-    ${ratioTds(m)}</tr>`).join('');
-  return `<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📍 Analisa Per Jalur</div>
+  return`<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📍 Analisa Per Jalur</div>
     <input class="tbl-search" placeholder="Cari jalur..." oninput="ftbl(this,'${uid}')"></div>
     <div style="overflow-x:auto"><table id="${uid}"><thead><tr>
     <th class="rank">#</th><th>Jalur</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
-    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>${ratioThs}
-    </tr></thead><tbody>${tr}</tbody></table></div></div>`;
-}
-function hubTableHTML(fRows,hubList,color){
-  const rows=hubList.map(hub=>{
-    const hr=fRows.filter(r=>r.hub===hub),m=metrics(hr),pid=HUB_PAGE[hub];
-    return `<tr><td style="cursor:pointer;color:var(--${color})" onclick="showPage('${pid}')">Hub ${hub}</td>
-      <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
-      <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td><td class="num">${fmtM(m.total_cost)}</td><td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>
-      ${ratioTds(m)}</tr>`;
-  }).join('');
-  return `<div class="tbl-wrap" style="margin-bottom:20px"><div class="tbl-head"><div class="tbl-title">📦 Detail Per Hub</div></div>
-    <div style="overflow-x:auto"><table><thead><tr>
-    <th>Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
-    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>${ratioThs}
-    </tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>${rThs}
+    </tr></thead><tbody>${e.map(({j,m},i)=>`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td><td>${j}</td>
+    <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td><td class="num">${fmtM(m.total_cost)}</td><td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>
+    ${rTds(m)}</tr>`).join('')}</tbody></table></div></div>`;
 }
 function personHTML(rows,col,title,uid){
   const src=rows.filter(r=>r[col]&&r[col]!='nan'&&r[col]!='');
-  const e=Object.entries(groupBy(src,col)).map(([n,rs])=>({n,m:metrics(rs)})).sort((a,b)=>b.m.trips-a.m.trips).slice(0,50);
+  const e=Object.entries(grpBy(src,col)).map(([n,rs])=>({n,m:metrics(rs)})).sort((a,b)=>b.m.trips-a.m.trips).slice(0,50);
   if(!e.length)return`<div class="empty">📭 Tidak ada data</div>`;
-  const tr=e.map(({n,m},i)=>`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td><td>${n}</td>
-    <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
-    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td><td class="num">${fmtM(m.total_cost)}</td>${ratioTds(m)}</tr>`).join('');
-  return `<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">${title}</div>
+  return`<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">${title}</div>
     <input class="tbl-search" placeholder="Cari nama..." oninput="ftbl(this,'${uid}')"></div>
     <div style="overflow-x:auto"><table id="${uid}"><thead><tr>
     <th class="rank">#</th><th>Nama</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
-    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th>${ratioThs}
-    </tr></thead><tbody>${tr}</tbody></table></div></div>`;
+    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th>${rThs}
+    </tr></thead><tbody>${e.map(({n,m},i)=>`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td><td>${n}</td>
+    <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td><td class="num">${fmtM(m.total_cost)}</td>${rTds(m)}</tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+function hubTblHTML(fRows,hList,color){
+  return`<div class="tbl-wrap" style="margin-bottom:20px"><div class="tbl-head"><div class="tbl-title">📦 Detail Per Hub</div></div>
+    <div style="overflow-x:auto"><table><thead><tr>
+    <th>Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
+    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>${rThs}
+    </tr></thead><tbody>${hList.map(hub=>{const m=metrics(fRows.filter(r=>r.hub===hub)),pid=HUB_PAGE[hub];
+    return`<tr><td style="cursor:pointer;color:var(--${color})" onclick="showPage('${pid}')">Hub ${hub}</td>
+    <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td><td class="num">${fmtM(m.total_cost)}</td><td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>
+    ${rTds(m)}</tr>`;}).join('')}</tbody></table></div></div>`;
 }
 function ftbl(inp,id){const q=inp.value.toLowerCase();document.getElementById(id)?.querySelectorAll('tbody tr').forEach(tr=>tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none');}
 
 // ── Sub tabs ──────────────────────────────────────────────────────────────────
 function showSub(btn,pid,sec){
-  btn.closest('.sub-nav').querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  const container=btn.closest('.tab-content');
-  container.querySelectorAll('.sec-block').forEach(s=>s.style.display='none');
-  const target=container.querySelector('#'+pid+'_'+sec);
-  if(target)target.style.display='block';
-}
-
-function secBlocks(pid,rows){
-  return `<div class="sub-nav">
-    <button class="sub-tab active" onclick="showSub(this,'${pid}','j')">📍 Per Jalur</button>
-    <button class="sub-tab" onclick="showSub(this,'${pid}','d')">🚗 Driver</button>
-    <button class="sub-tab" onclick="showSub(this,'${pid}','a')">👤 Asst Driver</button>
-  </div>
-  <div id="${pid}_j" class="sec-block" style="display:block">${jalurHTML(rows,'t'+pid+'j')}</div>
-  <div id="${pid}_d" class="sec-block" style="display:none">${personHTML(rows,'drv','🚗 Top Driver','t'+pid+'d')}</div>
-  <div id="${pid}_a" class="sec-block" style="display:none">${personHTML(rows,'ast','👤 Top Asisten Driver','t'+pid+'a')}</div>`;
+  btn.closest('.sub-nav').querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
+  btn.closest('.tab-pane').querySelectorAll('.sec-block').forEach(s=>s.classList.remove('show'));
+  document.getElementById(pid+'_'+sec)?.classList.add('show');
 }
 
 // ── Charts ────────────────────────────────────────────────────────────────────
-const chartInst={};
-function mkChart(id,type,labels,datasets,opts={}){
-  if(chartInst[id]){chartInst[id].destroy();delete chartInst[id];}
+const CI={};
+function mkC(id,type,labels,datasets,opts={}){
+  if(CI[id]){CI[id].destroy();delete CI[id];}
   const ctx=document.getElementById(id)?.getContext('2d');if(!ctx)return;
-  chartInst[id]=new Chart(ctx,{type,data:{labels,datasets},options:{
-    responsive:true,maintainAspectRatio:false,
+  CI[id]=new Chart(ctx,{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
     plugins:{legend:{labels:{color:'#8892a4',font:{size:11}}}},
-    scales:type==='doughnut'||type==='pie'?{}:{
-      x:{ticks:{color:'#8892a4',font:{size:10}},grid:{color:'#2e3147'}},
-      y:{ticks:{color:'#8892a4',font:{size:10}},grid:{color:'#2e3147'}}},
-    ...opts
-  }});
+    scales:type==='doughnut'?{}:{x:{ticks:{color:'#8892a4',font:{size:10}},grid:{color:'#2e3147'}},y:{ticks:{color:'#8892a4',font:{size:10}},grid:{color:'#2e3147'}}},
+    ...opts}});
 }
-const COLORS=['#3b82f6','#f59e0b','#10b981','#8b5cf6','#ef4444','#06b6d4','#f97316','#ec4899','#84cc16','#14b8a6','#a855f7','#eab308','#6366f1','#22c55e','#0ea5e9','#d946ef','#fb923c','#4ade80','#38bdf8','#c084fc'];
+const CLR=['#3b82f6','#f59e0b','#10b981','#8b5cf6','#ef4444','#06b6d4','#f97316','#ec4899','#84cc16','#14b8a6','#a855f7','#eab308','#6366f1','#22c55e'];
 
 function renderCharts(pid,fRows,hubList){
-  const byMonth={};
-  fRows.forEach(r=>{if(!r.d)return;const ym=r.d.substring(0,7);if(!byMonth[ym])byMonth[ym]={trips:0,cost:0};byMonth[ym].trips++;byMonth[ym].cost+=r.cost;});
-  const months=Object.keys(byMonth).sort();
+  const bm={};fRows.forEach(r=>{if(!r.d)return;const k=r.d.substring(0,7);if(!bm[k])bm[k]={t:0,c:0};bm[k].t++;bm[k].c+=r.cost;});
+  const months=Object.keys(bm).sort();
   const hm=(hubList||HUBS).map(h=>({h,m:metrics(fRows.filter(r=>r.hub===h))}));
   const hasHub=hm.length>1;
-  mkChart(pid+'_c1','bar',months,[{label:'Trip',data:months.map(m=>byMonth[m].trips),backgroundColor:'#3b82f6',borderRadius:4}]);
-  mkChart(pid+'_c2','bar',months,[{label:'Cost (Jt)',data:months.map(m=>Math.round(byMonth[m].cost/1e6)),backgroundColor:'#8b5cf6',borderRadius:4}]);
+  mkC(pid+'c1','bar',months,[{label:'Trip',data:months.map(k=>bm[k].t),backgroundColor:'#3b82f6',borderRadius:4}]);
+  mkC(pid+'c2','bar',months,[{label:'Cost (Jt)',data:months.map(k=>Math.round(bm[k].c/1e6)),backgroundColor:'#8b5cf6',borderRadius:4}]);
   const dc=fRows.reduce((s,r)=>s+r.doc,0),ds=fRows.reduce((s,r)=>s+r.dos,0);
-  mkChart(pid+'_c3','doughnut',['DO Cust','DO Store'],[{data:[dc,ds],backgroundColor:['#3b82f6','#f59e0b'],borderWidth:0}]);
+  mkC(pid+'c3','doughnut',['DO Cust','DO Store'],[{data:[dc,ds],backgroundColor:['#3b82f6','#f59e0b'],borderWidth:0}]);
   if(hasHub){
-    const lbls=hm.map(x=>x.h.replace(/^(AHI|HCI)\s/,''));
-    mkChart(pid+'_c4','bar',lbls,[{label:'Trip',data:hm.map(x=>x.m.trips),backgroundColor:COLORS,borderRadius:4}],{plugins:{legend:{display:false}}});
-    mkChart(pid+'_c5','bar',lbls,[{label:'Cost/Trip (Rb)',data:hm.map(x=>Math.round(x.m.cost_per_trip/1e3)),backgroundColor:COLORS,borderRadius:4}],{plugins:{legend:{display:false}}});
-    mkChart(pid+'_c6','bar',lbls,[{label:'KM/Trip',data:hm.map(x=>x.m.km_per_trip),backgroundColor:COLORS,borderRadius:4}],{plugins:{legend:{display:false}}});
+    const lb=hm.map(x=>x.h.replace(/^(AHI|HCI)\s/,''));
+    mkC(pid+'c4','bar',lb,[{label:'Trip',data:hm.map(x=>x.m.trips),backgroundColor:CLR,borderRadius:4}],{plugins:{legend:{display:false}}});
+    mkC(pid+'c5','bar',lb,[{label:'Cost/Trip (Rb)',data:hm.map(x=>Math.round(x.m.cost_per_trip/1e3)),backgroundColor:CLR,borderRadius:4}],{plugins:{legend:{display:false}}});
   }
-}
-
-function insightHTML(pid,fRows,hubList){
-  const hm=(hubList||HUBS).map(h=>({h,m:metrics(fRows.filter(r=>r.hub===h))}));
-  const hasHub=hm.length>1;
-  return `<div class="chart-grid">
-    <div class="chart-card"><div class="chart-title">📈 Trend Trip per Bulan</div><div class="chart-wrap"><canvas id="${pid}_c1"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">💰 Total Cost per Bulan (Juta)</div><div class="chart-wrap"><canvas id="${pid}_c2"></canvas></div></div>
-  </div>
-  <div class="chart-grid${hasHub?'':''}" style="grid-template-columns:${hasHub?'1fr 1fr 1fr':'1fr'}">
-    <div class="chart-card"><div class="chart-title">🍩 DO Cust vs Store</div><div class="chart-wrap"><canvas id="${pid}_c3"></canvas></div></div>
-    ${hasHub?`<div class="chart-card"><div class="chart-title">🏆 Trip per Hub</div><div class="chart-wrap"><canvas id="${pid}_c4"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">💵 Cost/Trip per Hub (Rb)</div><div class="chart-wrap"><canvas id="${pid}_c5"></canvas></div></div>`:''}
-  </div>
-  ${hasHub?`<div class="chart-grid">
-    <div class="chart-card"><div class="chart-title">🛣️ KM/Trip per Hub</div><div class="chart-wrap"><canvas id="${pid}_c6"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">📊 Ratio per Hub</div>
-      <div style="overflow-x:auto;max-height:220px"><table><thead><tr>
-        <th>Hub</th><th class="num">DO/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>
-      </tr></thead><tbody>${hm.map(({h,m})=>`<tr>
-        <td style="cursor:pointer;color:var(--ahi);font-size:11px" onclick="showPage('${HUB_PAGE[h]||''}')">${h}</td>
-        <td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td>
-        <td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td></tr>`).join('')}
-      </tbody></table></div></div></div>`:''}`;
 }
 
 // ── Page tab switch ───────────────────────────────────────────────────────────
-function showPageTab(btn,pid,tab){
-  btn.closest('.page-tabs').querySelectorAll('.page-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('#page-'+pid+' .tab-content').forEach(t=>t.style.display='none');
-  const target=document.getElementById(pid+'-tab-'+tab);
-  if(target){
-    target.style.display='block';
-    if(tab==='insight'){
-      const fRows=filtered(getPageRows(pid));
-      const hubList=getPageHubList(pid);
-      renderCharts(pid,fRows,hubList);
-    }
-  }
+function switchTab(btn,pid,tab){
+  btn.closest('.page-tabs').querySelectorAll('.page-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
+  document.querySelectorAll('.tab-pane[data-pid="'+pid+'"]').forEach(t=>t.classList.remove('active'));
+  const pane=document.getElementById(pid+'_tab_'+tab);
+  if(pane){pane.classList.add('active');
+    if(tab==='insight'){const n=NAV.find(x=>x.id===pid);renderCharts(pid,filt(getRows(pid)),getHList(pid));}}
 }
 
-// ── Page data helpers ─────────────────────────────────────────────────────────
-function getPageRows(pid){
-  if(pid==='all') return RAW;
-  if(pid==='ahi') return RAW.filter(r=>r.bu==='AHI');
-  if(pid==='hci') return RAW.filter(r=>r.bu==='HCI');
-  const nav=NAV.find(n=>n.id===pid);
-  if(nav?.hub) return RAW.filter(r=>r.hub===nav.hub);
-  return RAW;
+// ── Data helpers ──────────────────────────────────────────────────────────────
+function getRows(pid){
+  if(pid==='all')return RAW;
+  if(pid==='ahi')return RAW.filter(r=>r.bu==='AHI');
+  if(pid==='hci')return RAW.filter(r=>r.bu==='HCI');
+  const n=NAV.find(x=>x.id===pid);
+  return n?.hub?BY_HUB[n.hub]||[]:RAW;
 }
-function getPageHubList(pid){
-  if(pid==='all') return [...HCI_HUBS,...AHI_HUBS];
-  if(pid==='ahi') return AHI_HUBS;
-  if(pid==='hci') return HCI_HUBS;
+function getHList(pid){
+  if(pid==='all')return[...HCI_HUBS,...AHI_HUBS];
+  if(pid==='ahi')return AHI_HUBS;
+  if(pid==='hci')return HCI_HUBS;
   return null;
 }
 
-// ── Build single page ─────────────────────────────────────────────────────────
-function buildPage(pid){
-  const rows=getPageRows(pid);
-  const hubList=getPageHubList(pid);
-  const fRows=filtered(rows);
+// ── Main showPage — instant header, deferred content ─────────────────────────
+function showPage(pid){
+  curPid=pid;
+  // Update sidebar
+  document.querySelectorAll('.sidebar-item').forEach(el=>{
+    el.classList.toggle('active',el.dataset.pid===pid);
+  });
+
   const nav=NAV.find(n=>n.id===pid)||{};
-  const isHubPage=!!nav.hub;
+  const isHub=!!nav.hub;
+  let badgeCls='badge-all',badgeLbl='ALL HUB',title='ALL Hub',sub=`${HUBS.length} Hub`;
+  if(pid==='ahi'){badgeCls='badge-ahi';badgeLbl='AHI';title='ALL HUB AHI';sub=`${AHI_HUBS.length} Hub AHI`;}
+  else if(pid==='hci'){badgeCls='badge-hci';badgeLbl='HCI';title='ALL HUB HCI';sub=`${HCI_HUBS.length} Hub HCI`;}
+  else if(isHub){const bu=RAW.find(r=>r.hub===nav.hub)?.bu||'';badgeCls=`badge-${bu.toLowerCase()}`;badgeLbl=bu;title=`Hub ${nav.hub}`;sub=`BU ${bu}`;}
 
-  let badgeCls='badge-all', badgeLabel='ALL HUB', title='ALL Hub', sub=`${HUBS.length} Hub`;
-  if(pid==='ahi'){badgeCls='badge-ahi';badgeLabel='AHI';title='ALL HUB AHI';sub=`${AHI_HUBS.length} Hub AHI`;}
-  else if(pid==='hci'){badgeCls='badge-hci';badgeLabel='HCI';title='ALL HUB HCI';sub=`${HCI_HUBS.length} Hub HCI`;}
-  else if(isHubPage){
-    const bu=RAW.find(r=>r.hub===nav.hub)?.bu||'';
-    badgeCls=`badge-${bu.toLowerCase()}`;badgeLabel=bu;title=`Hub ${nav.hub}`;sub=`BU ${bu}`;
-  }
-
-  let extra='';
-  if(pid==='all'){
-    const maF=metrics(filtered(RAW.filter(r=>r.bu==='AHI')));
-    const mhF=metrics(filtered(RAW.filter(r=>r.bu==='HCI')));
-    extra=`<div class="summary-grid">
-      <div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📊 ALL HUB AHI vs ALL HUB HCI</div></div>
-      <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th>${ratioThs}</tr></thead>
-      <tbody>
-        <tr><td><span class="tag tag-ahi">AHI</span></td><td class="num">${fmt(maF.trips)}</td><td class="num">${fmt(maF.total_do)}</td><td class="num">${maF.tat_avg}</td><td class="num">${fmt(maF.jarak_km)}</td><td class="num">${fmtM(maF.total_cost)}</td><td class="num">${fmtM(maF.bbm_ujp)}</td>${ratioTds(maF)}</tr>
-        <tr><td><span class="tag tag-hci">HCI</span></td><td class="num">${fmt(mhF.trips)}</td><td class="num">${fmt(mhF.total_do)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td><td class="num">${fmtM(mhF.total_cost)}</td><td class="num">${fmtM(mhF.bbm_ujp)}</td>${ratioTds(mhF)}</tr>
-      </tbody></table></div>
-      <div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📦 Ringkasan Per Hub</div></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>Hub</th><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">Total Cost</th><th class="num">Cost/Trip</th></tr></thead>
-      <tbody>${[...HCI_HUBS,...AHI_HUBS].map(hub=>{
-        const hr=fRows.filter(r=>r.hub===hub),m=metrics(hr),bu=RAW.find(r=>r.hub===hub)?.bu||'',hpid=HUB_PAGE[hub];
-        return `<tr><td style="cursor:pointer;color:var(--ahi)" onclick="showPage('${hpid}')">Hub ${hub}</td>
-          <td><span class="tag tag-${bu.toLowerCase()}">${bu}</span></td>
-          <td class="num">${fmt(m.trips)}</td><td class="num">${fmt(m.total_do)}</td>
-          <td class="num">${m.tat_avg}</td><td class="num">${fmtM(m.total_cost)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td></tr>`;}).join('')}
-      </tbody></table></div></div></div>`;
-  } else if(pid==='ahi'||pid==='hci'){
-    extra=hubTableHTML(fRows,hubList,pid==='ahi'?'ahi':'hci');
-  }
-
-  document.getElementById('page-'+pid).innerHTML=`
-    <div class="sec-header"><span class="badge ${badgeCls}">${badgeLabel}</span>
+  // ① Render header + tabs + spinner IMMEDIATELY
+  document.getElementById('mainContent').innerHTML=`<div class="page-wrap">
+    <div class="sec-header"><span class="badge ${badgeCls}">${badgeLbl}</span>
       <div><div class="sec-title">${title} — Performance & Productivity</div><div class="sec-sub">${sub} | *Status LC "New" tidak dihitung</div></div>
     </div>
     <div class="page-tabs">
-      <button class="page-tab active" onclick="showPageTab(this,'${pid}','overview')">📊 Overview</button>
-      <button class="page-tab" onclick="showPageTab(this,'${pid}','insight')">💡 Insight</button>
+      <button class="page-tab active" onclick="switchTab(this,'${pid}','overview')">📊 Overview</button>
+      <button class="page-tab" onclick="switchTab(this,'${pid}','insight')">💡 Insight</button>
     </div>
-    <div id="${pid}-tab-overview" class="tab-content" style="display:block">
-      ${kpiHTML(metrics(fRows))}${extra}${secBlocks(pid,fRows)}
+    <div id="${pid}_tab_overview" class="tab-pane active" data-pid="${pid}">
+      <div class="spinner"><div class="spin"></div> Memuat data...</div>
     </div>
-    <div id="${pid}-tab-insight" class="tab-content" style="display:none">
-      ${insightHTML(pid,fRows,hubList)}
-    </div>`;
-
-  document.getElementById('filterInfo').textContent=
-    `${filtered(RAW).length.toLocaleString('id-ID')} dari ${RAW.length.toLocaleString('id-ID')} trip`;
-}
-
-// ── Only rebuild current page ─────────────────────────────────────────────────
-function rebuildCurrentPage(){buildPage(currentPage);}
-
-// ── Nav ───────────────────────────────────────────────────────────────────────
-function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.sidebar-item').forEach(t=>t.classList.remove('active'));
-  currentPage=id;
-  buildPage(id);
-  document.getElementById('page-'+id)?.classList.add('active');
-  document.querySelectorAll('.sidebar-item').forEach(t=>{if(t.dataset.page===id)t.classList.add('active');});
+    <div id="${pid}_tab_insight" class="tab-pane" data-pid="${pid}"></div>
+  </div>`;
   document.getElementById('mainContent').scrollTop=0;
+
+  // ② Render actual content async (next frame)
+  requestAnimationFrame(()=>{
+    const rows=getRows(pid);
+    const hList=getHList(pid);
+    const fRows=filt(rows);
+    const m=metrics(fRows);
+
+    // Update filter info
+    document.getElementById('filterInfo').textContent=
+      `${filt(RAW).length.toLocaleString('id-ID')} dari ${RAW.length.toLocaleString('id-ID')} trip`;
+
+    // Extra table for all/ahi/hci
+    let extra='';
+    if(pid==='all'){
+      const maF=metrics(filt(RAW.filter(r=>r.bu==='AHI')));
+      const mhF=metrics(filt(RAW.filter(r=>r.bu==='HCI')));
+      extra=`<div class="summary-grid">
+        <div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📊 ALL HUB AHI vs HCI</div></div>
+        <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th>${rThs}</tr></thead>
+        <tbody>
+          <tr><td><span class="tag tag-ahi">AHI</span></td><td class="num">${fmt(maF.trips)}</td><td class="num">${fmt(maF.total_do)}</td><td class="num">${maF.tat_avg}</td><td class="num">${fmt(maF.jarak_km)}</td><td class="num">${fmtM(maF.total_cost)}</td><td class="num">${fmtM(maF.bbm_ujp)}</td>${rTds(maF)}</tr>
+          <tr><td><span class="tag tag-hci">HCI</span></td><td class="num">${fmt(mhF.trips)}</td><td class="num">${fmt(mhF.total_do)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td><td class="num">${fmtM(mhF.total_cost)}</td><td class="num">${fmtM(mhF.bbm_ujp)}</td>${rTds(mhF)}</tr>
+        </tbody></table></div>
+        <div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📦 Ringkasan Per Hub</div></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Hub</th><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">TAT</th><th class="num">Total Cost</th><th class="num">Cost/Trip</th></tr></thead>
+        <tbody>${[...HCI_HUBS,...AHI_HUBS].map(hub=>{const hm=metrics(fRows.filter(r=>r.hub===hub)),bu=RAW.find(r=>r.hub===hub)?.bu||'',hpid=HUB_PAGE[hub];
+          return`<tr><td style="cursor:pointer;color:var(--ahi)" onclick="showPage('${hpid}')">Hub ${hub}</td>
+          <td><span class="tag tag-${bu.toLowerCase()}">${bu}</span></td>
+          <td class="num">${fmt(hm.trips)}</td><td class="num">${fmt(hm.total_do)}</td>
+          <td class="num">${hm.tat_avg}</td><td class="num">${fmtM(hm.total_cost)}</td><td class="num ratio-val">${fmtM(hm.cost_per_trip)}</td></tr>`;}).join('')}
+        </tbody></table></div></div></div>`;
+    } else if(pid==='ahi'||pid==='hci'){
+      extra=hubTblHTML(fRows,hList,pid==='ahi'?'ahi':'hci');
+    }
+
+    // Build overview content
+    const overviewHTML=`${kpiHTML(m)}${extra}
+      <div class="sub-nav">
+        <button class="sub-tab active" onclick="showSub(this,'${pid}','j')">📍 Per Jalur</button>
+        <button class="sub-tab" onclick="showSub(this,'${pid}','d')">🚗 Driver</button>
+        <button class="sub-tab" onclick="showSub(this,'${pid}','a')">👤 Asst Driver</button>
+      </div>
+      <div id="${pid}_j" class="sec-block show">${jalurHTML(fRows,'tJ'+pid)}</div>
+      <div id="${pid}_d" class="sec-block">${personHTML(fRows,'drv','🚗 Top Driver','tD'+pid)}</div>
+      <div id="${pid}_a" class="sec-block">${personHTML(fRows,'ast','👤 Top Asisten Driver','tA'+pid)}</div>`;
+
+    document.getElementById(pid+'_tab_overview').innerHTML=overviewHTML;
+
+    // Insight placeholder (render on demand)
+    const hasHub=(hList||[]).length>1;
+    document.getElementById(pid+'_tab_insight').innerHTML=`
+      <div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">📈 Trend Trip per Bulan</div><div class="chart-wrap"><canvas id="${pid}c1"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">💰 Total Cost per Bulan (Juta)</div><div class="chart-wrap"><canvas id="${pid}c2"></canvas></div></div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">🍩 DO Cust vs Store</div><div class="chart-wrap"><canvas id="${pid}c3"></canvas></div></div>
+        ${hasHub?`<div class="chart-card"><div class="chart-title">🏆 Trip per Hub</div><div class="chart-wrap"><canvas id="${pid}c4"></canvas></div></div>`:''}
+      </div>
+      ${hasHub?`<div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">💵 Cost/Trip per Hub (Rb)</div><div class="chart-wrap"><canvas id="${pid}c5"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">📊 Ratio per Hub</div>
+          <div style="overflow-x:auto;max-height:220px"><table><thead><tr>
+            <th>Hub</th><th class="num">DO/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>
+          </tr></thead><tbody>${(hList||HUBS).map(h=>{const hm=metrics(fRows.filter(r=>r.hub===h));return`<tr>
+            <td style="cursor:pointer;color:var(--ahi);font-size:11px" onclick="showPage('${HUB_PAGE[h]||''}')">${h}</td>
+            <td class="num ratio-val">${fmtD(hm.do_per_trip)}</td><td class="num ratio-val">${fmtM(hm.cost_per_trip)}</td>
+            <td class="num ratio-val">${fmtM(hm.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(hm.km_per_trip)}</td></tr>`;}).join('')}
+          </tbody></table></div>
+        </div>
+      </div>`:''}`;
+  });
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
 showPage('all');
 </script>
 </body>
