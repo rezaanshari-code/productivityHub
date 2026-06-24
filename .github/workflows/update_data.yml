@@ -24,7 +24,7 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
           python3 - << 'PYEOF'
-          import os, json, urllib.request, math
+          import os, json, urllib.request, urllib.parse, math, time
           import pandas as pd
 
           SPREADSHEET_ID = os.environ["SPREADSHEET_ID"]
@@ -47,23 +47,11 @@ jobs:
               if "Status LC" in df.columns:
                   df = df[df["Status LC"] != "New"].copy()
               for col in ["Total DO Cust","Total DO Store","Total DO","BBM (UJP)",
-                          "Total Cost UJP","Total Cost","Jarak (KM)","Jumlah DP",
-                          "Cost VR","Cost MPP Fee","Cost Ovt","Cost Insentif"]:
+                          "Total Cost UJP","Total Cost","Jarak (KM)","Jumlah DP"]:
                   if col in df.columns:
                       df[col] = pd.to_numeric(
                           df[col].astype(str).str.replace(",","").str.strip(),
                           errors="coerce").fillna(0)
-              # Auto-compute Total Cost jika null (formula Excel tidak terhitung)
-              if "Total Cost" in df.columns:
-                  mask = df["Total Cost"] == 0
-                  if mask.any():
-                      df.loc[mask, "Total Cost"] = (
-                          df.loc[mask, "Total Cost UJP"].fillna(0) +
-                          df.loc[mask, "Cost VR"].fillna(0) +
-                          df.loc[mask, "Cost MPP Fee"].fillna(0) +
-                          df.loc[mask, "Cost Ovt"].fillna(0) +
-                          df.loc[mask, "Cost Insentif"].fillna(0)
-                      )
               if "Jalur" in df.columns:
                   df["Jalur"] = (df["Jalur"].astype(str).str.replace("\xa0"," ").str.strip()
                       .replace({"nan":"(Tidak Ada Jalur)","-":"(Tidak Ada Jalur)","":"(Tidak Ada Jalur)"}))
@@ -80,31 +68,90 @@ jobs:
                   df["Delivery Date"] = pd.to_datetime(df["Delivery Date"], errors="coerce")
               return df
 
+          # ── Geocoding otomatis pakai Nominatim ────────────────────────────
+          def geocode_hub(hub_name):
+              """Auto geocode hub name → [lat, lon] pakai OpenStreetMap Nominatim"""
+              # Bersihkan prefix AHI/HCI dan tambah Indonesia
+              city = hub_name.replace("AHI ", "").replace("HCI ", "").strip()
+              # Map beberapa singkatan umum
+              aliases = {
+                  "Alsut": "Alam Sutera Tangerang", "MAG": "Mall Artha Gading Jakarta",
+                  "Puri": "Puri Indah Jakarta Barat", "Kasablanka": "Kasablanka Jakarta",
+                  "Gandaria": "Gandaria Jakarta Selatan", "Terasutera": "Alam Sutera Tangerang",
+                  "AYB": "Ahmad Yani Bogor", "IBCC": "Bandung Convention Centre",
+                  "Paskal": "Paskal Bandung", "Utara": "Jakarta Utara",
+                  "Cibubur": "Cibubur Jakarta", "Depok": "Depok Jawa Barat",
+                  "Bintaro": "Bintaro Tangerang Selatan", "Tasik": "Tasikmalaya",
+                  "Yogya": "Yogyakarta", "Kuta": "Kuta Bali", "Banyumas": "Purwokerto Banyumas",
+              }
+              query = aliases.get(city, city) + " Indonesia"
+              try:
+                  url = f"https://nominatim.openstreetmap.org/search?q={urllib.parse.quote(query)}&format=json&limit=1"
+                  req = urllib.request.Request(url, headers={"User-Agent": "HubDashboard/1.0"})
+                  with urllib.request.urlopen(req, timeout=10) as r:
+                      results = json.loads(r.read())
+                  if results:
+                      lat, lon = float(results[0]["lat"]), float(results[0]["lon"])
+                      print(f"   🌍 Geocoded {hub_name} → [{lat:.4f}, {lon:.4f}]")
+                      return [lat, lon]
+              except Exception as e:
+                  print(f"   ⚠️  Geocode gagal {hub_name}: {e}")
+              return None
+
+          # ── Load koordinat yang sudah ada ─────────────────────────────────
+          coords_file = "docs/hub_coords.json"
+          if os.path.exists(coords_file):
+              with open(coords_file) as f:
+                  hub_coords = json.load(f)
+              print(f"📍 Loaded {len(hub_coords)} koordinat dari {coords_file}")
+          else:
+              # Seed koordinat awal untuk hub yang sudah dikenal
+              hub_coords = {
+                  "AHI Alsut":[-6.2297,106.6541],"AHI Bintaro":[-6.2942,106.7342],
+                  "AHI MAG":[-6.1456,106.9091],"AHI Puri":[-6.1789,106.7236],
+                  "AHI Gandaria":[-6.2487,106.7797],"AHI Kasablanka":[-6.2248,106.8398],
+                  "AHI Depok":[-6.4025,106.7942],"AHI Cibubur":[-6.3691,106.8773],
+                  "AHI Terasutera":[-6.2350,106.6600],"AHI AYB":[-6.1950,106.8264],
+                  "AHI IBCC":[-6.9175,107.6191],"AHI Paskal":[-6.9024,107.5986],
+                  "AHI Semarang":[-6.9932,110.4203],"AHI Yogyakarta":[-7.7956,110.3695],
+                  "AHI Malang":[-7.9797,112.6304],"AHI Palembang":[-2.9761,104.7754],
+                  "AHI Kuta":[-8.7215,115.1698],"AHI Denpasar":[-8.6705,115.2126],
+                  "HCI Tangerang":[-6.1781,106.6297],"HCI Bogor":[-6.5971,106.8060],
+                  "HCI Utara":[-6.1345,106.8956],"HCI Bandung":[-6.9175,107.6191],
+                  "HCI Tasik":[-7.3273,108.2207],"HCI Semarang":[-6.9932,110.4003],
+                  "HCI Yogya":[-7.8014,110.3647],"HCI Kediri":[-7.8480,111.9675],
+                  "HCI Malang":[-7.9666,112.6326],"HCI Bali":[-8.4095,115.1889],
+                  "HCI Banyumas":[-7.4222,109.2350],"HCI Pekanbaru":[0.5071,101.4478],
+                  "HCI Palembang":[-2.9761,104.7754],"HCI Lampung":[-5.4295,105.2610],
+              }
+              print(f"📍 Koordinat awal: {len(hub_coords)} hub")
+
+          # ── Fetch data sheets ─────────────────────────────────────────────
           print("Mengambil data dari Google Sheets...")
           sheets = get_sheets()
           print(f"{len(sheets)} sheet: {[s['title'] for s in sheets]}")
 
           rows = []
+          all_hub_names = []
+
           for s in sheets:
               name, gid = s["title"], s["gid"]
               try:
                   df = clean(read_sheet(gid))
                   if "BU Hub" not in df.columns or len(df)==0:
                       print(f"Skip {name}"); continue
+                  all_hub_names.append(name)
                   for _, r in df.iterrows():
                       dt  = r.get("Delivery Date")
                       tat = r.get("TAT_min")
                       rows.append({
                           "d":    dt.strftime("%Y-%m-%d") if pd.notna(dt) else None,
-                          "hub":  name,
-                          "bu":   str(r.get("BU Hub","")),
+                          "hub":  name,"bu":   str(r.get("BU Hub","")),
                           "jalur":str(r.get("Jalur","(Tidak Ada Jalur)")),
                           "drv":  str(r.get("Nama Driver","")).strip(),
                           "ast":  str(r.get("Nama Asst to Driver","")).strip(),
-                          "do":   int(r["Total DO"]),
-                          "doc":  int(r["Total DO Cust"]),
-                          "dos":  int(r["Total DO Store"]),
-                          "dp":   int(r.get("Jumlah DP", 0)),
+                          "do":   int(r["Total DO"]),"doc":  int(r["Total DO Cust"]),
+                          "dos":  int(r["Total DO Store"]),"dp":   int(r.get("Jumlah DP",0)),
                           "cost": round(float(r["Total Cost"]),2),
                           "ujp":  round(float(r["Total Cost UJP"]),2),
                           "bbm":  round(float(r["BBM (UJP)"]),2),
@@ -115,6 +162,25 @@ jobs:
               except Exception as e:
                   print(f"GAGAL {name}: {e}")
 
+          # ── Auto geocode hub baru ─────────────────────────────────────────
+          new_hubs = [h for h in all_hub_names if h not in hub_coords]
+          if new_hubs:
+              print(f"\n🆕 Hub baru terdeteksi: {new_hubs}")
+              for hub in new_hubs:
+                  coords = geocode_hub(hub)
+                  if coords:
+                      hub_coords[hub] = coords
+                  time.sleep(1.1)  # Rate limit Nominatim: max 1 req/sec
+          else:
+              print("✅ Tidak ada hub baru")
+
+          # Simpan koordinat terbaru
+          os.makedirs("docs", exist_ok=True)
+          with open(coords_file, "w") as f:
+              json.dump(hub_coords, f, ensure_ascii=False, indent=2)
+          print(f"📍 Koordinat tersimpan: {len(hub_coords)} hub")
+
+          # ── Fix nan ───────────────────────────────────────────────────────
           for r in rows:
               if r["tat"] is not None:
                   try:
@@ -125,21 +191,23 @@ jobs:
 
           print(f"Total rows: {len(rows)}")
 
+          # ── Inject ke template ────────────────────────────────────────────
           with open("docs/template.html","r",encoding="utf-8") as f:
               template = f.read()
 
           final = template.replace("RAW_DATA_PLACEHOLDER", json.dumps(rows, ensure_ascii=False))
-          os.makedirs("docs", exist_ok=True)
+          final = final.replace("HUB_COORDS_PLACEHOLDER", json.dumps(hub_coords, ensure_ascii=False))
+
           with open("docs/index.html","w",encoding="utf-8") as f:
               f.write(final)
 
           print(f"DONE: docs/index.html ({os.path.getsize('docs/index.html')//1024} KB)")
           PYEOF
 
-      - name: Commit & push index.html
+      - name: Commit & push
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/index.html
+          git add docs/index.html docs/hub_coords.json
           git diff --staged --quiet || git commit -m "auto-update dashboard [$(TZ='Asia/Jakarta' date '+%Y-%m-%d %H:%M WIB')]"
           git push
