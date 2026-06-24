@@ -56,6 +56,50 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;fo
 .content.bg-hci{background:#ADD8E6}
 .content.bg-ahi{background:#F08080}
 .content.bg-all{background:#F8F8FF}
+
+/* ── Light mode overrides (active on all 3 bg variants) ── */
+.content.light-mode{color:#1a1a2e}
+.content.light-mode .sec-title{color:#1a1a2e}
+.content.light-mode .sec-sub{color:#444}
+.content.light-mode .kpi{background:rgba(255,255,255,.7);border-color:rgba(0,0,0,.1)}
+.content.light-mode .kpi-value{color:#1a1a2e}
+.content.light-mode .kpi-label{color:#555}
+.content.light-mode .kpi-sub{color:#666}
+.content.light-mode .kpi-delta.d-up{color:#059669}
+.content.light-mode .kpi-delta.d-dn{color:#dc2626}
+.content.light-mode .tbl-wrap{background:rgba(255,255,255,.75);border-color:rgba(0,0,0,.1)}
+.content.light-mode .tbl-head{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.08)}
+.content.light-mode .tbl-title{color:#1e40af}
+.content.light-mode .tbl-search{background:#fff;border-color:rgba(0,0,0,.2);color:#1a1a2e}
+.content.light-mode table th{background:rgba(0,0,0,.07);color:#1e40af;border-color:rgba(0,0,0,.08)}
+.content.light-mode table td{color:#1a1a2e;border-color:rgba(0,0,0,.07)}
+.content.light-mode tr:hover td{background:rgba(0,0,0,.04)}
+.content.light-mode .rank{color:#888}
+.content.light-mode .r1{color:#d97706}.content.light-mode .r2{color:#6b7280}.content.light-mode .r3{color:#92400e}
+.content.light-mode .ratio-val{color:#0369a1}
+.content.light-mode .inline-delta.d-up{color:#059669}
+.content.light-mode .inline-delta.d-dn{color:#dc2626}
+.content.light-mode .d-up{color:#059669}
+.content.light-mode .d-dn{color:#dc2626}
+.content.light-mode .sub-nav .sub-tab{background:rgba(255,255,255,.6);color:#555;border-color:rgba(0,0,0,.15)}
+.content.light-mode .sub-nav .sub-tab.active{background:#fff;color:#1e40af;border-color:#1e40af}
+.content.light-mode .sub-nav .sub-tab:hover{color:#1e40af;border-color:#1e40af}
+.content.light-mode .page-tabs{border-color:rgba(0,0,0,.15)}
+.content.light-mode .page-tab{color:#555}
+.content.light-mode .page-tab.active{color:#1e40af;border-bottom-color:#1e40af}
+.content.light-mode .map-card{background:rgba(255,255,255,.7);border-color:rgba(0,0,0,.1)}
+.content.light-mode .map-header{color:#1e40af;background:rgba(255,255,255,.5);border-color:rgba(0,0,0,.08)}
+.content.light-mode .chart-card{background:rgba(255,255,255,.7);border-color:rgba(0,0,0,.1)}
+.content.light-mode .chart-title{color:#1e40af}
+.content.light-mode .hub-link-ahi{color:#dc2626!important}
+.content.light-mode .hub-link-hci{color:#1d4ed8!important}
+.content.light-mode .hub-tag.hub-ahi{background:rgba(220,38,38,.12);color:#dc2626}
+.content.light-mode .hub-tag.hub-hci{background:rgba(29,78,216,.12);color:#1d4ed8}
+.content.light-mode .tag-ahi{background:rgba(220,38,38,.12);color:#dc2626}
+.content.light-mode .tag-hci{background:rgba(29,78,216,.12);color:#1d4ed8}
+.content.light-mode .empty{color:#666}
+.content.light-mode .spin-wrap{color:#666}
+.content.light-mode .badge-all{background:linear-gradient(135deg,#0369a1,#4f46e5);color:#fff}
 .content::-webkit-scrollbar{width:6px}.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 .page-wrap{max-width:1400px;margin:0 auto}
 
@@ -504,10 +548,10 @@ function showPage(pid){
   document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.toggle('active',el.dataset.pid===pid));
   // Dynamic background
   const mc=document.getElementById('mainContent');
-  mc.classList.remove('bg-hci','bg-ahi','bg-all');
-  if(pid==='hci'||pid.startsWith('hci_'))mc.classList.add('bg-hci');
-  else if(pid==='ahi'||pid.startsWith('ahi_'))mc.classList.add('bg-ahi');
-  else mc.classList.add('bg-all');
+  mc.classList.remove('bg-hci','bg-ahi','bg-all','light-mode');
+  if(pid==='hci'||pid.startsWith('hci_')){mc.classList.add('bg-hci','light-mode');}
+  else if(pid==='ahi'||pid.startsWith('ahi_')){mc.classList.add('bg-ahi','light-mode');}
+  else{mc.classList.add('bg-all','light-mode');}
   const nav=NAV.find(n=>n.id===pid)||{};
   const isHub=!!nav.hub;
   let badgeCls='badge-all',badgeLbl='ALL HUB',title='ALL Hub',sub=`${HUBS.length} Hub`;
