@@ -356,6 +356,13 @@ function metrics(rows){
 function grpBy(rows,key){const m={};for(const r of rows){const k=r[key]||'(kosong)';if(!m[k])m[k]=[];m[k].push(r);}return m;}
 const fmt=n=>n==null||isNaN(n)?'-':Math.round(n).toLocaleString('id-ID');
 const fmtD=n=>n==null||isNaN(n)?'-':Number(n).toLocaleString('id-ID',{maximumFractionDigits:1});
+function growthCell(cur,prev){
+  if(!prev||prev===0)return'<td class="num d-fl">-</td>';
+  const p=(cur-prev)/prev*100;
+  const c=p>0?'d-up':'d-dn';
+  const s=p>0?'▲':'▼';
+  return`<td class="num ${c}" style="font-weight:700">${s}${Math.abs(p).toFixed(1)}%</td>`;
+}
 const fmtM=n=>{if(!n||isNaN(n))return '-';if(n>=1e9)return(n/1e9).toFixed(2)+' M';if(n>=1e6)return(n/1e6).toFixed(1)+' Jt';if(n>=1e3)return(n/1e3).toFixed(0)+' Rb';return fmt(n);};
 
 // ── Inline delta ──────────────────────────────────────────────────────────────
@@ -629,45 +636,65 @@ function showPage(pid){
           <td class="num">${fmt(mhF.trips)}${inlineDelta(mhF.trips,mhP.trips)}</td>
           <td class="num">${fmt(mhF.total_do)}</td><td class="num">${fmt(mhF.total_dp)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td>
           <td class="num">${fmtM(mhF.total_cost)}${inlineDelta(mhF.total_cost,mhP.total_cost)}</td><td class="num">${fmtM(mhF.bbm_ujp)}</td>${rTds(mhF)}</tr>
-          <tr style="background:var(--surface2);border-top:2px solid var(--sky)">
-            <td style="color:var(--sky);font-weight:700">⚡ TOTAL</td>
-            <td class="num" style="font-weight:700">${fmt(allF.trips)}${inlineDelta(allF.trips,allP.trips)}</td>
-            <td class="num" style="font-weight:700">${fmt(allF.total_do)}</td>
-            <td class="num" style="font-weight:700">${fmt(allF.total_dp)}</td>
-            <td class="num" style="font-weight:700">${allF.tat_avg}</td>
-            <td class="num" style="font-weight:700">${fmt(allF.jarak_km)}</td>
-            <td class="num" style="font-weight:700">${fmtM(allF.total_cost)}${inlineDelta(allF.total_cost,allP.total_cost)}</td>
-            <td class="num" style="font-weight:700">${fmtM(allF.bbm_ujp)}</td>${rTds(allF)}</tr>
+          <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
+            <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmt(allF.trips)}${inlineDelta(allF.trips,allP.trips)}</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmt(allF.total_do)}</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmt(allF.total_dp)}</td>
+            <td class="num" style="font-weight:700;color:#fff">${allF.tat_avg}</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmt(allF.jarak_km)}</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmtM(allF.total_cost)}${inlineDelta(allF.total_cost,allP.total_cost)}</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmtM(allF.bbm_ujp)}</td>${rTds(allF)}</tr>
         </tbody></table></div>
 
-        <div class="tbl-wrap" style="margin-bottom:16px"><div class="tbl-head"><div class="tbl-title">📋 Perbandingan Ringkas AHI vs HCI</div></div>
-        <table><thead><tr>
-          <th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Total DP</th><th class="num">TAT</th><th class="num">DO/Trip</th><th class="num">DP/Trip</th>
-        </tr></thead><tbody>
-          <tr><td><span class="tag tag-ahi">AHI</span></td>
-          <td class="num">${fmt(maF.trips)}${inlineDelta(maF.trips,maP.trips)}</td>
-          <td class="num">${fmt(maF.total_do)}${inlineDelta(maF.total_do,maP.total_do)}</td>
-          <td class="num">${fmt(maF.total_dp)}${inlineDelta(maF.total_dp,maP.total_dp)}</td>
-          <td class="num">${maF.tat_avg}</td>
-          <td class="num ratio-val">${fmtD(maF.do_per_trip)}</td>
-          <td class="num ratio-val">${fmtD(maF.dp_per_trip)}</td></tr>
-          <tr><td><span class="tag tag-hci">HCI</span></td>
-          <td class="num">${fmt(mhF.trips)}${inlineDelta(mhF.trips,mhP.trips)}</td>
-          <td class="num">${fmt(mhF.total_do)}${inlineDelta(mhF.total_do,mhP.total_do)}</td>
-          <td class="num">${fmt(mhF.total_dp)}${inlineDelta(mhF.total_dp,mhP.total_dp)}</td>
-          <td class="num">${mhF.tat_avg}</td>
-          <td class="num ratio-val">${fmtD(mhF.do_per_trip)}</td>
-          <td class="num ratio-val">${fmtD(mhF.dp_per_trip)}</td></tr>
-          <tr style="background:var(--surface2);border-top:2px solid var(--sky)">
-            <td style="color:var(--sky);font-weight:700">⚡ TOTAL</td>
-            <td class="num" style="font-weight:700">${fmt(allF.trips)}${inlineDelta(allF.trips,allP.trips)}</td>
-            <td class="num" style="font-weight:700">${fmt(allF.total_do)}${inlineDelta(allF.total_do,allP.total_do)}</td>
-            <td class="num" style="font-weight:700">${fmt(allF.total_dp)}${inlineDelta(allF.total_dp,allP.total_dp)}</td>
-            <td class="num" style="font-weight:700">${allF.tat_avg}</td>
-            <td class="num ratio-val" style="font-weight:700">${fmtD(allF.do_per_trip)}</td>
-            <td class="num ratio-val" style="font-weight:700">${fmtD(allF.dp_per_trip)}</td></tr>
-        </tbody></table></div>
-
+        <div class="tbl-wrap" style="margin-bottom:16px">
+        <div class="tbl-head"><div class="tbl-title">📊 Overview Growth Delivery Hub AHI dan Hub HCI</div></div>
+        <div style="overflow-x:auto"><table>
+        <thead>
+          <tr>
+            <th rowspan="2">BU</th>
+            <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">Trip</th>
+            <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">Total DO</th>
+            <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">Total DP</th>
+            <th class="num" rowspan="2">TAT</th>
+            <th class="num" rowspan="2">DO/Trip</th>
+            <th class="num" rowspan="2">DP/Trip</th>
+          </tr>
+          <tr>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tag tag-ahi">AHI</span></td>
+            <td class="num">${fmt(maF.trips)}</td><td class="num" style="color:var(--muted)">${fmt(maP.trips)}</td>${growthCell(maF.trips,maP.trips)}
+            <td class="num">${fmt(maF.total_do)}</td><td class="num" style="color:var(--muted)">${fmt(maP.total_do)}</td>${growthCell(maF.total_do,maP.total_do)}
+            <td class="num">${fmt(maF.total_dp)}</td><td class="num" style="color:var(--muted)">${fmt(maP.total_dp)}</td>${growthCell(maF.total_dp,maP.total_dp)}
+            <td class="num">${maF.tat_avg}</td>
+            <td class="num ratio-val">${fmtD(maF.do_per_trip)}</td>
+            <td class="num ratio-val">${fmtD(maF.dp_per_trip)}</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-hci">HCI</span></td>
+            <td class="num">${fmt(mhF.trips)}</td><td class="num" style="color:var(--muted)">${fmt(mhP.trips)}</td>${growthCell(mhF.trips,mhP.trips)}
+            <td class="num">${fmt(mhF.total_do)}</td><td class="num" style="color:var(--muted)">${fmt(mhP.total_do)}</td>${growthCell(mhF.total_do,mhP.total_do)}
+            <td class="num">${fmt(mhF.total_dp)}</td><td class="num" style="color:var(--muted)">${fmt(mhP.total_dp)}</td>${growthCell(mhF.total_dp,mhP.total_dp)}
+            <td class="num">${mhF.tat_avg}</td>
+            <td class="num ratio-val">${fmtD(mhF.do_per_trip)}</td>
+            <td class="num ratio-val">${fmtD(mhF.dp_per_trip)}</td>
+          </tr>
+          <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
+            <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
+            <td class="num" style="color:#fff;font-weight:700">${fmt(allF.trips)}</td><td class="num" style="color:#93c5fd;font-weight:600">${fmt(allP.trips)}</td>${growthCell(allF.trips,allP.trips)}
+            <td class="num" style="color:#fff;font-weight:700">${fmt(allF.total_do)}</td><td class="num" style="color:#93c5fd;font-weight:600">${fmt(allP.total_do)}</td>${growthCell(allF.total_do,allP.total_do)}
+            <td class="num" style="color:#fff;font-weight:700">${fmt(allF.total_dp)}</td><td class="num" style="color:#93c5fd;font-weight:600">${fmt(allP.total_dp)}</td>${growthCell(allF.total_dp,allP.total_dp)}
+            <td class="num" style="color:#fff;font-weight:700">${allF.tat_avg}</td>
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(allF.do_per_trip)}</td>
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(allF.dp_per_trip)}</td>
+          </tr>
+        </tbody></table></div></div>
         ${hubTblHTML(fRows,pRows,[...HCI_HUBS,...AHI_HUBS])}`;
     } else if(pid==='ahi'||pid==='hci'){
       extra=hubTblHTML(fRows,pRows,hList);
