@@ -465,12 +465,15 @@ function switchTab(btn,pid,tab){
 
 // ── Map ───────────────────────────────────────────────────────────────────────
 let mapInst=null;
-function renderMap(fRows){
+function renderMap(fRows, hubFilter){
   if(!document.getElementById('hubMap'))return;
   if(mapInst){mapInst.remove();mapInst=null;}
-  mapInst=L.map('hubMap',{zoomControl:true,scrollWheelZoom:false}).setView([-6.5,110.0],5);
+  const centerCoord = hubFilter&&hubFilter.length===HCI_HUBS.length?[-7.0,110.0]:hubFilter&&hubFilter.length===AHI_HUBS.length?[-6.8,108.5]:[-6.5,110.0];
+  const zoomLevel = hubFilter&&hubFilter.length<5?6:5;
+  mapInst=L.map('hubMap',{zoomControl:true,scrollWheelZoom:false}).setView(centerCoord,zoomLevel);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'©OSM ©CartoDB',maxZoom:18}).addTo(mapInst);
-  HUBS.forEach(hub=>{
+  const displayHubs = hubFilter || HUBS;
+  displayHubs.forEach(hub=>{
     const coords=HUB_COORDS[hub];if(!coords)return;
     const m=metrics(filt(BY_HUB[hub]||[]));
     const bu=getBU(hub);
@@ -560,7 +563,7 @@ function showPage(pid){
       extra=hubTblHTML(fRows,pRows,hList);
     }
 
-    const mapHTML=pid==='all'?`<div class="map-card"><div class="map-header">🗺️ Peta Lokasi Hub</div><div id="hubMap"></div></div>`:'';
+    const mapHTML=(pid==='all'||pid==='ahi'||pid==='hci')?`<div class="map-card"><div class="map-header">🗺️ Peta Lokasi Hub</div><div id="hubMap"></div></div>`:'';
 
     document.getElementById(pid+'_tab_overview').innerHTML=`${mapHTML}${kpiHTML(m,mp)}${extra}
       <div class="sub-nav">
@@ -572,7 +575,7 @@ function showPage(pid){
       <div id="${pid}_d" class="sec-block">${personHTML(fRows,pRows,'drv','🚗 Top Driver','tD'+pid,showHub)}</div>
       <div id="${pid}_a" class="sec-block">${personHTML(fRows,pRows,'ast','👤 Top Asisten Driver','tA'+pid,showHub)}</div>`;
 
-    if(pid==='all')setTimeout(()=>renderMap(fRows),100);
+    if(pid==='all'||pid==='ahi'||pid==='hci')setTimeout(()=>renderMap(fRows, hList),100);
 
     const hm=(hList||HUBS).map(h=>({h,m:metrics(fRows.filter(r=>r.hub===h))}));
     const hasHub=hm.length>1;
