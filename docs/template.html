@@ -137,7 +137,8 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;fo
 .badge-all{background:linear-gradient(135deg,var(--sky),var(--violet));color:#fff}
 .badge-ahi{background:var(--ahi);color:#fff}
 .badge-hci{background:var(--hci);color:#fff}
-.sec-title{font-size:18px;font-weight:700;color:var(--text)}
+.sec-title{font-size:18px;font-weight:700;color:#f1f5f9}
+.content.bg-ahi .sec-title{color:#3d0a0a!important}
 .sec-sub{color:var(--muted);font-size:11px;margin-top:2px}
 
 /* PAGE TABS */
@@ -378,7 +379,11 @@ function deltaKPI(cur,prev,key){
   const pct=(cur[key]-prev[key])/prev[key]*100;
   const cls=pct>0?'d-up':'d-dn';
   const sign=pct>0?'▲':'▼';
-  return`<div class="kpi-delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs prev</div>`;
+  let pv;
+  if(['total_cost','total_ujp','bbm_ujp','ujp_per_trip','cost_per_trip','bbm_per_trip'].includes(key))pv=fmtM(prev[key]);
+  else if(['do_per_trip','dp_per_trip','km_per_trip'].includes(key))pv=fmtD(prev[key]);
+  else pv=fmt(prev[key]);
+  return`<div class="kpi-delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs prev (${pv})</div>`;
 }
 
 // ── KPI ───────────────────────────────────────────────────────────────────────
