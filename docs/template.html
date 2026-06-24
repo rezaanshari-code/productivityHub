@@ -184,20 +184,7 @@ tr:hover td{background:var(--surface2)}
 <script>
 const RAW = RAW_DATA_PLACEHOLDER;
 
-const HUB_COORDS = {
-  'AHI Alsut':[-6.2297,106.6541],'AHI Bintaro':[-6.2942,106.7342],'AHI MAG':[-6.1456,106.9091],
-  'AHI Puri':[-6.1789,106.7236],'AHI Gandaria':[-6.2487,106.7797],'AHI Kasablanka':[-6.2248,106.8398],
-  'AHI Depok':[-6.4025,106.7942],'AHI Cibubur':[-6.3691,106.8773],'AHI Terasutera':[-6.2350,106.6600],
-  'AHI AYB':[-6.1950,106.8264],'AHI IBCC':[-6.9175,107.6191],'AHI Paskal':[-6.9024,107.5986],
-  'AHI Semarang':[-6.9932,110.4203],'AHI Yogyakarta':[-7.7956,110.3695],'AHI Malang':[-7.9797,112.6304],
-  'AHI Palembang':[-2.9761,104.7754],'AHI Kuta':[-8.7215,115.1698],'AHI Denpasar':[-8.6705,115.2126],
-  'HCI Tangerang':[-6.1781,106.6297],'HCI Bogor':[-6.5971,106.8060],'HCI Utara':[-6.1345,106.8956],
-  'HCI Bandung':[-6.9175,107.6191],'HCI Tasik':[-7.3273,108.2207],'HCI Semarang':[-6.9932,110.4003],
-  'HCI Yogya':[-7.8014,110.3647],'HCI Kediri':[-7.8480,111.9675],'HCI Malang':[-7.9666,112.6326],
-  'HCI Bali':[-8.4095,115.1889],'HCI Banyumas':[-7.4222,109.2350],'HCI Pekanbaru':[0.5071,101.4478],
-  'HCI Palembang':[-2.9761,104.7754],
-  'HCI Lampung':[-5.4295,105.2610],
-};
+const HUB_COORDS = HUB_COORDS_PLACEHOLDER;
 
 const HUBS=[...new Set(RAW.map(r=>r.hub))];
 const AHI_HUBS=HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='AHI');
