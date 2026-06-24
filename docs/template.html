@@ -53,13 +53,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;fo
 .dot-all{background:var(--sky)}.dot-ahi{background:var(--ahi)}.dot-hci{background:var(--hci)}
 
 .content{flex:1;overflow-y:auto;padding:16px;transition:background .3s}
-.content.bg-hci{
-  background:#ADD8E6;
-  --text:#0a1628;--muted:#1e3a5f;--surface:rgba(255,255,255,.65);
-  --surface2:rgba(200,228,240,.7);--border:rgba(30,58,138,.2);--sky:#0369a1;
-  --mint:#065f46;--amber:#92400e;--rose:#9f1239;--violet:#4c1d95;--cyan:#0e7490;
-  --green:#065f46;--red:#9f1239;
-}
+.content.bg-hci{background:var(--bg)}
 .content.bg-ahi{
   background:#F08080;
   --text:#3d0a0a;--muted:#7f1d1d;--surface:rgba(255,255,255,.65);
@@ -67,37 +61,29 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;fo
   --mint:#065f46;--amber:#92400e;--rose:#9f1239;--violet:#4c1d95;--cyan:#0e7490;
   --green:#065f46;--red:#7f1d1d;
 }
-.content.bg-all{
-  background:#F8F8FF;
-  --text:#1a1a2e;--muted:#4a5568;--surface:rgba(255,255,255,.8);
-  --surface2:rgba(235,235,250,.9);--border:rgba(0,0,0,.1);--sky:#0369a1;
-  --mint:#065f46;--amber:#92400e;--rose:#9f1239;--violet:#4c1d95;--cyan:#0e7490;
-  --green:#065f46;--red:#9f1239;
-}
-/* Force text color for light backgrounds */
-.content.bg-hci *,.content.bg-ahi *,.content.bg-all *{color:inherit}
-.content.bg-hci .sec-title,.content.bg-ahi .sec-title,.content.bg-all .sec-title{color:var(--text)!important}
-.content.bg-hci td,.content.bg-ahi td,.content.bg-all td{color:var(--text)}
-.content.bg-hci th,.content.bg-ahi th,.content.bg-all th{color:var(--sky)!important}
-.content.bg-hci .kpi-value,.content.bg-ahi .kpi-value,.content.bg-all .kpi-value{color:var(--text)!important}
-.content.bg-hci .kpi-label,.content.bg-ahi .kpi-label,.content.bg-all .kpi-label{color:var(--muted)!important}
-.content.bg-hci .kpi-sub,.content.bg-ahi .kpi-sub,.content.bg-all .kpi-sub{color:var(--muted)!important}
-.content.bg-hci .sec-sub,.content.bg-ahi .sec-sub,.content.bg-all .sec-sub{color:var(--muted)!important}
-.content.bg-hci .tbl-title,.content.bg-ahi .tbl-title,.content.bg-all .tbl-title{color:var(--sky)!important}
-.content.bg-hci .filter-info,.content.bg-ahi .filter-info,.content.bg-all .filter-info{color:var(--muted)!important}
-.content.bg-hci .ratio-val,.content.bg-ahi .ratio-val,.content.bg-all .ratio-val{color:var(--sky)!important}
-.content.bg-hci .page-tab.active,.content.bg-ahi .page-tab.active,.content.bg-all .page-tab.active{color:var(--sky)!important;border-bottom-color:var(--sky)!important}
-.content.bg-hci .page-tab,.content.bg-ahi .page-tab,.content.bg-all .page-tab{color:var(--muted)!important}
-.content.bg-hci .sub-tab,.content.bg-ahi .sub-tab,.content.bg-all .sub-tab{color:var(--muted)!important}
-.content.bg-hci .sub-tab.active,.content.bg-ahi .sub-tab.active,.content.bg-all .sub-tab.active{color:var(--sky)!important;border-color:var(--sky)!important}
-.content.bg-hci .rank,.content.bg-ahi .rank,.content.bg-all .rank{color:var(--muted)!important}
-.content.bg-hci .d-up,.content.bg-ahi .d-up,.content.bg-all .d-up{color:#065f46!important}
-.content.bg-hci .d-dn,.content.bg-ahi .d-dn,.content.bg-all .d-dn{color:#9f1239!important}
-.content.bg-hci .delta-up,.content.bg-ahi .delta-up,.content.bg-all .delta-up{color:#065f46!important}
-.content.bg-hci .delta-down,.content.bg-ahi .delta-down,.content.bg-all .delta-down{color:#9f1239!important}
-.content.bg-hci .chart-title,.content.bg-ahi .chart-title,.content.bg-all .chart-title{color:var(--sky)!important}
-.content.bg-hci .map-header,.content.bg-ahi .map-header,.content.bg-all .map-header{color:var(--sky)!important}
-.content.bg-hci .sidebar-group-label,.content.bg-ahi .sidebar-group-label,.content.bg-all .sidebar-group-label{color:var(--muted)}
+.content.bg-all{background:var(--bg)}
+/* Force text color for AHI light background only */
+.content.bg-ahi *{color:inherit}
+.content.bg-ahi .sec-title{color:var(--text)!important}
+.content.bg-ahi td{color:var(--text)}
+.content.bg-ahi th{color:var(--sky)!important}
+.content.bg-ahi .kpi-value{color:var(--text)!important}
+.content.bg-ahi .kpi-label{color:var(--muted)!important}
+.content.bg-ahi .kpi-sub{color:var(--muted)!important}
+.content.bg-ahi .sec-sub{color:var(--muted)!important}
+.content.bg-ahi .tbl-title{color:var(--sky)!important}
+.content.bg-ahi .ratio-val{color:var(--sky)!important}
+.content.bg-ahi .page-tab.active{color:var(--sky)!important;border-bottom-color:var(--sky)!important}
+.content.bg-ahi .page-tab{color:var(--muted)!important}
+.content.bg-ahi .sub-tab{color:var(--muted)!important}
+.content.bg-ahi .sub-tab.active{color:var(--sky)!important;border-color:var(--sky)!important}
+.content.bg-ahi .rank{color:var(--muted)!important}
+.content.bg-ahi .d-up{color:#065f46!important}
+.content.bg-ahi .d-dn{color:#9f1239!important}
+.content.bg-ahi .delta-up{color:#065f46!important}
+.content.bg-ahi .delta-down{color:#9f1239!important}
+.content.bg-ahi .chart-title{color:var(--sky)!important}
+.content.bg-ahi .map-header{color:var(--sky)!important}
 
 /* ── Light mode overrides (active on all 3 bg variants) ── */
 .content.light-mode{color:#1a1a2e}
@@ -630,7 +616,9 @@ function showPage(pid){
     if(pid==='all'){
       const maF=metrics(filt(RAW.filter(r=>r.bu==='AHI'))),maP=metrics(filtPrev(RAW.filter(r=>r.bu==='AHI')));
       const mhF=metrics(filt(RAW.filter(r=>r.bu==='HCI'))),mhP=metrics(filtPrev(RAW.filter(r=>r.bu==='HCI')));
-      extra=`<div class="tbl-wrap" style="margin-bottom:16px"><div class="tbl-head"><div class="tbl-title">📊 ALL HUB AHI vs ALL HUB HCI</div></div>
+      // Total combined
+    const allF=metrics(fRows),allP=metrics(pRows);
+    extra=`<div class="tbl-wrap" style="margin-bottom:16px"><div class="tbl-head"><div class="tbl-title">📊 ALL HUB AHI vs ALL HUB HCI</div></div>
         <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Total DP</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th>${rThs}</tr></thead>
         <tbody>
           <tr><td><span class="tag tag-ahi">AHI</span></td>
@@ -641,7 +629,45 @@ function showPage(pid){
           <td class="num">${fmt(mhF.trips)}${inlineDelta(mhF.trips,mhP.trips)}</td>
           <td class="num">${fmt(mhF.total_do)}</td><td class="num">${fmt(mhF.total_dp)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td>
           <td class="num">${fmtM(mhF.total_cost)}${inlineDelta(mhF.total_cost,mhP.total_cost)}</td><td class="num">${fmtM(mhF.bbm_ujp)}</td>${rTds(mhF)}</tr>
+          <tr style="background:var(--surface2);border-top:2px solid var(--sky)">
+            <td style="color:var(--sky);font-weight:700">⚡ TOTAL</td>
+            <td class="num" style="font-weight:700">${fmt(allF.trips)}${inlineDelta(allF.trips,allP.trips)}</td>
+            <td class="num" style="font-weight:700">${fmt(allF.total_do)}</td>
+            <td class="num" style="font-weight:700">${fmt(allF.total_dp)}</td>
+            <td class="num" style="font-weight:700">${allF.tat_avg}</td>
+            <td class="num" style="font-weight:700">${fmt(allF.jarak_km)}</td>
+            <td class="num" style="font-weight:700">${fmtM(allF.total_cost)}${inlineDelta(allF.total_cost,allP.total_cost)}</td>
+            <td class="num" style="font-weight:700">${fmtM(allF.bbm_ujp)}</td>${rTds(allF)}</tr>
         </tbody></table></div>
+
+        <div class="tbl-wrap" style="margin-bottom:16px"><div class="tbl-head"><div class="tbl-title">📋 Perbandingan Ringkas AHI vs HCI</div></div>
+        <table><thead><tr>
+          <th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Total DP</th><th class="num">TAT</th><th class="num">DO/Trip</th><th class="num">DP/Trip</th>
+        </tr></thead><tbody>
+          <tr><td><span class="tag tag-ahi">AHI</span></td>
+          <td class="num">${fmt(maF.trips)}${inlineDelta(maF.trips,maP.trips)}</td>
+          <td class="num">${fmt(maF.total_do)}${inlineDelta(maF.total_do,maP.total_do)}</td>
+          <td class="num">${fmt(maF.total_dp)}${inlineDelta(maF.total_dp,maP.total_dp)}</td>
+          <td class="num">${maF.tat_avg}</td>
+          <td class="num ratio-val">${fmtD(maF.do_per_trip)}</td>
+          <td class="num ratio-val">${fmtD(maF.dp_per_trip)}</td></tr>
+          <tr><td><span class="tag tag-hci">HCI</span></td>
+          <td class="num">${fmt(mhF.trips)}${inlineDelta(mhF.trips,mhP.trips)}</td>
+          <td class="num">${fmt(mhF.total_do)}${inlineDelta(mhF.total_do,mhP.total_do)}</td>
+          <td class="num">${fmt(mhF.total_dp)}${inlineDelta(mhF.total_dp,mhP.total_dp)}</td>
+          <td class="num">${mhF.tat_avg}</td>
+          <td class="num ratio-val">${fmtD(mhF.do_per_trip)}</td>
+          <td class="num ratio-val">${fmtD(mhF.dp_per_trip)}</td></tr>
+          <tr style="background:var(--surface2);border-top:2px solid var(--sky)">
+            <td style="color:var(--sky);font-weight:700">⚡ TOTAL</td>
+            <td class="num" style="font-weight:700">${fmt(allF.trips)}${inlineDelta(allF.trips,allP.trips)}</td>
+            <td class="num" style="font-weight:700">${fmt(allF.total_do)}${inlineDelta(allF.total_do,allP.total_do)}</td>
+            <td class="num" style="font-weight:700">${fmt(allF.total_dp)}${inlineDelta(allF.total_dp,allP.total_dp)}</td>
+            <td class="num" style="font-weight:700">${allF.tat_avg}</td>
+            <td class="num ratio-val" style="font-weight:700">${fmtD(allF.do_per_trip)}</td>
+            <td class="num ratio-val" style="font-weight:700">${fmtD(allF.dp_per_trip)}</td></tr>
+        </tbody></table></div>
+
         ${hubTblHTML(fRows,pRows,[...HCI_HUBS,...AHI_HUBS])}`;
     } else if(pid==='ahi'||pid==='hci'){
       extra=hubTblHTML(fRows,pRows,hList);
