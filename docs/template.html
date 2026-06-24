@@ -52,7 +52,10 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;fo
 .sidebar-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .dot-all{background:var(--sky)}.dot-ahi{background:var(--ahi)}.dot-hci{background:var(--hci)}
 
-.content{flex:1;overflow-y:auto;padding:16px}
+.content{flex:1;overflow-y:auto;padding:16px;transition:background .3s}
+.content.bg-hci{background:linear-gradient(160deg,#060f1f 0%,#0a1628 40%,#0d1117 100%)}
+.content.bg-ahi{background:linear-gradient(160deg,#1a0808 0%,#200d10 40%,#0d1117 100%)}
+.content.bg-all{background:var(--bg)}
 .content::-webkit-scrollbar{width:6px}.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 .page-wrap{max-width:1400px;margin:0 auto}
 
@@ -305,7 +308,7 @@ function kpiHTML(m,mp){
   return`<div class="kpi-grid">
     <div class="kpi t-sky"><div class="kpi-label">Total Trip</div><div class="kpi-value">${fmt(m.trips)}</div>${d('trips')}<div class="kpi-sub">Pengiriman aktif</div></div>
     <div class="kpi t-mint"><div class="kpi-label">Total DO</div><div class="kpi-value">${fmt(m.total_do)}</div>${d('total_do')}<div class="kpi-sub">Cust: ${fmt(m.do_cust)} | Store: ${fmt(m.do_store)}</div></div>
-    <div class="kpi t-amber"><div class="kpi-label">Jumlah DP</div><div class="kpi-value">${fmt(m.total_dp)}</div>${d('total_dp')}<div class="kpi-sub">${fmtD(m.dp_per_trip)} DP/trip</div></div>
+    <div class="kpi t-amber"><div class="kpi-label">Total DP</div><div class="kpi-value">${fmt(m.total_dp)}</div>${d('total_dp')}<div class="kpi-sub">${fmtD(m.dp_per_trip)} DP/trip</div></div>
     <div class="kpi t-violet"><div class="kpi-label">TAT Rata-rata</div><div class="kpi-value">${m.tat_avg}</div><div class="kpi-sub">Jam:Menit per trip</div></div>
     <div class="kpi t-rose"><div class="kpi-label">Jarak KM</div><div class="kpi-value">${fmt(m.jarak_km)}</div>${d('jarak_km')}<div class="kpi-sub">${fmtD(m.km_per_trip)} km/trip</div></div>
     <div class="kpi t-cyan"><div class="kpi-label">Total Cost</div><div class="kpi-value">${fmtM(m.total_cost)}</div>${d('total_cost')}<div class="kpi-sub">${fmtM(m.cost_per_trip)}/trip</div></div>
@@ -317,7 +320,7 @@ function kpiHTML(m,mp){
 }
 
 // ── Table helpers ─────────────────────────────────────────────────────────────
-const rThs=`<th class="num">Jml DP</th><th class="num">DO/Trip</th><th class="num">DP/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>`;
+const rThs=`<th class="num">Total DP</th><th class="num">DO/Trip</th><th class="num">DP/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>`;
 const rTds=m=>`<td class="num ratio-val">${fmt(m.total_dp)}</td><td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtD(m.dp_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td><td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td>`;
 
 function getBU(hub){return RAW.find(r=>r.hub===hub)?.bu||'AHI';}
@@ -392,7 +395,7 @@ function personHTML(rows,prevRows,col,title,uid,showHub){
 function hubTblHTML(fRows,pRows,hList){
   return`<div class="tbl-wrap" style="margin-bottom:16px"><div class="tbl-head"><div class="tbl-title">📦 Detail Per Hub</div></div>
     <div style="overflow-x:auto"><table><thead><tr>
-    <th>Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Jml DP</th><th class="num">DO Cust</th><th class="num">DO Store</th>
+    <th>Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Total DP</th><th class="num">DO Cust</th><th class="num">DO Store</th>
     <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>${rThs}
     </tr></thead><tbody>${hList.map(hub=>{
       const m=metrics(fRows.filter(r=>r.hub===hub));
@@ -499,6 +502,12 @@ function isMultiHub(pid){return pid==='all'||pid==='ahi'||pid==='hci';}
 function showPage(pid){
   curPid=pid;
   document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.toggle('active',el.dataset.pid===pid));
+  // Dynamic background
+  const mc=document.getElementById('mainContent');
+  mc.classList.remove('bg-hci','bg-ahi','bg-all');
+  if(pid==='hci'||pid.startsWith('hci_'))mc.classList.add('bg-hci');
+  else if(pid==='ahi'||pid.startsWith('ahi_'))mc.classList.add('bg-ahi');
+  else mc.classList.add('bg-all');
   const nav=NAV.find(n=>n.id===pid)||{};
   const isHub=!!nav.hub;
   let badgeCls='badge-all',badgeLbl='ALL HUB',title='ALL Hub',sub=`${HUBS.length} Hub`;
@@ -536,7 +545,7 @@ function showPage(pid){
       const maF=metrics(filt(RAW.filter(r=>r.bu==='AHI'))),maP=metrics(filtPrev(RAW.filter(r=>r.bu==='AHI')));
       const mhF=metrics(filt(RAW.filter(r=>r.bu==='HCI'))),mhP=metrics(filtPrev(RAW.filter(r=>r.bu==='HCI')));
       extra=`<div class="tbl-wrap" style="margin-bottom:16px"><div class="tbl-head"><div class="tbl-title">📊 ALL HUB AHI vs ALL HUB HCI</div></div>
-        <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Jml DP</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th>${rThs}</tr></thead>
+        <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Total DP</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th>${rThs}</tr></thead>
         <tbody>
           <tr><td><span class="tag tag-ahi">AHI</span></td>
           <td class="num">${fmt(maF.trips)}${inlineDelta(maF.trips,maP.trips)}</td>
