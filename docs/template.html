@@ -131,6 +131,8 @@ tr:hover td{background:var(--surface2)}
 .map-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
 .map-header{padding:10px 14px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px;color:var(--sky);background:linear-gradient(135deg,var(--surface2),var(--surface))}
 #hubMap{height:300px;width:100%}
+.hub-map-label{background:rgba(13,17,23,.85)!important;border:1px solid rgba(56,189,248,.4)!important;border-radius:4px!important;color:#f1f5f9!important;font-size:10px!important;font-weight:700!important;padding:2px 6px!important;box-shadow:0 2px 6px rgba(0,0,0,.4)!important;white-space:nowrap!important}
+.hub-map-label::before{display:none!important}
 
 /* MISC */
 .summary-col{display:flex;flex-direction:column;gap:14px;margin-bottom:16px}
@@ -474,7 +476,7 @@ function renderMap(fRows){
     const bu=getBU(hub);
     const color=bu==='HCI'?'#38bdf8':'#fb7185';
     const r=Math.max(8,Math.min(22,6+m.trips/80));
-    L.circleMarker(coords,{radius:r,fillColor:color,color:'#fff',weight:1.5,opacity:.9,fillOpacity:.75})
+    const marker = L.circleMarker(coords,{radius:r,fillColor:color,color:'#fff',weight:1.5,opacity:.9,fillOpacity:.75})
       .bindPopup(`<div style="font-family:Segoe UI;min-width:160px;font-size:12px">
         <b style="color:${color};font-size:13px">${hub}</b><br>
         <span style="color:#888">BU ${bu}</span><hr style="margin:4px 0;border-color:#ddd">
@@ -482,7 +484,12 @@ function renderMap(fRows){
         Total DO: <b>${fmt(m.total_do)}</b><br>
         Total Cost: <b>${fmtM(m.total_cost)}</b><br>
         TAT: <b>${m.tat_avg}</b>
-      </div>`).addTo(mapInst);
+      </div>`)
+      .bindTooltip(hub.replace(/^(AHI|HCI) /,''), {
+        permanent: true, direction: 'top', offset: [0, -r],
+        className: 'hub-map-label'
+      })
+      .addTo(mapInst);
   });
 }
 
