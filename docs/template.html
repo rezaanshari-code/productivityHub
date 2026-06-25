@@ -678,7 +678,15 @@ function renderBBM(pid, fRows, hubList){
   });
 
   const jenisColors = ['#38bdf8','#f59e0b','#34d399','#a78bfa','#fb7185','#06b6d4','#f97316'];
-  const jenisEntries = Object.entries(byJenis).sort((a,b)=>b[1].trip-a[1].trip);
+  // Rename 'Rechecked' → 'Fuel Type On Checked'
+  if(byJenis['Rechecked']){byJenis['Fuel Type On Checked']=byJenis['Rechecked'];delete byJenis['Rechecked'];}
+
+  // Sort by trip desc, but always put 'Fuel Type On Checked' last
+  const jenisEntries = Object.entries(byJenis).sort((a,b)=>{
+    if(a[0]==='Fuel Type On Checked') return 1;
+    if(b[0]==='Fuel Type On Checked') return -1;
+    return b[1].trip - a[1].trip;
+  });
 
   // KPI Cards
   const kpiSection = `<div class="kpi-grid" style="margin-bottom:16px">
