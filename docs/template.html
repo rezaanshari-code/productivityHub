@@ -377,6 +377,60 @@ function growthCell(cur,prev){
   const s=p>0?'▲':'▼';
   return`<td class="num ${c}" style="font-weight:700">${s}${Math.abs(p).toFixed(1)}%</td>`;
 }
+function hubGrowthTableHTML(fRows, pRows, hubList){
+  const rows = hubList.map(hub => {
+    const mF = metrics(fRows.filter(r=>r.hub===hub));
+    const mP = metrics(pRows?pRows.filter(r=>r.hub===hub):[]);
+    const bu = getBU(hub);
+    const pid = HUB_PAGE[hub]||'';
+    const cls = bu==='HCI'?'hub-link-hci':'hub-link-ahi';
+    return `<tr>
+      <td class="${cls}" onclick="showPage('${pid}')" style="white-space:nowrap">Hub ${hub.replace(/^(AHI|HCI) /,'$1 ')}</td>
+      <td class="num">${fmt(mF.trips)}</td><td class="num" style="color:var(--muted)">${fmt(mP.trips)}</td>${growthCell(mF.trips,mP.trips)}
+      <td class="num">${fmt(mF.total_do)}</td><td class="num" style="color:var(--muted)">${fmt(mP.total_do)}</td>${growthCell(mF.total_do,mP.total_do)}
+      <td class="num">${fmt(mF.total_dp)}</td><td class="num" style="color:var(--muted)">${fmt(mP.total_dp)}</td>${growthCell(mF.total_dp,mP.total_dp)}
+      <td class="num">${mF.tat_avg}</td><td class="num" style="color:var(--muted)">${mP.tat_avg}</td>${growthCell(mF.tat_minutes,mP.tat_minutes)}
+      <td class="num ratio-val">${fmtD(mF.do_per_trip)}</td><td class="num" style="color:var(--muted)">${fmtD(mP.do_per_trip)}</td>${growthCell(mF.do_per_trip,mP.do_per_trip)}
+      <td class="num ratio-val">${fmtD(mF.dp_per_trip)}</td><td class="num" style="color:var(--muted)">${fmtD(mP.dp_per_trip)}</td>${growthCell(mF.dp_per_trip,mP.dp_per_trip)}
+    </tr>`;
+  }).join('');
+  // Total row
+  const allF=metrics(fRows), allP=metrics(pRows||[]);
+  return `<div class="tbl-wrap" style="margin-bottom:16px">
+    <div class="tbl-head"><div class="tbl-title">📊 Overview Growth Delivery per Hub</div></div>
+    <div style="overflow-x:auto"><table>
+    <thead>
+      <tr>
+        <th rowspan="2">Hub</th>
+        <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Trip</th>
+        <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Total DO</th>
+        <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Total DP</th>
+        <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">TAT</th>
+        <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">DO/Trip</th>
+        <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">DP/Trip</th>
+      </tr>
+      <tr>
+        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+      <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
+        <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
+        <td class="num" style="color:#fff;font-weight:700">${fmt(allF.trips)}</td><td class="num" style="color:#93c5fd">${fmt(allP.trips)}</td>${growthCell(allF.trips,allP.trips)}
+        <td class="num" style="color:#fff;font-weight:700">${fmt(allF.total_do)}</td><td class="num" style="color:#93c5fd">${fmt(allP.total_do)}</td>${growthCell(allF.total_do,allP.total_do)}
+        <td class="num" style="color:#fff;font-weight:700">${fmt(allF.total_dp)}</td><td class="num" style="color:#93c5fd">${fmt(allP.total_dp)}</td>${growthCell(allF.total_dp,allP.total_dp)}
+        <td class="num" style="color:#fff;font-weight:700">${allF.tat_avg}</td><td class="num" style="color:#93c5fd">${allP.tat_avg}</td>${growthCell(allF.tat_minutes,allP.tat_minutes)}
+        <td class="num" style="color:var(--sky);font-weight:700">${fmtD(allF.do_per_trip)}</td><td class="num" style="color:#93c5fd">${fmtD(allP.do_per_trip)}</td>${growthCell(allF.do_per_trip,allP.do_per_trip)}
+        <td class="num" style="color:var(--sky);font-weight:700">${fmtD(allF.dp_per_trip)}</td><td class="num" style="color:#93c5fd">${fmtD(allP.dp_per_trip)}</td>${growthCell(allF.dp_per_trip,allP.dp_per_trip)}
+      </tr>
+    </tbody></table></div></div>`;
+}
 const fmtM=n=>{if(!n||isNaN(n))return '-';if(n>=1e9)return(n/1e9).toFixed(2)+' M';if(n>=1e6)return(n/1e6).toFixed(1)+' Jt';if(n>=1e3)return(n/1e3).toFixed(0)+' Rb';return fmt(n);};
 
 // ── Inline delta ──────────────────────────────────────────────────────────────
@@ -718,7 +772,7 @@ function showPage(pid){
         </tbody></table></div></div>
         ${hubTblHTML(fRows,pRows,[...HCI_HUBS,...AHI_HUBS])}`;
     } else if(pid==='ahi'||pid==='hci'){
-      extra=hubTblHTML(fRows,pRows,hList);
+      extra=hubTblHTML(fRows,pRows,hList)+hubGrowthTableHTML(fRows,pRows,hList);
     }
 
     const mapHTML=(pid==='all'||pid==='ahi'||pid==='hci')?`<div class="map-card"><div class="map-header">🗺️ Peta Lokasi Hub</div><div id="hubMap"></div></div>`:'';
