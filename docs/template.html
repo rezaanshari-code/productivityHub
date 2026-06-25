@@ -604,7 +604,9 @@ function switchTab(btn,pid,tab){
   btn.closest('.page-tabs').querySelectorAll('.page-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
   document.querySelectorAll('.tab-pane[data-pid="'+pid+'"]').forEach(t=>t.classList.remove('active'));
   const pane=document.getElementById(pid+'_tab_'+tab);
-  if(pane){pane.classList.add('active');if(tab==='insight')renderCharts(pid,filt(getRows(pid)),getHList(pid));}
+  if(pane){pane.classList.add('active');if(tab==='insight')renderCharts(pid,filt(getRows(pid)),getHList(pid));
+    if(tab==='bbm')renderBBM(pid,filt(getRows(pid)),getHList(pid));
+  }
 }
 
 // ── Map ───────────────────────────────────────────────────────────────────────
@@ -651,6 +653,119 @@ function getHList(pid){
 function isMultiHub(pid){return pid==='all'||pid==='ahi'||pid==='hci';}
 
 // ── Show page ─────────────────────────────────────────────────────────────────
+function renderBBM(pid, fRows, hubList){
+  const pane = document.getElementById(pid+'_tab_bbm');
+  if(!pane) return;
+
+  const totalTrip = fRows.length;
+  const totalBbm  = fRows.reduce((s,r)=>s+(r.bbm||0),0);
+  const totalVol  = fRows.reduce((s,r)=>s+(r.vol||0),0);
+  const totalKm   = fRows.reduce((s,r)=>s+(r.km||0),0);
+  const bbmPerTrip = totalTrip ? Math.round(totalBbm/totalTrip) : 0;
+  const kmPerTrip  = totalTrip ? +(totalKm/totalTrip).toFixed(1) : 0;
+  const kmPerLiter = totalVol  ? +(totalKm/totalVol).toFixed(2) : 0;
+
+  // Group by Jenis BBM
+  const byJenis = {};
+  fRows.forEach(r=>{
+    const j = (r.jbbm&&r.jbbm!='nan'&&r.jbbm!='') ? r.jbbm : '(Tidak Diisi)';
+    if(!byJenis[j]) byJenis[j]={trip:0,bbm:0,vol:0,km:0};
+    byJenis[j].trip++;
+    byJenis[j].bbm += (r.bbm||0);
+    byJenis[j].vol += (r.vol||0);
+    byJenis[j].km  += (r.km||0);
+  });
+
+  const jenisColors = ['#38bdf8','#f59e0b','#34d399','#a78bfa','#fb7185','#06b6d4','#f97316'];
+  const jenisEntries = Object.entries(byJenis).sort((a,b)=>b[1].trip-a[1].trip);
+
+  // KPI Cards
+  const kpiSection = `<div class="kpi-grid" style="margin-bottom:16px">
+    <div class="kpi t-sky"><div class="kpi-label">Total Trip</div><div class="kpi-value">${fmt(totalTrip)}</div><div class="kpi-sub">Pengiriman aktif</div></div>
+    <div class="kpi t-amber"><div class="kpi-label">Biaya BBM</div><div class="kpi-value">${fmtM(totalBbm)}</div><div class="kpi-sub">${fmtM(bbmPerTrip)}/trip</div></div>
+    <div class="kpi t-green"><div class="kpi-label">Volume BBM</div><div class="kpi-value">${fmtD(totalVol)} L</div><div class="kpi-sub">${fmtD(totalVol&&totalTrip?+(totalVol/totalTrip).toFixed(1):0)} L/trip</div></div>
+    <div class="kpi t-cyan"><div class="kpi-label">Jarak KM</div><div class="kpi-value">${fmt(totalKm)}</div><div class="kpi-sub">${fmtD(kmPerTrip)} km/trip</div></div>
+    <div class="kpi t-violet"><div class="kpi-label">KM/Liter</div><div class="kpi-value">${fmtD(kmPerLiter)}</div><div class="kpi-sub">Efisiensi BBM</div></div>
+  </div>`;
+
+  // Jenis BBM Cards
+  const jenisCards = `<div style="margin-bottom:16px">
+    <div class="tbl-head" style="background:var(--surface);border:1px solid var(--border);border-radius:10px 10px 0 0;padding:10px 14px">
+      <div class="tbl-title">⛽ Penggunaan BBM per Jenis</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:14px;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px">
+      ${jenisEntries.map(([j,d],i)=>`
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;border-top:3px solid ${jenisColors[i%jenisColors.length]}">
+          <div style="font-size:12px;font-weight:700;color:${jenisColors[i%jenisColors.length]};margin-bottom:8px">${j}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Trip</div><div style="font-size:16px;font-weight:700">${fmt(d.trip)}</div></div>
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Volume</div><div style="font-size:16px;font-weight:700">${fmtD(d.vol)} L</div></div>
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Biaya BBM</div><div style="font-size:14px;font-weight:700">${fmtM(d.bbm)}</div></div>
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">KM</div><div style="font-size:14px;font-weight:700">${fmt(d.km)}</div></div>
+          </div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:space-between">
+            <span style="font-size:10px;color:var(--muted)">KM/L: <b style="color:var(--text)">${d.vol?+(d.km/d.vol).toFixed(2):'-'}</b></span>
+            <span style="font-size:10px;color:var(--muted)">${fmt(Math.round(d.trip/totalTrip*100))}% trip</span>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+
+  // Hub table
+  const hList = hubList || HUBS;
+  const hubRows = hList.map(hub=>{
+    const hr  = fRows.filter(r=>r.hub===hub);
+    const trp = hr.length;
+    const bbm = hr.reduce((s,r)=>s+(r.bbm||0),0);
+    const vol = hr.reduce((s,r)=>s+(r.vol||0),0);
+    const km  = hr.reduce((s,r)=>s+(r.km||0),0);
+    const bu  = getBU(hub);
+    const cls = bu==='HCI'?'hub-link-hci':'hub-link-ahi';
+    return `<tr>
+      <td class="${cls}" onclick="showPage('${HUB_PAGE[hub]||''}')" style="cursor:pointer">Hub ${hub}</td>
+      <td class="num">${fmt(trp)}</td>
+      <td class="num">${fmtM(bbm)}</td>
+      <td class="num ratio-val">${fmtM(trp?Math.round(bbm/trp):0)}</td>
+      <td class="num">${fmtD(vol)} L</td>
+      <td class="num ratio-val">${fmtD(trp?+(vol/trp).toFixed(1):0)} L</td>
+      <td class="num">${fmt(km)}</td>
+      <td class="num ratio-val">${fmtD(trp?+(km/trp).toFixed(1):0)}</td>
+      <td class="num ratio-val">${vol?+(km/vol).toFixed(2):'-'}</td>
+    </tr>`;
+  }).join('');
+
+  const hubTable = `<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">⛽ Detail BBM per Hub</div></div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr>
+        <th>Hub</th>
+        <th class="num">Trip</th>
+        <th class="num">Biaya BBM</th>
+        <th class="num">BBM/Trip</th>
+        <th class="num">Volume BBM</th>
+        <th class="num">Vol/Trip</th>
+        <th class="num">Jarak KM</th>
+        <th class="num">KM/Trip</th>
+        <th class="num">KM/Liter</th>
+      </tr></thead>
+      <tbody>
+        ${hubRows}
+        <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
+          <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
+          <td class="num" style="color:#fff;font-weight:700">${fmt(totalTrip)}</td>
+          <td class="num" style="color:#fff;font-weight:700">${fmtM(totalBbm)}</td>
+          <td class="num" style="color:var(--sky);font-weight:700">${fmtM(bbmPerTrip)}</td>
+          <td class="num" style="color:#fff;font-weight:700">${fmtD(totalVol)} L</td>
+          <td class="num" style="color:var(--sky);font-weight:700">${fmtD(totalVol&&totalTrip?+(totalVol/totalTrip).toFixed(1):0)} L</td>
+          <td class="num" style="color:#fff;font-weight:700">${fmt(totalKm)}</td>
+          <td class="num" style="color:var(--sky);font-weight:700">${fmtD(kmPerTrip)}</td>
+          <td class="num" style="color:var(--sky);font-weight:700">${fmtD(kmPerLiter)}</td>
+        </tr>
+      </tbody>
+    </table></div></div>`;
+
+  pane.innerHTML = kpiSection + jenisCards + hubTable;
+}
+
 function showPage(pid){
   curPid=pid;
   document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.toggle('active',el.dataset.pid===pid));
@@ -674,11 +789,13 @@ function showPage(pid){
     <div class="page-tabs">
       <button class="page-tab active" onclick="switchTab(this,'${pid}','overview')">📊 Overview</button>
       <button class="page-tab" onclick="switchTab(this,'${pid}','insight')">💡 Insight</button>
+      <button class="page-tab" onclick="switchTab(this,'${pid}','bbm')">⛽ Review BBM</button>
     </div>
     <div id="${pid}_tab_overview" class="tab-pane active" data-pid="${pid}">
       <div class="spin-wrap"><div class="spin"></div> Memuat data...</div>
     </div>
     <div id="${pid}_tab_insight" class="tab-pane" data-pid="${pid}"></div>
+    <div id="${pid}_tab_bbm" class="tab-pane" data-pid="${pid}"></div>
   </div>`;
   document.getElementById('mainContent').scrollTop=0;
 
