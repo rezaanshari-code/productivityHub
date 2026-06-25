@@ -711,59 +711,97 @@ function renderBBM(pid, fRows, hubList){
     </div>
   </div>`;
 
-  // Hub table
-  const hList = hubList || HUBS;
-  const hubRows = hList.map(hub=>{
-    const hr  = fRows.filter(r=>r.hub===hub);
-    const trp = hr.length;
-    const bbm = hr.reduce((s,r)=>s+(r.bbm||0),0);
-    const vol = hr.reduce((s,r)=>s+(r.vol||0),0);
-    const km  = hr.reduce((s,r)=>s+(r.km||0),0);
-    const bu  = getBU(hub);
-    const cls = bu==='HCI'?'hub-link-hci':'hub-link-ahi';
-    return `<tr>
-      <td class="${cls}" onclick="showPage('${HUB_PAGE[hub]||''}')" style="cursor:pointer">Hub ${hub}</td>
-      <td class="num">${fmt(trp)}</td>
-      <td class="num">${fmtM(bbm)}</td>
-      <td class="num ratio-val">${fmtM(trp?Math.round(bbm/trp):0)}</td>
-      <td class="num">${fmtD(vol)} L</td>
-      <td class="num ratio-val">${fmtD(trp?+(vol/trp).toFixed(1):0)} L</td>
-      <td class="num">${fmt(km)}</td>
-      <td class="num ratio-val">${fmtD(trp?+(km/trp).toFixed(1):0)}</td>
-      <td class="num ratio-val">${vol?+(km/vol).toFixed(2):'-'}</td>
-    </tr>`;
-  }).join('');
+  // Hub table (only for multi-hub pages) OR Jalur/Driver/Asst for single hub
+  const isMulti = !!hubList;
+  let bottomSection = '';
 
-  const hubTable = `<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">⛽ Detail BBM per Hub</div></div>
-    <div style="overflow-x:auto"><table>
-      <thead><tr>
-        <th>Hub</th>
-        <th class="num">Trip</th>
-        <th class="num">Biaya BBM</th>
-        <th class="num">BBM/Trip</th>
-        <th class="num">Volume BBM</th>
-        <th class="num">Vol/Trip</th>
-        <th class="num">Jarak KM</th>
-        <th class="num">KM/Trip</th>
-        <th class="num">KM/Liter</th>
-      </tr></thead>
-      <tbody>
-        ${hubRows}
-        <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
-          <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
-          <td class="num" style="color:#fff;font-weight:700">${fmt(totalTrip)}</td>
-          <td class="num" style="color:#fff;font-weight:700">${fmtM(totalBbm)}</td>
-          <td class="num" style="color:var(--sky);font-weight:700">${fmtM(bbmPerTrip)}</td>
-          <td class="num" style="color:#fff;font-weight:700">${fmtD(totalVol)} L</td>
-          <td class="num" style="color:var(--sky);font-weight:700">${fmtD(totalVol&&totalTrip?+(totalVol/totalTrip).toFixed(1):0)} L</td>
-          <td class="num" style="color:#fff;font-weight:700">${fmt(totalKm)}</td>
-          <td class="num" style="color:var(--sky);font-weight:700">${fmtD(kmPerTrip)}</td>
-          <td class="num" style="color:var(--sky);font-weight:700">${fmtD(kmPerLiter)}</td>
-        </tr>
-      </tbody>
-    </table></div></div>`;
+  if(isMulti){
+    const hList = hubList || HUBS;
+    const hubRows = hList.map(hub=>{
+      const hr  = fRows.filter(r=>r.hub===hub);
+      const trp = hr.length;
+      const bbm = hr.reduce((s,r)=>s+(r.bbm||0),0);
+      const vol = hr.reduce((s,r)=>s+(r.vol||0),0);
+      const km  = hr.reduce((s,r)=>s+(r.km||0),0);
+      const bu  = getBU(hub);
+      const cls = bu==='HCI'?'hub-link-hci':'hub-link-ahi';
+      return `<tr>
+        <td class="${cls}" onclick="showPage('${HUB_PAGE[hub]||''}')" style="cursor:pointer">Hub ${hub}</td>
+        <td class="num">${fmt(trp)}</td>
+        <td class="num">${fmtM(bbm)}</td>
+        <td class="num ratio-val">${fmtM(trp?Math.round(bbm/trp):0)}</td>
+        <td class="num">${fmtD(vol)} L</td>
+        <td class="num ratio-val">${fmtD(trp?+(vol/trp).toFixed(1):0)} L</td>
+        <td class="num">${fmt(km)}</td>
+        <td class="num ratio-val">${fmtD(trp?+(km/trp).toFixed(1):0)}</td>
+        <td class="num ratio-val">${vol?+(km/vol).toFixed(2):'-'}</td>
+      </tr>`;
+    }).join('');
 
-  pane.innerHTML = kpiSection + jenisCards + hubTable;
+    bottomSection = `<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">⛽ Detail BBM per Hub</div></div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr>
+          <th>Hub</th><th class="num">Trip</th><th class="num">Biaya BBM</th><th class="num">BBM/Trip</th>
+          <th class="num">Volume BBM</th><th class="num">Vol/Trip</th><th class="num">Jarak KM</th>
+          <th class="num">KM/Trip</th><th class="num">KM/Liter</th>
+        </tr></thead>
+        <tbody>
+          ${hubRows}
+          <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
+            <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
+            <td class="num" style="color:#fff;font-weight:700">${fmt(totalTrip)}</td>
+            <td class="num" style="color:#fff;font-weight:700">${fmtM(totalBbm)}</td>
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtM(bbmPerTrip)}</td>
+            <td class="num" style="color:#fff;font-weight:700">${fmtD(totalVol)} L</td>
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(totalVol&&totalTrip?+(totalVol/totalTrip).toFixed(1):0)} L</td>
+            <td class="num" style="color:#fff;font-weight:700">${fmt(totalKm)}</td>
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(kmPerTrip)}</td>
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(kmPerLiter)}</td>
+          </tr>
+        </tbody>
+      </table></div></div>`;
+  } else {
+    // Single hub → Jalur, Driver, Asst Driver tables
+    function bbmTblByGroup(rows, groupKey, title, uid){
+      const grp = grpBy(rows, groupKey);
+      const entries = Object.entries(grp).map(([k,rs])=>{
+        const trp=rs.length, bbm=rs.reduce((s,r)=>s+(r.bbm||0),0),
+              vol=rs.reduce((s,r)=>s+(r.vol||0),0), km=rs.reduce((s,r)=>s+(r.km||0),0);
+        return {k,trp,bbm,vol,km};
+      }).sort((a,b)=>b.bbm-a.bbm);
+      if(!entries.length) return '<div class="empty">📭 Tidak ada data</div>';
+      const trows = entries.map((e,i)=>`<tr>
+        <td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td><td>${e.k}</td>
+        <td class="num">${fmt(e.trp)}</td>
+        <td class="num">${fmtM(e.bbm)}</td>
+        <td class="num ratio-val">${fmtM(e.trp?Math.round(e.bbm/e.trp):0)}</td>
+        <td class="num">${fmtD(e.vol)} L</td>
+        <td class="num ratio-val">${fmtD(e.trp?+(e.vol/e.trp).toFixed(1):0)} L</td>
+        <td class="num">${fmt(e.km)}</td>
+        <td class="num ratio-val">${e.vol?+(e.km/e.vol).toFixed(2):'-'}</td>
+      </tr>`).join('');
+      return `<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">${title}</div>
+        <input class="tbl-search" placeholder="Cari..." oninput="ftbl(this,'${uid}')"></div>
+        <div style="overflow-x:auto"><table id="${uid}"><thead><tr>
+          <th class="rank">#</th><th>${groupKey==='jalur'?'Jalur':groupKey==='drv'?'Driver':'Asst Driver'}</th>
+          <th class="num">Trip</th><th class="num">Biaya BBM</th><th class="num">BBM/Trip</th>
+          <th class="num">Volume BBM</th><th class="num">Vol/Trip</th>
+          <th class="num">KM</th><th class="num">KM/Liter</th>
+        </tr></thead><tbody>${trows}</tbody></table></div></div>`;
+    }
+
+    // Sub nav for jalur/driver/asst
+    bottomSection = `<div class="sub-nav">
+      <button class="sub-tab active" onclick="showSub(this,'${pid}_bbm','j')">📍 Per Jalur</button>
+      <button class="sub-tab" onclick="showSub(this,'${pid}_bbm','d')">🚗 Driver</button>
+      <button class="sub-tab" onclick="showSub(this,'${pid}_bbm','a')">👤 Asst Driver</button>
+    </div>
+    <div id="${pid}_bbm_j" class="sec-block show">${bbmTblByGroup(fRows,'jalur','⛽ BBM per Jalur','bbmJ'+pid)}</div>
+    <div id="${pid}_bbm_d" class="sec-block">${bbmTblByGroup(fRows.filter(r=>r.drv&&r.drv!='nan'&&r.drv!=''),'drv','⛽ BBM per Driver','bbmD'+pid)}</div>
+    <div id="${pid}_bbm_a" class="sec-block">${bbmTblByGroup(fRows.filter(r=>r.ast&&r.ast!='nan'&&r.ast!=''),'ast','⛽ BBM per Asst Driver','bbmA'+pid)}</div>`;
+  }
+
+  pane.innerHTML = kpiSection + jenisCards + bottomSection;
 }
 
 function showPage(pid){
