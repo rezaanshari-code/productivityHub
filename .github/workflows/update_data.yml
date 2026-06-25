@@ -166,6 +166,8 @@ jobs:
                           "bbm":  round(float(r["BBM (UJP)"]),2),
                           "km":   round(float(r["Jarak (KM)"]),2),
                           "tat":  round(float(tat),1) if tat is not None else None,
+                          "vol":  round(float(pd.to_numeric(str(r.get("Volume BBM",0)).replace(",",""), errors="coerce") or 0), 2),
+                          "jbbm": str(r.get("Jenis BBM","")).strip(),
                       })
                   print(f"OK {name}: {len(df)} baris")
               except Exception as e:
