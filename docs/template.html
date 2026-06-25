@@ -689,11 +689,14 @@ function showPage(pid){
             <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">Trip</th>
             <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">Total DO</th>
             <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">Total DP</th>
-            <th class="num" rowspan="2">TAT</th>
-            <th class="num" rowspan="2">DO/Trip</th>
-            <th class="num" rowspan="2">DP/Trip</th>
+            <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">TAT</th>
+            <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">DO/Trip</th>
+            <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">DP/Trip</th>
           </tr>
           <tr>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
             <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
             <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
             <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
@@ -705,27 +708,27 @@ function showPage(pid){
             <td class="num">${fmt(maF.trips)}</td><td class="num" style="color:var(--muted)">${fmt(maP.trips)}</td>${growthCell(maF.trips,maP.trips)}
             <td class="num">${fmt(maF.total_do)}</td><td class="num" style="color:var(--muted)">${fmt(maP.total_do)}</td>${growthCell(maF.total_do,maP.total_do)}
             <td class="num">${fmt(maF.total_dp)}</td><td class="num" style="color:var(--muted)">${fmt(maP.total_dp)}</td>${growthCell(maF.total_dp,maP.total_dp)}
-            <td class="num">${maF.tat_avg}</td>
-            <td class="num ratio-val">${fmtD(maF.do_per_trip)}</td>
-            <td class="num ratio-val">${fmtD(maF.dp_per_trip)}</td>
+            <td class="num">${maF.tat_avg}</td><td class="num" style="color:var(--muted)">${maP.tat_avg}</td>${growthCell(maF.tat_minutes,maP.tat_minutes)}
+            <td class="num ratio-val">${fmtD(maF.do_per_trip)}</td><td class="num" style="color:var(--muted)">${fmtD(maP.do_per_trip)}</td>${growthCell(maF.do_per_trip,maP.do_per_trip)}
+            <td class="num ratio-val">${fmtD(maF.dp_per_trip)}</td><td class="num" style="color:var(--muted)">${fmtD(maP.dp_per_trip)}</td>${growthCell(maF.dp_per_trip,maP.dp_per_trip)}
           </tr>
           <tr>
             <td><span class="tag tag-hci">HCI</span></td>
             <td class="num">${fmt(mhF.trips)}</td><td class="num" style="color:var(--muted)">${fmt(mhP.trips)}</td>${growthCell(mhF.trips,mhP.trips)}
             <td class="num">${fmt(mhF.total_do)}</td><td class="num" style="color:var(--muted)">${fmt(mhP.total_do)}</td>${growthCell(mhF.total_do,mhP.total_do)}
             <td class="num">${fmt(mhF.total_dp)}</td><td class="num" style="color:var(--muted)">${fmt(mhP.total_dp)}</td>${growthCell(mhF.total_dp,mhP.total_dp)}
-            <td class="num">${mhF.tat_avg}</td>
-            <td class="num ratio-val">${fmtD(mhF.do_per_trip)}</td>
-            <td class="num ratio-val">${fmtD(mhF.dp_per_trip)}</td>
+            <td class="num">${mhF.tat_avg}</td><td class="num" style="color:var(--muted)">${mhP.tat_avg}</td>${growthCell(mhF.tat_minutes,mhP.tat_minutes)}
+            <td class="num ratio-val">${fmtD(mhF.do_per_trip)}</td><td class="num" style="color:var(--muted)">${fmtD(mhP.do_per_trip)}</td>${growthCell(mhF.do_per_trip,mhP.do_per_trip)}
+            <td class="num ratio-val">${fmtD(mhF.dp_per_trip)}</td><td class="num" style="color:var(--muted)">${fmtD(mhP.dp_per_trip)}</td>${growthCell(mhF.dp_per_trip,mhP.dp_per_trip)}
           </tr>
           <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
             <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
-            <td class="num" style="color:#fff;font-weight:700">${fmt(allF.trips)}</td><td class="num" style="color:#93c5fd;font-weight:600">${fmt(allP.trips)}</td>${growthCell(allF.trips,allP.trips)}
-            <td class="num" style="color:#fff;font-weight:700">${fmt(allF.total_do)}</td><td class="num" style="color:#93c5fd;font-weight:600">${fmt(allP.total_do)}</td>${growthCell(allF.total_do,allP.total_do)}
-            <td class="num" style="color:#fff;font-weight:700">${fmt(allF.total_dp)}</td><td class="num" style="color:#93c5fd;font-weight:600">${fmt(allP.total_dp)}</td>${growthCell(allF.total_dp,allP.total_dp)}
-            <td class="num" style="color:#fff;font-weight:700">${allF.tat_avg}</td>
-            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(allF.do_per_trip)}</td>
-            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(allF.dp_per_trip)}</td>
+            <td class="num" style="color:#fff;font-weight:700">${fmt(allF.trips)}</td><td class="num" style="color:#93c5fd">${fmt(allP.trips)}</td>${growthCell(allF.trips,allP.trips)}
+            <td class="num" style="color:#fff;font-weight:700">${fmt(allF.total_do)}</td><td class="num" style="color:#93c5fd">${fmt(allP.total_do)}</td>${growthCell(allF.total_do,allP.total_do)}
+            <td class="num" style="color:#fff;font-weight:700">${fmt(allF.total_dp)}</td><td class="num" style="color:#93c5fd">${fmt(allP.total_dp)}</td>${growthCell(allF.total_dp,allP.total_dp)}
+            <td class="num" style="color:#fff;font-weight:700">${allF.tat_avg}</td><td class="num" style="color:#93c5fd">${allP.tat_avg}</td>${growthCell(allF.tat_minutes,allP.tat_minutes)}
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(allF.do_per_trip)}</td><td class="num" style="color:#93c5fd">${fmtD(allP.do_per_trip)}</td>${growthCell(allF.do_per_trip,allP.do_per_trip)}
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(allF.dp_per_trip)}</td><td class="num" style="color:#93c5fd">${fmtD(allP.dp_per_trip)}</td>${growthCell(allF.dp_per_trip,allP.dp_per_trip)}
           </tr>
         </tbody></table></div></div>
         ${hubTblHTML(fRows,pRows,[...HCI_HUBS,...AHI_HUBS])}`;
