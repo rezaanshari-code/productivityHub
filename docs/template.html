@@ -63,7 +63,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;fo
   --text:#3d0a0a;--muted:#7f1d1d;--surface:rgba(255,255,255,.65);
   --surface2:rgba(248,200,200,.7);--border:rgba(180,30,30,.2);--sky:#1d4ed8;
   --mint:#065f46;--amber:#92400e;--rose:#9f1239;--violet:#4c1d95;--cyan:#0e7490;
-  --green:#065f46;--red:#7f1d1d;
+  --green:#065f46;--red:#7f1d1d
 }
 .content.bg-all{background:var(--bg)}
 /* Force text color for AHI light background only */
@@ -698,14 +698,14 @@ function renderBBM(pid, fRows, hubList){
         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;border-top:3px solid ${jenisColors[i%jenisColors.length]}">
           <div style="font-size:12px;font-weight:700;color:${jenisColors[i%jenisColors.length]};margin-bottom:8px">${j}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-            <div><div style="font-size:10px;color:#8892a4;text-transform:uppercase;letter-spacing:.5px">Trip</div><div style="font-size:16px;font-weight:700;color:#f1f5f9">${fmt(d.trip)}</div></div>
-            <div><div style="font-size:10px;color:#8892a4;text-transform:uppercase;letter-spacing:.5px">Volume</div><div style="font-size:16px;font-weight:700;color:#f1f5f9">${fmtD(d.vol)} L</div></div>
-            <div><div style="font-size:10px;color:#8892a4;text-transform:uppercase;letter-spacing:.5px">Biaya BBM</div><div style="font-size:14px;font-weight:700;color:#f1f5f9">${fmtM(d.bbm)}</div></div>
-            <div><div style="font-size:10px;color:#8892a4;text-transform:uppercase;letter-spacing:.5px">KM</div><div style="font-size:14px;font-weight:700;color:#f1f5f9">${fmt(d.km)}</div></div>
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Trip</div><div style="font-size:16px;font-weight:700;color:var(--text)">${fmt(d.trip)}</div></div>
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Volume</div><div style="font-size:16px;font-weight:700;color:var(--text)">${fmtD(d.vol)} L</div></div>
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Biaya BBM</div><div style="font-size:14px;font-weight:700;color:var(--text)">${fmtM(d.bbm)}</div></div>
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">KM</div><div style="font-size:14px;font-weight:700;color:var(--text)">${fmt(d.km)}</div></div>
           </div>
           <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:space-between">
-            <span style="font-size:10px;color:#8892a4">KM/L: <b style="color:#38bdf8">${d.vol?+(d.km/d.vol).toFixed(2):'-'}</b></span>
-            <span style="font-size:10px;color:#8892a4">${fmt(Math.round(d.trip/totalTrip*100))}% trip</span>
+            <span style="font-size:10px;color:var(--muted)">KM/L: <b style="color:var(--sky)">${d.vol?+(d.km/d.vol).toFixed(2):'-'}</b></span>
+            <span style="font-size:10px;color:var(--muted)">${fmt(Math.round(d.trip/totalTrip*100))}% trip</span>
           </div>
         </div>`).join('')}
     </div>
