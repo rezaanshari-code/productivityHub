@@ -494,10 +494,10 @@ function jalurHTML(rows,prevRows,uid,showHub){
     const bu=hub?getBU(hub):'';
     const hubCell=showHub?`<td><span class="hub-tag hub-${bu.toLowerCase()}">${hub}</span></td>`:'';
     return`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td>${hubCell}<td>${j}</td>
-    <td class="num">${fmt(m.trips)}${inlineDelta(m.trips,pm?.trips)}</td>
+    <td class="num">${fmt(m.trips)}</td>
     <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
     <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
-    <td class="num">${fmtM(m.total_cost)}${inlineDelta(m.total_cost,pm?.total_cost)}</td>
+    <td class="num">${fmtM(m.total_cost)}</td>
     <td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>
     ${rTds(m)}</tr>`;}).join('');
   return`<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📍 Analisa Per Jalur</div>
@@ -529,10 +529,10 @@ function personHTML(rows,prevRows,col,title,uid,showHub){
     const bu=hub?getBU(hub):'';
     const hubCell=showHub?`<td><span class="hub-tag hub-${bu.toLowerCase()}">${hub}</span></td>`:'';
     return`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td>${hubCell}<td>${n}</td>
-    <td class="num">${fmt(m.trips)}${inlineDelta(m.trips,pm?.trips)}</td>
+    <td class="num">${fmt(m.trips)}</td>
     <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
     <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
-    <td class="num">${fmtM(m.total_cost)}${inlineDelta(m.total_cost,pm?.total_cost)}</td>
+    <td class="num">${fmtM(m.total_cost)}</td>
     ${rTds(m)}</tr>`;}).join('');
   return`<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">${title}</div>
     <input class="tbl-search" placeholder="Cari nama..." oninput="ftbl(this,'${uid}')"></div>
@@ -555,11 +555,11 @@ function hubTblHTML(fRows,pRows,hList){
       const bu=getBU(hub);const pid=HUB_PAGE[hub];
       const cls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';
       return`<tr><td class="${cls}" onclick="showPage('${pid}')">Hub ${hub}</td>
-      <td class="num">${fmt(m.trips)}${inlineDelta(m.trips,pm?.trips)}</td>
+      <td class="num">${fmt(m.trips)}</td>
       <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.total_dp)}</td>
       <td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
       <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
-      <td class="num">${fmtM(m.total_cost)}${inlineDelta(m.total_cost,pm?.total_cost)}</td>
+      <td class="num">${fmtM(m.total_cost)}</td>
       <td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>${rTds(m)}</tr>`;}).join('')}
     </tbody></table></div></div>`;
 }
@@ -702,21 +702,21 @@ function showPage(pid){
         <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Total DP</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th>${rThs}</tr></thead>
         <tbody>
           <tr><td><span class="tag tag-ahi">AHI</span></td>
-          <td class="num">${fmt(maF.trips)}${inlineDelta(maF.trips,maP.trips)}</td>
+          <td class="num">${fmt(maF.trips)}</td>
           <td class="num">${fmt(maF.total_do)}</td><td class="num">${fmt(maF.total_dp)}</td><td class="num">${maF.tat_avg}</td><td class="num">${fmt(maF.jarak_km)}</td>
-          <td class="num">${fmtM(maF.total_cost)}${inlineDelta(maF.total_cost,maP.total_cost)}</td><td class="num">${fmtM(maF.bbm_ujp)}</td>${rTds(maF)}</tr>
+          <td class="num">${fmtM(maF.total_cost)}</td><td class="num">${fmtM(maF.bbm_ujp)}</td>${rTds(maF)}</tr>
           <tr><td><span class="tag tag-hci">HCI</span></td>
-          <td class="num">${fmt(mhF.trips)}${inlineDelta(mhF.trips,mhP.trips)}</td>
+          <td class="num">${fmt(mhF.trips)}</td>
           <td class="num">${fmt(mhF.total_do)}</td><td class="num">${fmt(mhF.total_dp)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td>
-          <td class="num">${fmtM(mhF.total_cost)}${inlineDelta(mhF.total_cost,mhP.total_cost)}</td><td class="num">${fmtM(mhF.bbm_ujp)}</td>${rTds(mhF)}</tr>
+          <td class="num">${fmtM(mhF.total_cost)}</td><td class="num">${fmtM(mhF.bbm_ujp)}</td>${rTds(mhF)}</tr>
           <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
             <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
-            <td class="num" style="font-weight:700;color:#fff">${fmt(allF.trips)}${inlineDelta(allF.trips,allP.trips)}</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmt(allF.trips)}</td>
             <td class="num" style="font-weight:700;color:#fff">${fmt(allF.total_do)}</td>
             <td class="num" style="font-weight:700;color:#fff">${fmt(allF.total_dp)}</td>
             <td class="num" style="font-weight:700;color:#fff">${allF.tat_avg}</td>
             <td class="num" style="font-weight:700;color:#fff">${fmt(allF.jarak_km)}</td>
-            <td class="num" style="font-weight:700;color:#fff">${fmtM(allF.total_cost)}${inlineDelta(allF.total_cost,allP.total_cost)}</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmtM(allF.total_cost)}</td>
             <td class="num" style="font-weight:700;color:#fff">${fmtM(allF.bbm_ujp)}</td>${rTds(allF)}</tr>
         </tbody></table></div>
 
