@@ -53,7 +53,11 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;fo
 .dot-all{background:var(--sky)}.dot-ahi{background:var(--ahi)}.dot-hci{background:var(--hci)}
 
 .content{flex:1;overflow-y:auto;padding:16px;transition:background .3s}
-.content.bg-hci{background:var(--bg)}
+.content.bg-hci{
+  background:#87CEFA;
+  --text:#0a1628;--muted:#1e3a5f;--surface:rgba(255,255,255,.65);
+  --surface2:rgba(180,220,245,.7);--border:rgba(30,58,138,.2);
+}
 .content.bg-ahi{
   background:#F08080;
   --text:#3d0a0a;--muted:#7f1d1d;--surface:rgba(255,255,255,.65);
@@ -141,6 +145,28 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;fo
 .sec-sub{color:#94a3b8!important}
 .content.bg-ahi .sec-title{color:#3d0a0a!important}
 .content.bg-ahi .sec-sub{color:#7f1d1d!important}
+.content.bg-hci .sec-title{color:#0a1628!important}
+.content.bg-hci .sec-sub{color:#1e3a5f!important}
+.content.bg-hci .page-tab{color:#1e3a5f!important}
+.content.bg-hci .page-tab.active{color:#0a1628!important;border-bottom-color:#0a1628!important}
+.content.bg-hci .tbl-title{color:#0a1628!important}
+.content.bg-hci th{color:#0369a1!important}
+.content.bg-hci td{color:#0a1628!important}
+.content.bg-hci .kpi-value{color:#0a1628!important}
+.content.bg-hci .kpi-label{color:#1e3a5f!important}
+.content.bg-hci .kpi-sub{color:#1e3a5f!important}
+.content.bg-hci .kpi-delta{color:#065f46!important}
+.content.bg-hci .d-up{color:#065f46!important}
+.content.bg-hci .d-dn{color:#9f1239!important}
+.content.bg-hci .delta-up{color:#065f46!important}
+.content.bg-hci .delta-down{color:#9f1239!important}
+.content.bg-hci .ratio-val{color:#0369a1!important}
+.content.bg-hci .rank{color:#1e3a5f!important}
+.content.bg-hci .map-header{color:#0a1628!important}
+.content.bg-hci .sub-tab{color:#1e3a5f!important;border-color:rgba(30,58,138,.3)!important}
+.content.bg-hci .sub-tab.active{color:#0a1628!important;border-color:#0a1628!important;background:rgba(255,255,255,.5)!important}
+.content.bg-hci .filter-info{color:#1e3a5f!important}
+.content.bg-hci .sec-header .badge{color:#fff!important}
 .sec-sub{color:var(--muted);font-size:11px;margin-top:2px}
 
 /* PAGE TABS */
@@ -603,7 +629,7 @@ function showPage(pid){
 
   document.getElementById('mainContent').innerHTML=`<div class="page-wrap">
     <div class="sec-header"><span class="badge ${badgeCls}">${badgeLbl}</span>
-      <div><div class="sec-title">${title} — Performance & Productivity</div><div class="sec-sub">${sub} | *Status LC "New" tidak dihitung</div></div>
+      <div><div class="sec-title">${title} — Performance & Productivity</div><div class="sec-sub">${sub}</div></div>
     </div>
     <div class="page-tabs">
       <button class="page-tab active" onclick="switchTab(this,'${pid}','overview')">📊 Overview</button>
