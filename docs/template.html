@@ -606,7 +606,7 @@ function switchTab(btn,pid,tab){
   document.querySelectorAll('.tab-pane[data-pid="'+pid+'"]').forEach(t=>t.classList.remove('active'));
   const pane=document.getElementById(pid+'_tab_'+tab);
   if(pane){pane.classList.add('active');if(tab==='insight')renderCharts(pid,filt(getRows(pid)),getHList(pid));
-    if(tab==='bbm')renderBBM(pid,filt(getRows(pid)),getHList(pid));
+    if(tab==='bbm')renderBBM(pid,filt(getRows(pid)),filtPrev(getRows(pid)),getHList(pid));
   }
 }
 
@@ -654,17 +654,34 @@ function getHList(pid){
 function isMultiHub(pid){return pid==='all'||pid==='ahi'||pid==='hci';}
 
 // ── Show page ─────────────────────────────────────────────────────────────────
-function renderBBM(pid, fRows, hubList){
+function renderBBM(pid, fRows, pRows, hubList){
   const pane = document.getElementById(pid+'_tab_bbm');
   if(!pane) return;
 
-  const totalTrip = fRows.length;
-  const totalBbm  = fRows.reduce((s,r)=>s+(r.bbm||0),0);
-  const totalVol  = fRows.reduce((s,r)=>s+(r.vol||0),0);
-  const totalKm   = fRows.reduce((s,r)=>s+(r.km||0),0);
+  const totalTrip  = fRows.length;
+  const totalBbm   = fRows.reduce((s,r)=>s+(r.bbm||0),0);
+  const totalVol   = fRows.reduce((s,r)=>s+(r.vol||0),0);
+  const totalKm    = fRows.reduce((s,r)=>s+(r.km||0),0);
   const bbmPerTrip = totalTrip ? Math.round(totalBbm/totalTrip) : 0;
   const kmPerTrip  = totalTrip ? +(totalKm/totalTrip).toFixed(1) : 0;
   const kmPerLiter = totalVol  ? +(totalKm/totalVol).toFixed(2) : 0;
+
+  // Prev period metrics
+  const pTrip    = pRows ? pRows.length : 0;
+  const pBbm     = pRows ? pRows.reduce((s,r)=>s+(r.bbm||0),0) : 0;
+  const pVol     = pRows ? pRows.reduce((s,r)=>s+(r.vol||0),0) : 0;
+  const pKm      = pRows ? pRows.reduce((s,r)=>s+(r.km||0),0) : 0;
+  const pBbmTrip = pTrip ? Math.round(pBbm/pTrip) : 0;
+  const pKmTrip  = pTrip ? +(pKm/pTrip).toFixed(1) : 0;
+  const pKmLiter = pVol  ? +(pKm/pVol).toFixed(2) : 0;
+
+  function bbmDelta(cur, prev){
+    if(!prev||prev===0) return '';
+    const pct=(cur-prev)/prev*100;
+    const cls=pct>0?'d-up':'d-dn', sign=pct>0?'▲':'▼';
+    let pv = cur>1e6?fmtM(prev):cur>1e3?fmtM(prev):fmtD(prev);
+    return `<div class="kpi-delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs prev (${pv})</div>`;
+  }
 
   // Group by Jenis BBM
   const byJenis = {};
@@ -688,14 +705,51 @@ function renderBBM(pid, fRows, hubList){
     return b[1].trip - a[1].trip;
   });
 
-  // KPI Cards
+  const volPerTrip = totalTrip&&totalVol ? +(totalVol/totalTrip).toFixed(1) : 0;
+  const pVolPerTrip = pTrip&&pVol ? +(pVol/pTrip).toFixed(1) : 0;
+
+  // KPI Cards with delta
   const kpiSection = `<div class="kpi-grid" style="margin-bottom:16px">
-    <div class="kpi t-sky"><div class="kpi-label">Total Trip</div><div class="kpi-value">${fmt(totalTrip)}</div><div class="kpi-sub">Pengiriman aktif</div></div>
-    <div class="kpi t-amber"><div class="kpi-label">Biaya BBM</div><div class="kpi-value">${fmtM(totalBbm)}</div><div class="kpi-sub">${fmtM(bbmPerTrip)}/trip</div></div>
-    <div class="kpi t-green"><div class="kpi-label">Volume BBM</div><div class="kpi-value">${fmtD(totalVol)} L</div><div class="kpi-sub">${fmtD(totalVol&&totalTrip?+(totalVol/totalTrip).toFixed(1):0)} L/trip</div></div>
-    <div class="kpi t-cyan"><div class="kpi-label">Jarak KM</div><div class="kpi-value">${fmt(totalKm)}</div><div class="kpi-sub">${fmtD(kmPerTrip)} km/trip</div></div>
-    <div class="kpi t-violet"><div class="kpi-label">KM/Liter</div><div class="kpi-value">${fmtD(kmPerLiter)}</div><div class="kpi-sub">Efisiensi BBM</div></div>
-  </div>`;
+    <div class="kpi t-sky">
+      <div class="kpi-label">Total Trip</div>
+      <div class="kpi-value">${fmt(totalTrip)}</div>
+      ${bbmDelta(totalTrip,pTrip)}
+      <div class="kpi-sub">Pengiriman aktif</div>
+    </div>
+    <div class="kpi t-amber">
+      <div class="kpi-label">Biaya BBM</div>
+      <div class="kpi-value">${fmtM(totalBbm)}</div>
+      ${bbmDelta(totalBbm,pBbm)}
+      <div class="kpi-sub" style="margin-top:6px">
+        <span style="font-size:13px;font-weight:700;color:var(--amber)">💰 ${fmtM(bbmPerTrip)}/trip</span>
+        ${pBbmTrip?`<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: ${fmtM(pBbmTrip)})</span>`:''}
+      </div>
+    </div>
+    <div class="kpi t-green">
+      <div class="kpi-label">Volume BBM</div>
+      <div class="kpi-value">${fmtD(totalVol)} L</div>
+      ${bbmDelta(totalVol,pVol)}
+      <div class="kpi-sub" style="margin-top:6px">
+        <span style="font-size:13px;font-weight:700;color:var(--green)">🛢 ${fmtD(volPerTrip)} L/trip</span>
+        ${pVolPerTrip?`<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: ${fmtD(pVolPerTrip)} L)</span>`:''}
+      </div>
+    </div>
+    <div class="kpi t-cyan">
+      <div class="kpi-label">Jarak KM</div>
+      <div class="kpi-value">${fmt(totalKm)}</div>
+      ${bbmDelta(totalKm,pKm)}
+      <div class="kpi-sub" style="margin-top:6px">
+        <span style="font-size:13px;font-weight:700;color:var(--cyan)">🛣 ${fmtD(kmPerTrip)} km/trip</span>
+        ${pKmTrip?`<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: ${fmtD(pKmTrip)})</span>`:''}
+      </div>
+    </div>
+    <div class="kpi t-violet">
+      <div class="kpi-label">KM/Liter</div>
+      <div class="kpi-value">${fmtD(kmPerLiter)}</div>
+      ${bbmDelta(kmPerLiter,pKmLiter)}
+      <div class="kpi-sub">Efisiensi BBM</div>
+    </div>
+  </div>\`;
 
   // Jenis BBM Cards
   const jenisCards = `<div style="margin-bottom:16px">
