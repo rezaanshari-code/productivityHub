@@ -13,6 +13,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Pull latest template
+        run: git pull origin main
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -226,8 +233,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git reset --soft origin/main
           git add docs/index.html docs/hub_coords.json
-          git diff --staged --quiet || git commit -m "auto-update dashboard [$(TZ='Asia/Jakarta' date '+%Y-%m-%d %H:%M WIB')]"
+          git diff --staged --quiet || git commit -m "auto-update dashboard [$(TZ='Asia/Jakarta' date '+%Y-%m-%d %M WIB')]"
+          git pull --rebase origin main
           git push origin main
