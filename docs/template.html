@@ -606,6 +606,7 @@ function switchTab(btn,pid,tab){
   const pane=document.getElementById(pid+'_tab_'+tab);
   if(pane){pane.classList.add('active');if(tab==='insight')renderCharts(pid,filt(getRows(pid)),getHList(pid));
     if(tab==='bbm')renderBBM(pid,filt(getRows(pid)),filtPrev(getRows(pid)),getHList(pid));
+    if(tab==='cost')renderCost(pid,filt(getRows(pid)),filtPrev(getRows(pid)),getHList(pid));
   }
 }
 
@@ -653,6 +654,172 @@ function getHList(pid){
 function isMultiHub(pid){return pid==='all'||pid==='ahi'||pid==='hci';}
 
 // ── Show page ─────────────────────────────────────────────────────────────────
+function renderCost(pid, fRows, pRows, hubList){
+  const pane = document.getElementById(pid+'_tab_cost');
+  if(!pane) return;
+
+  function cm(rows){ // cost metrics
+    const n=rows.length;
+    if(!n) return {cost:0,ujp:0,bbm:0,tol:0,pkr:0,oth:0,vr:0,mpp:0,ovt:0,ins:0,trip:0};
+    let cost=0,ujp=0,bbm=0,tol=0,pkr=0,oth=0,vr=0,mpp=0,ovt=0,ins=0;
+    for(const r of rows){cost+=r.cost||0;ujp+=r.ujp||0;bbm+=r.bbm||0;tol+=r.tol||0;pkr+=r.pkr||0;oth+=r.oth||0;vr+=r.vr||0;mpp+=r.mpp||0;ovt+=r.ovt||0;ins+=r.ins||0;}
+    return{cost,ujp,bbm,tol,pkr,oth,vr,mpp,ovt,ins,trip:n};
+  }
+
+  const c=cm(fRows), p=cm(pRows||[]);
+
+  function costDelta(cur,prev){
+    if(!prev||prev===0) return '';
+    const pct=(cur-prev)/prev*100;
+    const cls=pct>0?'d-up':'d-dn',sign=pct>0?'▲':'▼';
+    return '<div class="kpi-delta '+cls+'">'+sign+' '+Math.abs(pct).toFixed(1)+'% vs prev ('+fmt(prev)+')</div>';
+  }
+
+  // KPI 1: Main cost cards
+  const mainCards = '<div class="kpi-grid" style="margin-bottom:16px">'
+    +'<div class="kpi t-violet"><div class="kpi-label">Total Cost</div><div class="kpi-value">'+fmtM(c.cost)+'</div>'+costDelta(c.cost,p.cost)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.cost/c.trip):0)+'/trip</div></div>'
+    +'<div class="kpi t-sky"><div class="kpi-label">Total UJP</div><div class="kpi-value">'+fmtM(c.ujp)+'</div>'+costDelta(c.ujp,p.ujp)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.ujp/c.trip):0)+'/trip</div></div>'
+    +'<div class="kpi t-amber"><div class="kpi-label">Total MPP Fee</div><div class="kpi-value">'+fmtM(c.mpp)+'</div>'+costDelta(c.mpp,p.mpp)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.mpp/c.trip):0)+'/trip</div></div>'
+    +'<div class="kpi t-cyan"><div class="kpi-label">Total VR</div><div class="kpi-value">'+fmtM(c.vr)+'</div>'+costDelta(c.vr,p.vr)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.vr/c.trip):0)+'/trip</div></div>'
+    +'<div class="kpi t-rose"><div class="kpi-label">Total Ovt</div><div class="kpi-value">'+fmtM(c.ovt)+'</div>'+costDelta(c.ovt,p.ovt)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.ovt/c.trip):0)+'/trip</div></div>'
+    +'<div class="kpi t-green"><div class="kpi-label">Total Insentif</div><div class="kpi-value">'+fmtM(c.ins)+'</div>'+costDelta(c.ins,p.ins)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.ins/c.trip):0)+'/trip</div></div>'
+    +'</div>';
+
+  // KPI 2: UJP breakdown cards
+  const ujpCards = '<div class="tbl-wrap" style="margin-bottom:16px">'
+    +'<div class="tbl-head"><div class="tbl-title">💡 Overview Cost UJP — Breakdown</div></div>'
+    +'<div style="padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">'
+    +[['BBM','bbm','t-amber'],['Tol','tol','t-sky'],['Parkir','pkr','t-green'],['Others','oth','t-cyan']].map(([lbl,key,tc])=>{
+      const val=c[key],pval=p[key],pct=c.trip?+(val/c.cost*100).toFixed(1):0;
+      return '<div class="kpi '+tc+'" style="margin:0">'
+        +'<div class="kpi-label">'+lbl+'</div>'
+        +'<div class="kpi-value">'+fmtM(val)+'</div>'
+        +costDelta(val,pval)
+        +'<div class="kpi-sub">'+fmtM(c.trip?Math.round(val/c.trip):0)+'/trip &nbsp;|&nbsp; '+pct+'% of UJP</div>'
+        +'</div>';
+    }).join('')
+    +'</div></div>';
+
+  // Table
+  const isMulti = !!hubList;
+  let tableSection = '';
+
+  if(isMulti){
+    const hList = hubList||HUBS;
+    const rows = hList.map(hub=>{
+      const hf=fRows.filter(r=>r.hub===hub), hp=pRows?pRows.filter(r=>r.hub===hub):[];
+      const cf=cm(hf), cp=cm(hp);
+      const bu=getBU(hub), cls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';
+      const dg=(cur,prev)=>growthCell(cur,prev);
+      return '<tr>'
+        +'<td class="'+cls+'" onclick="showPage(''+( HUB_PAGE[hub]||'')+'''+')" style="cursor:pointer">Hub '+hub+'</td>'
+        +'<td class="num">'+fmt(cf.trip)+'</td>'+dg(cf.trip,cp.trip)
+        +'<td class="num">'+fmtM(cf.cost)+'</td>'+dg(cf.cost,cp.cost)
+        +'<td class="num ratio-val">'+fmtM(cf.trip?Math.round(cf.cost/cf.trip):0)+'</td>'
+        +'<td class="num">'+fmtM(cf.ujp)+'</td>'+dg(cf.ujp,cp.ujp)
+        +'<td class="num">'+fmtM(cf.bbm)+'</td>'+dg(cf.bbm,cp.bbm)
+        +'<td class="num">'+fmtM(cf.tol)+'</td>'+dg(cf.tol,cp.tol)
+        +'<td class="num">'+fmtM(cf.pkr)+'</td>'+dg(cf.pkr,cp.pkr)
+        +'<td class="num">'+fmtM(cf.oth)+'</td>'+dg(cf.oth,cp.oth)
+        +'<td class="num">'+fmtM(cf.mpp)+'</td>'+dg(cf.mpp,cp.mpp)
+        +'<td class="num">'+fmtM(cf.vr)+'</td>'+dg(cf.vr,cp.vr)
+        +'</tr>';
+    }).join('');
+
+    const totalRow = '<tr style="background:#1e3a8a;border-top:2px solid var(--sky)">'
+      +'<td style="color:#fff;font-weight:700">⚡ TOTAL</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmt(c.trip)+'</td>'+growthCell(c.trip,p.trip)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.cost)+'</td>'+growthCell(c.cost,p.cost)
+      +'<td class="num" style="color:var(--sky);font-weight:700">'+fmtM(c.trip?Math.round(c.cost/c.trip):0)+'</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.ujp)+'</td>'+growthCell(c.ujp,p.ujp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.bbm)+'</td>'+growthCell(c.bbm,p.bbm)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.tol)+'</td>'+growthCell(c.tol,p.tol)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.pkr)+'</td>'+growthCell(c.pkr,p.pkr)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.oth)+'</td>'+growthCell(c.oth,p.oth)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.mpp)+'</td>'+growthCell(c.mpp,p.mpp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.vr)+'</td>'+growthCell(c.vr,p.vr)
+      +'</tr>';
+
+    tableSection = '<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">💰 Detail Cost per Hub</div></div>'
+      +'<div style="overflow-x:auto"><table>'
+      +'<thead><tr><th>Hub</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Trip</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Total Cost</th>'
+      +'<th class="num">Cost/Trip</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Total UJP</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">BBM</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Tol</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Parkir</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Others</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">MPP Fee</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">VR</th>'
+      +'</tr>'
+      +'<tr><th></th>'
+      +['Trip','Cost','','UJP','BBM','Tol','Parkir','Others','MPP Fee','VR'].flatMap((h,i)=>i===2?['<th class="num">Periode</th>']:['<th class="num">Periode</th>','<th class="num">Growth</th>']).join('')
+      +'</tr></thead>'
+      +'<tbody>'+rows+totalRow+'</tbody></table></div></div>';
+
+  } else {
+    // Single hub: detail per jalur
+    const jalurGrp = {};
+    fRows.forEach(r=>{const j=r.jalur||'(kosong)';if(!jalurGrp[j])jalurGrp[j]=[];jalurGrp[j].push(r);});
+    const jalurEntries = Object.entries(jalurGrp).sort((a,b)=>cm(b[1]).cost-cm(a[1]).cost);
+
+    const jalurRows = jalurEntries.map(([j,rs],i)=>{
+      const cf=cm(rs), pj=pRows?pRows.filter(r=>r.jalur===j):[], cp=cm(pj);
+      return '<tr>'
+        +'<td class="rank '+(i<3?'r'+(i+1):'')+'>'+(i+1)+'</td><td>'+j+'</td>'
+        +'<td class="num">'+fmt(cf.trip)+'</td>'+growthCell(cf.trip,cp.trip)
+        +'<td class="num">'+fmtM(cf.cost)+'</td>'+growthCell(cf.cost,cp.cost)
+        +'<td class="num ratio-val">'+fmtM(cf.trip?Math.round(cf.cost/cf.trip):0)+'</td>'
+        +'<td class="num">'+fmtM(cf.ujp)+'</td>'+growthCell(cf.ujp,cp.ujp)
+        +'<td class="num">'+fmtM(cf.bbm)+'</td>'+growthCell(cf.bbm,cp.bbm)
+        +'<td class="num">'+fmtM(cf.tol)+'</td>'+growthCell(cf.tol,cp.tol)
+        +'<td class="num">'+fmtM(cf.pkr)+'</td>'+growthCell(cf.pkr,cp.pkr)
+        +'<td class="num">'+fmtM(cf.oth)+'</td>'+growthCell(cf.oth,cp.oth)
+        +'<td class="num">'+fmtM(cf.mpp)+'</td>'+growthCell(cf.mpp,cp.mpp)
+        +'<td class="num">'+fmtM(cf.vr)+'</td>'+growthCell(cf.vr,cp.vr)
+        +'</tr>';
+    }).join('');
+
+    const totalRow2 = '<tr style="background:#1e3a8a;border-top:2px solid var(--sky)">'
+      +'<td colspan="2" style="color:#fff;font-weight:700">⚡ TOTAL</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmt(c.trip)+'</td>'+growthCell(c.trip,p.trip)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.cost)+'</td>'+growthCell(c.cost,p.cost)
+      +'<td class="num" style="color:var(--sky);font-weight:700">'+fmtM(c.trip?Math.round(c.cost/c.trip):0)+'</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.ujp)+'</td>'+growthCell(c.ujp,p.ujp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.bbm)+'</td>'+growthCell(c.bbm,p.bbm)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.tol)+'</td>'+growthCell(c.tol,p.tol)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.pkr)+'</td>'+growthCell(c.pkr,p.pkr)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.oth)+'</td>'+growthCell(c.oth,p.oth)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.mpp)+'</td>'+growthCell(c.mpp,p.mpp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.vr)+'</td>'+growthCell(c.vr,p.vr)
+      +'</tr>';
+
+    tableSection = '<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">💰 Detail Cost per Jalur</div>'
+      +'<input class="tbl-search" placeholder="Cari jalur..." oninput="ftbl(this,'costJalur'+pid+'')"></div>'
+      +'<div style="overflow-x:auto"><table id="costJalur'+pid+'">'
+      +'<thead><tr><th class="rank">#</th><th>Jalur</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Trip</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Total Cost</th>'
+      +'<th class="num">Cost/Trip</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Total UJP</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">BBM</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Tol</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Parkir</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Others</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">MPP Fee</th>'
+      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">VR</th>'
+      +'</tr>'
+      +'<tr><th></th><th></th>'
+      +Array(9).fill(0).map(()=>'<th class="num">Periode</th><th class="num">Growth</th>').join('')+'<th class="num">Periode</th>'
+      +'</tr></thead>'
+      +'<tbody>'+jalurRows+totalRow2+'</tbody></table></div></div>';
+  }
+
+  pane.innerHTML = mainCards + ujpCards + tableSection;
+}
+
 function renderBBM(pid, fRows, pRows, hubList){
   const pane = document.getElementById(pid+'_tab_bbm');
   if(!pane) return;
@@ -939,14 +1106,16 @@ function showPage(pid){
     </div>
     <div class="page-tabs">
       <button class="page-tab active" onclick="switchTab(this,'${pid}','overview')">📊 Overview</button>
-      <button class="page-tab" onclick="switchTab(this,'${pid}','insight')">💡 Insight</button>
       <button class="page-tab" onclick="switchTab(this,'${pid}','bbm')">⛽ Review BBM</button>
+      <button class="page-tab" onclick="switchTab(this,'${pid}','cost')">💰 Review Cost</button>
+      <button class="page-tab" onclick="switchTab(this,'${pid}','insight')">💡 Insight</button>
     </div>
     <div id="${pid}_tab_overview" class="tab-pane active" data-pid="${pid}">
       <div class="spin-wrap"><div class="spin"></div> Memuat data...</div>
     </div>
     <div id="${pid}_tab_insight" class="tab-pane" data-pid="${pid}"></div>
     <div id="${pid}_tab_bbm" class="tab-pane" data-pid="${pid}"></div>
+    <div id="${pid}_tab_cost" class="tab-pane" data-pid="${pid}"></div>
   </div>`;
   document.getElementById('mainContent').scrollTop=0;
 
