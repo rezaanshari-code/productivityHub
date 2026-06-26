@@ -678,7 +678,7 @@ function renderBBM(pid, fRows, pRows, hubList){
     if(!prev||prev===0) return '';
     const pct=(cur-prev)/prev*100;
     const cls=pct>0?'d-up':'d-dn', sign=pct>0?'▲':'▼';
-    let pv = cur>1e6?fmtM(prev):cur>1e3?fmtM(prev):fmtD(prev);
+    const pv = (prev % 1 === 0) ? fmt(prev) : fmtD(prev);
     return `<div class="kpi-delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs prev (${pv})</div>`;
   }
 
