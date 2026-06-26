@@ -677,13 +677,11 @@ function renderCost(pid, fRows, pRows, hubList){
 
   // KPI 1: Main cost cards
   const mainCards = '<div class="kpi-grid" style="margin-bottom:16px">'
-    +'<div class="kpi t-violet"><div class="kpi-label">Total Cost</div><div class="kpi-value">'+fmtM(c.cost)+'</div>'+costDelta(c.cost,p.cost)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.cost/c.trip):0)+'/trip</div></div>'
+    +'<div class="kpi" style="border-top:3px solid #f59e0b;background:linear-gradient(135deg,rgba(245,158,11,.12),var(--surface))"><div class="kpi-label" style="color:#f59e0b;font-weight:700">Total Cost</div><div class="kpi-value">'+fmtM(c.cost)+'</div>'+costDelta(c.cost,p.cost)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.cost/c.trip):0)+'/trip</div></div>'
     +'<div class="kpi t-sky"><div class="kpi-label">Total UJP</div><div class="kpi-value">'+fmtM(c.ujp)+'</div>'+costDelta(c.ujp,p.ujp)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.ujp/c.trip):0)+'/trip</div></div>'
     +'<div class="kpi t-amber"><div class="kpi-label">Total MPP Fee</div><div class="kpi-value">'+fmtM(c.mpp)+'</div>'+costDelta(c.mpp,p.mpp)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.mpp/c.trip):0)+'/trip</div></div>'
     +'<div class="kpi t-cyan"><div class="kpi-label">Total VR</div><div class="kpi-value">'+fmtM(c.vr)+'</div>'+costDelta(c.vr,p.vr)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.vr/c.trip):0)+'/trip</div></div>'
-    +'<div class="kpi t-rose"><div class="kpi-label">Total Ovt</div><div class="kpi-value">'+fmtM(c.ovt)+'</div>'+costDelta(c.ovt,p.ovt)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.ovt/c.trip):0)+'/trip</div></div>'
-    +'<div class="kpi t-green"><div class="kpi-label">Total Insentif</div><div class="kpi-value">'+fmtM(c.ins)+'</div>'+costDelta(c.ins,p.ins)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.ins/c.trip):0)+'/trip</div></div>'
-    +'</div>';
+    +'</div>'
 
   // KPI 2: UJP breakdown cards
   const ujpCards = '<div class="tbl-wrap" style="margin-bottom:16px">'
