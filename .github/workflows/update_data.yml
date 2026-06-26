@@ -168,6 +168,13 @@ jobs:
                           "tat":  round(float(tat),1) if tat is not None else None,
                           "vol":  round(float(pd.to_numeric(str(r.get("Volume BBM",0)).replace(",",""), errors="coerce") or 0), 2),
                           "jbbm": str(r.get("Jenis BBM","")).strip(),
+                          "tol":  round(float(pd.to_numeric(str(r.get("Tol (UJP)",0)).replace(",",""), errors="coerce") or 0), 2),
+                          "pkr":  round(float(pd.to_numeric(str(r.get("Parkir (UJP)",0)).replace(",",""), errors="coerce") or 0), 2),
+                          "oth":  round(float(pd.to_numeric(str(r.get("Others (UJP)",0)).replace(",",""), errors="coerce") or 0), 2),
+                          "vr":   round(float(pd.to_numeric(str(r.get("Cost VR",0)).replace(",",""), errors="coerce") or 0), 2),
+                          "mpp":  round(float(pd.to_numeric(str(r.get("Cost MPP Fee",0)).replace(",",""), errors="coerce") or 0), 2),
+                          "ovt":  round(float(pd.to_numeric(str(r.get("Cost Ovt",0)).replace(",",""), errors="coerce") or 0), 2),
+                          "ins":  round(float(pd.to_numeric(str(r.get("Cost Insentif",0)).replace(",",""), errors="coerce") or 0), 2),
                       })
                   print(f"OK {name}: {len(df)} baris")
               except Exception as e:
