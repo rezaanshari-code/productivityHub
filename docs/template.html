@@ -800,25 +800,73 @@ function renderBBM(pid, fRows, pRows, hubList){
       </tr>`;
     }).join('');
 
+    // Build hub rows with prev & growth
+    const hubRowsWithGrowth = hList.map(hub=>{
+      const hr  = fRows.filter(r=>r.hub===hub);
+      const phr = pRows?pRows.filter(r=>r.hub===hub):[];
+      const trp=hr.length, ptrp=phr.length;
+      const bbm=hr.reduce((s,r)=>s+(r.bbm||0),0), pbbm=phr.reduce((s,r)=>s+(r.bbm||0),0);
+      const vol=hr.reduce((s,r)=>s+(r.vol||0),0), pvol=phr.reduce((s,r)=>s+(r.vol||0),0);
+      const km =hr.reduce((s,r)=>s+(r.km||0),0),  pkm =phr.reduce((s,r)=>s+(r.km||0),0);
+      const bpt=trp?Math.round(bbm/trp):0, pbpt=ptrp?Math.round(pbbm/ptrp):0;
+      const vpt=trp?+(vol/trp).toFixed(1):0, pvpt=ptrp?+(pvol/ptrp).toFixed(1):0;
+      const kpt=trp?+(km/trp).toFixed(1):0, pkpt=ptrp?+(pkm/ptrp).toFixed(1):0;
+      const kpl=vol?+(km/vol).toFixed(2):0, pkpl=pvol?+(pkm/pvol).toFixed(2):0;
+      const bu=getBU(hub), cls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';
+      return `<tr>
+        <td class="${cls}" onclick="showPage('${HUB_PAGE[hub]||''}')" style="cursor:pointer">Hub ${hub}</td>
+        <td class="num">${fmt(trp)}</td><td class="num" style="color:var(--muted)">${fmt(ptrp)}</td>${growthCell(trp,ptrp)}
+        <td class="num">${fmtM(bbm)}</td><td class="num" style="color:var(--muted)">${fmtM(pbbm)}</td>${growthCell(bbm,pbbm)}
+        <td class="num ratio-val">${fmtM(bpt)}</td><td class="num" style="color:var(--muted)">${fmtM(pbpt)}</td>${growthCell(bpt,pbpt)}
+        <td class="num">${fmtD(vol)} L</td><td class="num" style="color:var(--muted)">${fmtD(pvol)} L</td>${growthCell(vol,pvol)}
+        <td class="num ratio-val">${fmtD(vpt)} L</td><td class="num" style="color:var(--muted)">${fmtD(pvpt)} L</td>${growthCell(vpt,pvpt)}
+        <td class="num">${fmt(km)}</td><td class="num" style="color:var(--muted)">${fmt(pkm)}</td>${growthCell(km,pkm)}
+        <td class="num ratio-val">${fmtD(kpt)}</td><td class="num" style="color:var(--muted)">${fmtD(pkpt)}</td>${growthCell(kpt,pkpt)}
+        <td class="num ratio-val">${fmtD(kpl)}</td><td class="num" style="color:var(--muted)">${fmtD(pkpl)}</td>${growthCell(kpl,pkpl)}
+      </tr>`;
+    }).join('');
+
+    // Total row
+    const tBbmPt=totalTrip?Math.round(totalBbm/totalTrip):0, ptBbmPt=pTrip?Math.round(pBbm/pTrip):0;
+    const tVolPt=totalTrip&&totalVol?+(totalVol/totalTrip).toFixed(1):0, ptVolPt=pTrip&&pVol?+(pVol/pTrip).toFixed(1):0;
+
     bottomSection = `<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">⛽ Detail BBM per Hub</div></div>
       <div style="overflow-x:auto"><table>
-        <thead><tr>
-          <th>Hub</th><th class="num">Trip</th><th class="num">Biaya BBM</th><th class="num">BBM/Trip</th>
-          <th class="num">Volume BBM</th><th class="num">Vol/Trip</th><th class="num">Jarak KM</th>
-          <th class="num">KM/Trip</th><th class="num">KM/Liter</th>
-        </tr></thead>
+        <thead>
+          <tr>
+            <th rowspan="2">Hub</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Trip</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Biaya BBM</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">BBM/Trip</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Volume BBM</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Vol/Trip</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Jarak KM</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">KM/Trip</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">KM/Liter</th>
+          </tr>
+          <tr>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+          </tr>
+        </thead>
         <tbody>
-          ${hubRows}
+          ${hubRowsWithGrowth}
           <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
             <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
-            <td class="num" style="color:#fff;font-weight:700">${fmt(totalTrip)}</td>
-            <td class="num" style="color:#fff;font-weight:700">${fmtM(totalBbm)}</td>
-            <td class="num" style="color:var(--sky);font-weight:700">${fmtM(bbmPerTrip)}</td>
-            <td class="num" style="color:#fff;font-weight:700">${fmtD(totalVol)} L</td>
-            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(totalVol&&totalTrip?+(totalVol/totalTrip).toFixed(1):0)} L</td>
-            <td class="num" style="color:#fff;font-weight:700">${fmt(totalKm)}</td>
-            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(kmPerTrip)}</td>
-            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(kmPerLiter)}</td>
+            <td class="num" style="color:#fff;font-weight:700">${fmt(totalTrip)}</td><td class="num" style="color:#93c5fd">${fmt(pTrip)}</td>${growthCell(totalTrip,pTrip)}
+            <td class="num" style="color:#fff;font-weight:700">${fmtM(totalBbm)}</td><td class="num" style="color:#93c5fd">${fmtM(pBbm)}</td>${growthCell(totalBbm,pBbm)}
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtM(tBbmPt)}</td><td class="num" style="color:#93c5fd">${fmtM(ptBbmPt)}</td>${growthCell(tBbmPt,ptBbmPt)}
+            <td class="num" style="color:#fff;font-weight:700">${fmtD(totalVol)} L</td><td class="num" style="color:#93c5fd">${fmtD(pVol)} L</td>${growthCell(totalVol,pVol)}
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(tVolPt)} L</td><td class="num" style="color:#93c5fd">${fmtD(ptVolPt)} L</td>${growthCell(tVolPt,ptVolPt)}
+            <td class="num" style="color:#fff;font-weight:700">${fmt(totalKm)}</td><td class="num" style="color:#93c5fd">${fmt(pKm)}</td>${growthCell(totalKm,pKm)}
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(kmPerTrip)}</td><td class="num" style="color:#93c5fd">${fmtD(pKmTrip)}</td>${growthCell(kmPerTrip,pKmTrip)}
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(kmPerLiter)}</td><td class="num" style="color:#93c5fd">${fmtD(pKmLiter)}</td>${growthCell(kmPerLiter,pKmLiter)}
           </tr>
         </tbody>
       </table></div></div>`;
