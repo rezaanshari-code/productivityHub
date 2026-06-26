@@ -707,7 +707,10 @@ function renderBBM(pid, fRows, pRows, hubList){
   const volPerTrip = totalTrip&&totalVol ? +(totalVol/totalTrip).toFixed(1) : 0;
   const pVolPerTrip = pTrip&&pVol ? +(pVol/pTrip).toFixed(1) : 0;
 
-  // KPI Cards with delta
+  const spanPrevBbm = pBbmTrip ? '<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: '+fmt(pBbmTrip)+')</span>' : '';
+  const spanPrevVol = pVolPerTrip ? '<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: '+fmtD(pVolPerTrip)+' L)</span>' : '';
+  const spanPrevKm  = pKmTrip ? '<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: '+fmtD(pKmTrip)+')</span>' : '';
+  // KPI Cards
   const kpiSection = `<div class="kpi-grid" style="margin-bottom:16px">
     <div class="kpi t-sky">
       <div class="kpi-label">Total Trip</div>
@@ -721,7 +724,7 @@ function renderBBM(pid, fRows, pRows, hubList){
       ${bbmDelta(totalBbm,pBbm)}
       <div class="kpi-sub" style="margin-top:6px">
         <span style="font-size:13px;font-weight:700;color:#800000">💰 ${fmtM(bbmPerTrip)}/trip</span>
-        ${pBbmTrip?`<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: ${fmt(pBbmTrip)})</span>`:''}
+        ${spanPrevBbm}
       </div>
     </div>
     <div class="kpi t-green">
@@ -730,7 +733,7 @@ function renderBBM(pid, fRows, pRows, hubList){
       ${bbmDelta(totalVol,pVol)}
       <div class="kpi-sub" style="margin-top:6px">
         <span style="font-size:13px;font-weight:700;color:var(--green)">🛢 ${fmtD(volPerTrip)} L/trip</span>
-        ${pVolPerTrip?`<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: ${fmtD(pVolPerTrip)} L)</span>`:''}
+        ${spanPrevVol}
       </div>
     </div>
     <div class="kpi t-cyan">
@@ -739,7 +742,7 @@ function renderBBM(pid, fRows, pRows, hubList){
       ${bbmDelta(totalKm,pKm)}
       <div class="kpi-sub" style="margin-top:6px">
         <span style="font-size:13px;font-weight:700;color:var(--cyan)">🛣 ${fmtD(kmPerTrip)} km/trip</span>
-        ${pKmTrip?`<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: ${fmtD(pKmTrip)})</span>`:''}
+        ${spanPrevKm}
       </div>
     </div>
     <div class="kpi t-violet">
