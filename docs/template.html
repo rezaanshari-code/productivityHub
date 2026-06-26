@@ -449,8 +449,7 @@ function deltaKPI(cur,prev,key){
   const cls=pct>0?'d-up':'d-dn';
   const sign=pct>0?'▲':'▼';
   let pv;
-  if(['total_cost','total_ujp','bbm_ujp','ujp_per_trip','cost_per_trip','bbm_per_trip'].includes(key))pv=fmtM(prev[key]);
-  else if(['do_per_trip','dp_per_trip','km_per_trip'].includes(key))pv=fmtD(prev[key]);
+  if(['do_per_trip','dp_per_trip','km_per_trip','bbm_per_trip','ujp_per_trip','cost_per_trip'].includes(key))pv=fmtD(prev[key]);
   else pv=fmt(prev[key]);
   return`<div class="kpi-delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs prev (${pv})</div>`;
 }
@@ -721,8 +720,8 @@ function renderBBM(pid, fRows, pRows, hubList){
       <div class="kpi-value">${fmtM(totalBbm)}</div>
       ${bbmDelta(totalBbm,pBbm)}
       <div class="kpi-sub" style="margin-top:6px">
-        <span style="font-size:13px;font-weight:700;color:var(--amber)">💰 ${fmtM(bbmPerTrip)}/trip</span>
-        ${pBbmTrip?`<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: ${fmtM(pBbmTrip)})</span>`:''}
+        <span style="font-size:13px;font-weight:700;color:#800000">💰 ${fmtM(bbmPerTrip)}/trip</span>
+        ${pBbmTrip?`<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: ${fmt(pBbmTrip)})</span>`:''}
       </div>
     </div>
     <div class="kpi t-green">
