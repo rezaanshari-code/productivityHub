@@ -712,7 +712,7 @@ function renderCost(pid, fRows, pRows, hubList){
       const bu=getBU(hub), cls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';
       const dg=(cur,prev)=>growthCell(cur,prev);
       return '<tr>'
-        +'<td class="'+cls+'" onclick="showPage(''+( HUB_PAGE[hub]||'')+'''+')" style="cursor:pointer">Hub '+hub+'</td>'
+        +'<td class="'+cls+'" data-pid="'+(HUB_PAGE[hub]||'')+'" onclick="showPage(this.dataset.pid)" style="cursor:pointer">Hub '+hub+'</td>'
         +'<td class="num">'+fmt(cf.trip)+'</td>'+dg(cf.trip,cp.trip)
         +'<td class="num">'+fmtM(cf.cost)+'</td>'+dg(cf.cost,cp.cost)
         +'<td class="num ratio-val">'+fmtM(cf.trip?Math.round(cf.cost/cf.trip):0)+'</td>'
@@ -797,7 +797,7 @@ function renderCost(pid, fRows, pRows, hubList){
       +'</tr>';
 
     tableSection = '<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">💰 Detail Cost per Jalur</div>'
-      +'<input class="tbl-search" placeholder="Cari jalur..." oninput="ftbl(this,'costJalur'+pid+'')"></div>'
+      +'<input class="tbl-search" placeholder="Cari jalur..." oninput="ftbl(this,'costJalur'+pid)"></div>'
       +'<div style="overflow-x:auto"><table id="costJalur'+pid+'">'
       +'<thead><tr><th class="rank">#</th><th>Jalur</th>'
       +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Trip</th>'
