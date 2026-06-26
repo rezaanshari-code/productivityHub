@@ -872,7 +872,7 @@ function renderBBM(pid, fRows, pRows, hubList){
       </table></div></div>`;
   } else {
     // Single hub → Jalur, Driver, Asst Driver tables
-    function bbmTblByGroup(rows, groupKey, title, uid){
+    const bbmTblByGroup = (rows, groupKey, title, uid) => {
       const grp = grpBy(rows, groupKey);
       const entries = Object.entries(grp).map(([k,rs])=>{
         const trp=rs.length, bbm=rs.reduce((s,r)=>s+(r.bbm||0),0),
