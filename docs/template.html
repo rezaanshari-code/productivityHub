@@ -738,25 +738,55 @@ function renderCost(pid, fRows, pRows, hubList){
       +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.vr)+'</td>'+growthCell(c.vr,p.vr)
       +'</tr>';
 
-    tableSection = '<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">💰 Detail Cost per Hub</div></div>'
+        tableSection = '<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">💰 Detail Cost per Hub</div></div>'
       +'<div style="overflow-x:auto"><table>'
-      +'<thead><tr><th>Hub</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Trip</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Total Cost</th>'
-      +'<th class="num">Cost/Trip</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Total UJP</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">BBM</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Tol</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Parkir</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Others</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">MPP Fee</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">VR</th>'
-      +'</tr>'
-      +'<tr><th></th>'
-      +['Trip','Cost','','UJP','BBM','Tol','Parkir','Others','MPP Fee','VR'].flatMap((h,i)=>i===2?['<th class="num">Periode</th>']:['<th class="num">Periode</th>','<th class="num">Growth</th>']).join('')
-      +'</tr></thead>'
-      +'<tbody>'+rows+totalRow+'</tbody></table></div></div>';
-
+      +'<thead><tr><th rowspan="2">Hub</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Trip</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Total Cost</th>'
+      +'<th class="num" rowspan="2">Cost/Trip</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Total UJP</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">BBM</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Tol</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Parkir</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Others</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">MPP Fee</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">VR</th>'
+      +'</tr><tr>'
+      +Array(9).fill(0).map(()=>'<th class="num">Periode</th><th class="num" style="color:var(--muted)">Prev</th><th class="num">Growth</th>').join('')
+      +'</tr></thead><tbody>'
+      +hList.map(hub=>{
+        const hf=fRows.filter(r=>r.hub===hub),hp=pRows?pRows.filter(r=>r.hub===hub):[];
+        const cf=cm(hf),cp=cm(hp);
+        const bu=getBU(hub),cls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';
+        const dg=(cur,prev)=>growthCell(cur,prev);
+        const pv=(v)=>'<td class="num" style="color:var(--muted)">'+fmtM(v)+'</td>';
+        return '<tr>'
+          +'<td class="'+cls+'" data-pid="'+(HUB_PAGE[hub]||'')+'" onclick="showPage(this.dataset.pid)" style="cursor:pointer">Hub '+hub+'</td>'
+          +'<td class="num">'+fmt(cf.trip)+'</td>'+pv(cp.trip)+dg(cf.trip,cp.trip)
+          +'<td class="num">'+fmtM(cf.cost)+'</td>'+pv(cp.cost)+dg(cf.cost,cp.cost)
+          +'<td class="num ratio-val">'+fmtM(cf.trip?Math.round(cf.cost/cf.trip):0)+'</td>'
+          +'<td class="num">'+fmtM(cf.ujp)+'</td>'+pv(cp.ujp)+dg(cf.ujp,cp.ujp)
+          +'<td class="num">'+fmtM(cf.bbm)+'</td>'+pv(cp.bbm)+dg(cf.bbm,cp.bbm)
+          +'<td class="num">'+fmtM(cf.tol)+'</td>'+pv(cp.tol)+dg(cf.tol,cp.tol)
+          +'<td class="num">'+fmtM(cf.pkr)+'</td>'+pv(cp.pkr)+dg(cf.pkr,cp.pkr)
+          +'<td class="num">'+fmtM(cf.oth)+'</td>'+pv(cp.oth)+dg(cf.oth,cp.oth)
+          +'<td class="num">'+fmtM(cf.mpp)+'</td>'+pv(cp.mpp)+dg(cf.mpp,cp.mpp)
+          +'<td class="num">'+fmtM(cf.vr)+'</td>'+pv(cp.vr)+dg(cf.vr,cp.vr)
+          +'</tr>';
+      }).join('')
+      +'<tr style="background:#1e3a8a;border-top:2px solid var(--sky)">'
+      +'<td style="color:#fff;font-weight:700">⚡ TOTAL</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmt(c.trip)+'</td><td class="num" style="color:#93c5fd">'+fmt(p.trip)+'</td>'+growthCell(c.trip,p.trip)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.cost)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.cost)+'</td>'+growthCell(c.cost,p.cost)
+      +'<td class="num" style="color:var(--sky);font-weight:700">'+fmtM(c.trip?Math.round(c.cost/c.trip):0)+'</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.ujp)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.ujp)+'</td>'+growthCell(c.ujp,p.ujp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.bbm)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.bbm)+'</td>'+growthCell(c.bbm,p.bbm)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.tol)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.tol)+'</td>'+growthCell(c.tol,p.tol)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.pkr)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.pkr)+'</td>'+growthCell(c.pkr,p.pkr)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.oth)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.oth)+'</td>'+growthCell(c.oth,p.oth)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.mpp)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.mpp)+'</td>'+growthCell(c.mpp,p.mpp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.vr)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.vr)+'</td>'+growthCell(c.vr,p.vr)
+      +'</tr></tbody></table></div></div>';
   } else {
     // Single hub: detail per jalur
     const jalurGrp = {};
@@ -794,26 +824,55 @@ function renderCost(pid, fRows, pRows, hubList){
       +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.vr)+'</td>'+growthCell(c.vr,p.vr)
       +'</tr>';
 
+        const tblId = 'cJ' + pid;
     tableSection = '<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">💰 Detail Cost per Jalur</div>'
-      +'<input class="tbl-search" data-tbl="costJalur" data-pid="'+pid+'" placeholder="Cari jalur..." oninput="ftbl(this,this.dataset.tbl+this.dataset.pid)"></div>'
-      +'<div style="overflow-x:auto"><table id="'+'costJalur'+pid+'">'
-      +'<thead><tr><th class="rank">#</th><th>Jalur</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Trip</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Total Cost</th>'
-      +'<th class="num">Cost/Trip</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Total UJP</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">BBM</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Tol</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Parkir</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">Others</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">MPP Fee</th>'
-      +'<th class="num" colspan="2" style="text-align:center;border-bottom:1px solid var(--border)">VR</th>'
-      +'</tr>'
-      +'<tr><th></th><th></th>'
-      +Array(9).fill(0).map(()=>'<th class="num">Periode</th><th class="num">Growth</th>').join('')+'<th class="num">Periode</th>'
-      +'</tr></thead>'
-      +'<tbody>'+jalurRows+totalRow2+'</tbody></table></div></div>';
-  }
+      +'<input class="tbl-search" data-tbl="cJ" data-pid="'+pid+'" placeholder="Cari jalur..." oninput="ftbl(this,this.dataset.tbl+this.dataset.pid)"></div>'
+      +'<div style="overflow-x:auto"><table id="cJ'+pid+'">'
+      +'<thead><tr><th class="rank" rowspan="2">#</th><th rowspan="2">Jalur</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Trip</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Total Cost</th>'
+      +'<th class="num" rowspan="2">Cost/Trip</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Total UJP</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">BBM</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Tol</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Parkir</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Others</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">MPP Fee</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">VR</th>'
+      +'</tr><tr>'
+      +Array(9).fill(0).map(()=>'<th class="num">Periode</th><th class="num" style="color:var(--muted)">Prev</th><th class="num">Growth</th>').join('')
+      +'</tr></thead><tbody>'
+      +jalurEntries.map(([j,rs],i)=>{
+        const cf=cm(rs),pj=pRows?pRows.filter(r=>r.jalur===j):[],cp=cm(pj);
+        const dg=(cur,prev)=>growthCell(cur,prev);
+        const pv=(v)=>'<td class="num" style="color:var(--muted)">'+fmtM(v)+'</td>';
+        return '<tr>'
+          +'<td class="rank '+(i<3?'r'+(i+1):'')+'">'+(i+1)+'</td><td>'+j+'</td>'
+          +'<td class="num">'+fmt(cf.trip)+'</td>'+pv(cp.trip)+dg(cf.trip,cp.trip)
+          +'<td class="num">'+fmtM(cf.cost)+'</td>'+pv(cp.cost)+dg(cf.cost,cp.cost)
+          +'<td class="num ratio-val">'+fmtM(cf.trip?Math.round(cf.cost/cf.trip):0)+'</td>'
+          +'<td class="num">'+fmtM(cf.ujp)+'</td>'+pv(cp.ujp)+dg(cf.ujp,cp.ujp)
+          +'<td class="num">'+fmtM(cf.bbm)+'</td>'+pv(cp.bbm)+dg(cf.bbm,cp.bbm)
+          +'<td class="num">'+fmtM(cf.tol)+'</td>'+pv(cp.tol)+dg(cf.tol,cp.tol)
+          +'<td class="num">'+fmtM(cf.pkr)+'</td>'+pv(cp.pkr)+dg(cf.pkr,cp.pkr)
+          +'<td class="num">'+fmtM(cf.oth)+'</td>'+pv(cp.oth)+dg(cf.oth,cp.oth)
+          +'<td class="num">'+fmtM(cf.mpp)+'</td>'+pv(cp.mpp)+dg(cf.mpp,cp.mpp)
+          +'<td class="num">'+fmtM(cf.vr)+'</td>'+pv(cp.vr)+dg(cf.vr,cp.vr)
+          +'</tr>';
+      }).join('')
+      +'<tr style="background:#1e3a8a;border-top:2px solid var(--sky)">'
+      +'<td colspan="2" style="color:#fff;font-weight:700">⚡ TOTAL</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmt(c.trip)+'</td><td class="num" style="color:#93c5fd">'+fmt(p.trip)+'</td>'+growthCell(c.trip,p.trip)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.cost)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.cost)+'</td>'+growthCell(c.cost,p.cost)
+      +'<td class="num" style="color:var(--sky);font-weight:700">'+fmtM(c.trip?Math.round(c.cost/c.trip):0)+'</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.ujp)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.ujp)+'</td>'+growthCell(c.ujp,p.ujp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.bbm)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.bbm)+'</td>'+growthCell(c.bbm,p.bbm)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.tol)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.tol)+'</td>'+growthCell(c.tol,p.tol)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.pkr)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.pkr)+'</td>'+growthCell(c.pkr,p.pkr)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.oth)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.oth)+'</td>'+growthCell(c.oth,p.oth)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.mpp)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.mpp)+'</td>'+growthCell(c.mpp,p.mpp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.vr)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.vr)+'</td>'+growthCell(c.vr,p.vr)
+      +'</tr></tbody></table></div></div>';
 
   pane.innerHTML = mainCards + ujpCards + tableSection;
 }
