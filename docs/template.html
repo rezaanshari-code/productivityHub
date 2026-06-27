@@ -702,10 +702,72 @@ function renderInsight(pid, fRows, pRows, hubList){
 
   pane.innerHTML='<div class="ins-wrap"><div class="ins-card"><div class="ins-card-header">'+title+'</div>'+buildTable(entries,isMulti?'Hub':'Jalur')+'</div><div class="ins-card" id="ins-ai-'+pid+'"><div class="ins-card-header">🤖 AI Insight & Action Plan</div><div class="ins-loading"><div class="spin"></div> Menganalisis data...</div></div></div>';
 
-  fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:"Kamu analis logistik senior. Berikan insight mendalam dan action plan berdasarkan data berikut dalam Bahasa Indonesia. Format output: HTML dengan tag <h4> untuk judul section, <ul><li> untuk poin-poin. Fokus: anomali, tren signifikan, dan rekomendasi konkret.\n\n"+summary}]})})
-  .then(r=>r.json())
-  .then(d=>{const t=d.content?.[0]?.text||'Gagal memuat insight.';const el=document.getElementById('ins-ai-'+pid);if(el)el.innerHTML='<div class="ins-card-header">🤖 AI Insight & Action Plan</div><div class="ins-ai-content">'+t+'</div>';})
-  .catch(()=>{const el=document.getElementById('ins-ai-'+pid);if(el)el.innerHTML='<div class="ins-card-header">🤖 AI Insight & Action Plan</div><div class="ins-loading">⚠️ Gagal memuat AI insight.</div>';});
+  // Generate insight locally from data
+  function pct(cur,prev){return prev?((cur-prev)/prev*100):null;}
+  function sign(v){return v>0?'+':'';} 
+  function arrow(v){return v>2?'▲':v<-2?'▼':'→';}
+  function cls(v){return v>2?'ins-up':v<-2?'ins-dn':'ins-flat';}
+  function fmt_pct(v){return v===null?'N/A':sign(v)+v.toFixed(1)+'%';}
+
+  const pTrip=pct(allF.trip,allP.trip), pDO=pct(allF.do_,allP.do_);
+  const pDP=pct(allF.dp,allP.dp), pUJP=pct(allF.ujp,allP.ujp);
+  const pDOT=pct(allF.do_t,allP.do_t), pDPT=pct(allF.dp_t,allP.dp_t);
+  const pUJPT=pct(allF.ujp_t,allP.ujp_t);
+
+  // Determine overall health
+  const positives=[pDO,pDOT].filter(v=>v!==null&&v>2).length;
+  const negatives=[pTrip,pDO].filter(v=>v!==null&&v<-2).length;
+  const health = negatives>=2?'⚠️ Perlu Perhatian': positives>=2?'✅ Operasional Positif':'⚡ Operasional Stabil';
+  const healthClr = negatives>=2?'#f87171': positives>=2?'#4ade80':'#fbbf24';
+
+  // Top/bottom hub analysis (for multi-hub)
+  let topAnalysis='';
+  if(isMulti && entries.length>1){
+    const sorted=[...entries].sort((a,b)=>b.cf.do_t-a.cf.do_t);
+    const top3=sorted.slice(0,3).map(e=>e.label.replace('Hub ','')+' ('+fmtD(e.cf.do_t)+')').join(', ');
+    const btm3=[...entries].sort((a,b)=>a.cf.do_t-b.cf.do_t).slice(0,3).map(e=>e.label.replace('Hub ','')+' ('+fmtD(e.cf.do_t)+')').join(', ');
+    const bestGrow=[...entries].filter(e=>e.cp.trip>0).sort((a,b)=>pct(b.cf.trip,b.cp.trip)-pct(a.cf.trip,a.cp.trip))[0];
+    const worstGrow=[...entries].filter(e=>e.cp.trip>0).sort((a,b)=>pct(a.cf.trip,a.cp.trip)-pct(b.cf.trip,b.cp.trip))[0];
+    topAnalysis='<h4>🏆 Analisa Per Hub</h4><ul>'
+      +'<li>DO/Trip tertinggi: <b>'+top3+'</b></li>'
+      +'<li>DO/Trip terendah: <b>'+btm3+'</b></li>'
+      +(bestGrow?'<li>Growth Trip terbaik: <b>'+bestGrow.label.replace('Hub ','')+' ('+fmt_pct(pct(bestGrow.cf.trip,bestGrow.cp.trip))+')</b></li>':'')
+      +(worstGrow?'<li>Growth Trip terlemah: <b>'+worstGrow.label.replace('Hub ','')+' ('+fmt_pct(pct(worstGrow.cf.trip,worstGrow.cp.trip))+')</b></li>':'')
+      +'</ul>';
+  }
+
+  // Action plan based on conditions
+  const actions=[];
+  if(pTrip!==null&&pTrip<-5) actions.push('📌 Trip menurun signifikan — evaluasi kapasitas armada & jadwal pengiriman');
+  if(pDOT!==null&&pDOT<-3) actions.push('📌 DO/Trip turun — optimalkan konsolidasi muatan per perjalanan');
+  if(pUJPT!==null&&pUJPT>10) actions.push('📌 UJP/Trip naik — review komponen biaya UJP (BBM, Tol, Parkir)');
+  if(pDPT!==null&&pDPT<-5) actions.push('📌 DP/Trip turun — tinjau strategi distribusi ke drop point');
+  if(pDO!==null&&pDO>10) actions.push('📌 DO naik pesat — pastikan kapasitas operasional dapat mengimbangi');
+  if(actions.length===0) actions.push('📌 Pertahankan performa saat ini dengan monitoring rutin KPI mingguan');
+
+  const insHTML='<div style="padding:16px" class="ins-ai-content">'
+    +'<div style="padding:10px 14px;border-radius:8px;margin-bottom:14px;background:rgba(255,255,255,.07);border-left:4px solid '+healthClr+'">'
+    +'<b style="color:'+healthClr+';font-size:14px">'+health+'</b></div>'
+    +'<h4>📦 Demand & Volume</h4><ul>'
+    +'<li>Trip: <span class="'+cls(pTrip)+'">'+arrow(pTrip)+' '+fmt_pct(pTrip)+'</span> ('+fmt(allF.trip)+' vs prev '+fmt(allP.trip)+')</li>'
+    +'<li>Total DO: <span class="'+cls(pDO)+'">'+arrow(pDO)+' '+fmt_pct(pDO)+'</span> — '+(pDO>2?'demand meningkat':pDO<-2?'demand menurun':'demand stabil')+'</li>'
+    +'<li>Total DP: <span class="'+cls(pDP)+'">'+arrow(pDP)+' '+fmt_pct(pDP)+'</span></li>'
+    +'</ul>'
+    +'<h4>📊 Produktivitas per Trip</h4><ul>'
+    +'<li>DO/Trip: <span class="'+cls(pDOT)+'">'+arrow(pDOT)+' '+fmt_pct(pDOT)+'</span> ('+fmtD(allF.do_t)+' vs prev '+fmtD(allP.do_t)+')'+(pDOT<-3?' — produktivitas armada turun':' — produktivitas terjaga')+'</li>'
+    +'<li>DP/Trip: <span class="'+cls(pDPT)+'">'+arrow(pDPT)+' '+fmt_pct(pDPT)+'</span> ('+fmtD(allF.dp_t)+' vs prev '+fmtD(allP.dp_t)+')</li>'
+    +'</ul>'
+    +'<h4>💰 Biaya UJP</h4><ul>'
+    +'<li>Total UJP: <span class="'+cls(pUJP)+'">'+arrow(pUJP)+' '+fmt_pct(pUJP)+'</span> ('+fmtM(allF.ujp)+' vs prev '+fmtM(allP.ujp)+')</li>'
+    +'<li>UJP/Trip: <span class="'+cls(pUJPT)+'">'+arrow(pUJPT)+' '+fmt_pct(pUJPT)+'</span> ('+fmtM(allF.ujp_t)+' vs prev '+fmtM(allP.ujp_t)+')'+(pUJPT>5?' — perlu review efisiensi biaya':' — cost terkendali')+'</li>'
+    +'</ul>'
+    +topAnalysis
+    +'<h4>🎯 Action Plan</h4><ul>'
+    +actions.map(a=>'<li>'+a+'</li>').join('')
+    +'</ul></div>';
+
+  const el=document.getElementById('ins-ai-'+pid);
+  if(el) el.innerHTML='<div class="ins-card-header">💡 Insight & Action Plan</div>'+insHTML;
 }
 
 function switchTab(btn,pid,tab){
