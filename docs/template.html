@@ -233,6 +233,25 @@ tr:hover td{background:var(--surface2)}
 .empty{text-align:center;padding:40px;color:var(--muted)}
 .footer{text-align:center;padding:7px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface)}
 .spin-wrap{display:flex;align-items:center;justify-content:center;padding:50px;color:var(--muted);font-size:13px;gap:10px}
+:root{--ins-border:#2a3347}
+.ins-wrap{display:flex;flex-direction:column;gap:16px}
+.ins-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.ins-card-header{padding:11px 16px;background:linear-gradient(135deg,#0f1a2e,var(--surface2));font-weight:700;font-size:13px;color:var(--sky);border-bottom:1px solid var(--border)}
+.ins-loading{display:flex;align-items:center;gap:10px;padding:30px;color:var(--muted);font-size:13px}
+.ins-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.ins-tbl th{padding:6px 9px;background:var(--surface2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--border);white-space:nowrap}
+.ins-tbl td{padding:6px 9px;border-bottom:1px solid var(--border);white-space:nowrap}
+.ins-tbl tr:hover td{background:var(--surface2)}
+.ins-hdr-p{color:var(--text)!important}.ins-hdr-v{color:var(--muted)!important}.ins-hdr-g{color:var(--sky)!important}
+.ins-cur{color:var(--text);font-weight:600}.ins-prev{color:var(--muted)!important}
+.ins-up{color:#4ade80!important;font-weight:700}.ins-dn{color:#f87171!important;font-weight:700}.ins-flat{color:var(--muted)!important}
+.ins-total td{background:#1e3a8a!important;color:#fff!important;font-weight:700;border-top:2px solid var(--sky)}
+.ins-prev-t{color:#93c5fd!important}
+.ins-ai-content{padding:16px;font-size:13px;line-height:1.7;color:var(--text)}
+.ins-ai-content h4{color:var(--sky);margin:12px 0 6px;font-size:13px}
+.ins-ai-content ul{padding-left:20px;margin:4px 0}
+.ins-ai-content li{margin:4px 0}
+.ins-ai-content strong,.ins-ai-content b{color:var(--amber)}
 /* Insight tab styles */
 :root{--ins-border:#2a3347;--ins-header:#0f1a2e}
 .ins-wrap{display:flex;flex-direction:column;gap:16px}
@@ -611,26 +630,89 @@ function mkC(id,type,labels,datasets,opts={}){
 }
 const CLR=['#38bdf8','#fb7185','#34d399','#a78bfa','#fbbf24','#06b6d4','#f97316','#ec4899','#84cc16','#14b8a6','#a855f7'];
 
-function renderCharts(pid,fRows,hubList){
-  const bm={};fRows.forEach(r=>{if(!r.d)return;const k=r.d.substring(0,7);if(!bm[k])bm[k]={t:0,c:0};bm[k].t++;bm[k].c+=r.cost;});
-  const months=Object.keys(bm).sort();
-  const hm=(hubList||HUBS).map(h=>({h,m:metrics(fRows.filter(r=>r.hub===h))}));
-  const hasHub=hm.length>1;
-  mkC(pid+'c1','bar',months,[{label:'Trip',data:months.map(k=>bm[k].t),backgroundColor:'#38bdf8',borderRadius:3}]);
-  mkC(pid+'c2','bar',months,[{label:'Cost (Jt)',data:months.map(k=>Math.round(bm[k].c/1e6)),backgroundColor:'#a78bfa',borderRadius:3}]);
-  const dc=fRows.reduce((s,r)=>s+r.doc,0),ds=fRows.reduce((s,r)=>s+r.dos,0);
-  mkC(pid+'c3','doughnut',['DO Cust','DO Store'],[{data:[dc,ds],backgroundColor:['#38bdf8','#fb7185'],borderWidth:0}]);
-  if(hasHub){
-    const lb=hm.map(x=>x.h.replace(/^(AHI|HCI)\s/,''));
-    mkC(pid+'c4','bar',lb,[{label:'Trip',data:hm.map(x=>x.m.trips),backgroundColor:CLR,borderRadius:3}],{plugins:{legend:{display:false}}});
-    mkC(pid+'c5','bar',lb,[{label:'Cost/Trip (Rb)',data:hm.map(x=>Math.round(x.m.cost_per_trip/1e3)),backgroundColor:CLR,borderRadius:3}],{plugins:{legend:{display:false}}});
+function renderInsight(pid, fRows, pRows, hubList){
+  const pane = document.getElementById(pid+'_tab_insight');
+  if(!pane) return;
+  pane.innerHTML = '<div class="ins-wrap"><div class="ins-loading"><div class="spin"></div> Memuat insight...</div></div>';
+  const isMulti = pid==='all'||pid==='ahi'||pid==='hci';
+  const hList = hubList||(pid==='ahi'?AHI_HUBS:pid==='hci'?HCI_HUBS:HUBS);
+
+  function im(rows){
+    const n=rows.length; if(!n) return{trip:0,do_:0,dp:0,ujp:0,do_t:0,dp_t:0,ujp_t:0};
+    let d=0,dp=0,u=0;
+    for(const r of rows){d+=r.do;dp+=(r.dp||0);u+=r.ujp;}
+    return{trip:n,do_:d,dp,ujp:u,do_t:n?+(d/n).toFixed(1):0,dp_t:n?+(dp/n).toFixed(1):0,ujp_t:n?Math.round(u/n):0};
   }
+
+  const cols=[
+    {k:'trip', lb:'Trip',    fn:fmt,  r:false},
+    {k:'do_',  lb:'Total DO',fn:fmt,  r:false},
+    {k:'dp',   lb:'Total DP',fn:fmt,  r:false},
+    {k:'ujp',  lb:'Total UJP',fn:fmtM,r:false},
+    {k:'do_t', lb:'DO/Trip', fn:fmtD, r:true},
+    {k:'dp_t', lb:'DP/Trip', fn:fmtD, r:true},
+    {k:'ujp_t',lb:'UJP/Trip',fn:fmtM, r:true},
+  ];
+
+  function gc(cur,prev){
+    if(!prev||prev===0) return '<td class="num ins-flat">-</td>';
+    const p=(cur-prev)/prev*100,c=p>0?'ins-up':'ins-dn',s=p>0?'▲':'▼';
+    return '<td class="num '+c+'">'+s+Math.abs(p).toFixed(1)+'%</td>';
+  }
+
+  function buildTable(entries,rowLbl){
+    const h1='<tr><th rowspan="2">'+rowLbl+'</th>'+cols.map(c=>'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--ins-border)">'+c.lb+'</th>').join('')+'</tr>';
+    const h2='<tr>'+cols.map(()=>'<th class="num ins-hdr-p">Periode</th><th class="num ins-hdr-v">Prev</th><th class="num ins-hdr-g">Growth</th>').join('')+'</tr>';
+    const rows=entries.map(e=>{
+      const cc=e.cls?'class="'+e.cls+'"':'',pid=e.pid?'data-pid="'+e.pid+'" onclick="showPage(this.dataset.pid)" style="cursor:pointer"':'';
+      return '<tr><td '+cc+' '+pid+'>'+e.label+'</td>'
+        +cols.map(c=>'<td class="num ins-cur">'+c.fn(e.cf[c.k])+'</td><td class="num ins-prev">'+c.fn(e.cp[c.k])+'</td>'+gc(e.cf[c.k],e.cp[c.k])).join('')
+        +'</tr>';
+    }).join('');
+    const allF=im(fRows),allP=im(pRows||[]);
+    const tr='<tr class="ins-total"><td>⚡ TOTAL</td>'
+      +cols.map(c=>'<td class="num">'+c.fn(allF[c.k])+'</td><td class="num ins-prev-t">'+c.fn(allP[c.k])+'</td>'+gc(allF[c.k],allP[c.k])).join('')
+      +'</tr>';
+    return '<div style="overflow-x:auto"><table class="ins-tbl"><thead>'+h1+h2+'</thead><tbody>'+rows+tr+'</tbody></table></div>';
+  }
+
+  let entries=[],title='';
+  if(isMulti){
+    title=pid==='all'?'📊 Perbandingan Per Hub — ALL':pid==='hci'?'📊 Perbandingan Per Hub — HCI':'📊 Perbandingan Per Hub — AHI';
+    entries=hList.map(hub=>({
+      label:'Hub '+hub, pid:HUB_PAGE[hub]||'',
+      cls:getBU(hub)==='HCI'?'hub-link-hci':'hub-link-ahi',
+      cf:im(fRows.filter(r=>r.hub===hub)),
+      cp:im((pRows||[]).filter(r=>r.hub===hub))
+    }));
+  } else {
+    const hubName=NAV.find(n=>n.id===pid)?.hub||'';
+    title='📊 Perbandingan Per Jalur — '+hubName;
+    const jalurs=[...new Set(fRows.map(r=>r.jalur||('(kosong)')))].sort();
+    entries=jalurs.map(j=>({
+      label:j, pid:null, cls:'',
+      cf:im(fRows.filter(r=>(r.jalur||('(kosong)'))===j)),
+      cp:im((pRows||[]).filter(r=>(r.jalur||('(kosong)'))===j))
+    }));
+  }
+
+  const allF=im(fRows),allP=im(pRows||[]);
+  const top=entries.slice(0,8).map(e=>e.label+': Trip='+e.cf.trip+'(prev:'+e.cp.trip+'), DO='+e.cf.do_+'(prev:'+e.cp.do_+'), UJP='+fmtM(e.cf.ujp)+'(prev:'+fmtM(e.cp.ujp)+'), DO/Trip='+e.cf.do_t+'(prev:'+e.cp.do_t+')').join('; ');
+  const summary='Dashboard logistik. TOTAL: Trip='+allF.trip+'(prev:'+allP.trip+'), DO='+allF.do_+'(prev:'+allP.do_+'), DP='+allF.dp+'(prev:'+allP.dp+'), UJP='+fmtM(allF.ujp)+'(prev:'+fmtM(allP.ujp)+'), DO/Trip='+allF.do_t+'(prev:'+allP.do_t+'), DP/Trip='+allF.dp_t+'(prev:'+allP.dp_t+'), UJP/Trip='+fmtM(allF.ujp_t)+'(prev:'+fmtM(allP.ujp_t)+'). Detail: '+top;
+
+  pane.innerHTML='<div class="ins-wrap"><div class="ins-card"><div class="ins-card-header">'+title+'</div>'+buildTable(entries,isMulti?'Hub':'Jalur')+'</div><div class="ins-card" id="ins-ai-'+pid+'"><div class="ins-card-header">🤖 AI Insight & Action Plan</div><div class="ins-loading"><div class="spin"></div> Menganalisis data...</div></div></div>';
+
+  fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:"Kamu analis logistik senior. Berikan insight mendalam dan action plan berdasarkan data berikut dalam Bahasa Indonesia. Format output: HTML dengan tag <h4> untuk judul section, <ul><li> untuk poin-poin. Fokus: anomali, tren signifikan, dan rekomendasi konkret.\n\n"+summary}]})})
+  .then(r=>r.json())
+  .then(d=>{const t=d.content?.[0]?.text||'Gagal memuat insight.';const el=document.getElementById('ins-ai-'+pid);if(el)el.innerHTML='<div class="ins-card-header">🤖 AI Insight & Action Plan</div><div class="ins-ai-content">'+t+'</div>';})
+  .catch(()=>{const el=document.getElementById('ins-ai-'+pid);if(el)el.innerHTML='<div class="ins-card-header">🤖 AI Insight & Action Plan</div><div class="ins-loading">⚠️ Gagal memuat AI insight.</div>';});
 }
+
 function switchTab(btn,pid,tab){
   btn.closest('.page-tabs').querySelectorAll('.page-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
   document.querySelectorAll('.tab-pane[data-pid="'+pid+'"]').forEach(t=>t.classList.remove('active'));
   const pane=document.getElementById(pid+'_tab_'+tab);
-  if(pane){pane.classList.add('active');if(tab==='insight')renderCharts(pid,filt(getRows(pid)),getHList(pid));
+  if(pane){pane.classList.add('active');if(tab==='insight')renderInsight(pid,filt(getRows(pid)),filtPrev(getRows(pid)),getHList(pid));
     if(tab==='bbm')renderBBM(pid,filt(getRows(pid)),filtPrev(getRows(pid)),getHList(pid));
     if(tab==='cost')renderCost(pid,filt(getRows(pid)),filtPrev(getRows(pid)),getHList(pid));
   }
