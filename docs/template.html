@@ -1545,7 +1545,7 @@ function showPage(pid){
                       const arrow = row.up ? '▲' : '▼';
                       const clr = row.up ? '#f87171' : '#f87171';
                       html_ += '<div style="font-size:11px;display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.07)">';
-                      html_ += '<span style="color:#94a3b8;font-weight:600">'+row.k+'</span>';
+                      html_ += '<span style="color:#1e3a8a;font-weight:700">'+row.k+'</span>';
                       html_ += '<span><b style="color:#f1f5f9;font-size:12px">'+row.fmt_(row.cur)+'</b> <span style="color:#1e3a8a;font-size:11px">← prev <b style="color:#1e3a8a">'+row.fmt_(row.prev)+'</b></span> <span style="color:'+clr+';font-weight:700;font-size:12px"> '+arrow+Math.abs(pct).toFixed(1)+'%</span></span>';
                       html_ += '</div>';
                     });
