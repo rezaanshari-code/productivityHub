@@ -1528,28 +1528,28 @@ function showPage(pid){
                 html_ += '<div style="font-size:11px;font-weight:700;color:'+accentColor+';text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid '+accentColor+'">'+label+'</div>';
 
                 if(!declines.length) {
-                  html_ += '<div style="color:var(--green);font-size:12px;padding:8px 0">✅ Semua hub growth positif</div>';
+                  html_ += '<div style="color:#4ade80;font-size:13px;font-weight:600;padding:10px 0">✅ Semua hub growth positif</div>';
                 } else {
                   declines.forEach(d => {
-                    html_ += '<div style="margin-bottom:10px;padding:8px;background:rgba(0,0,0,.15);border-radius:6px;border-left:3px solid '+accentColor+'">';
-                    html_ += '<div style="font-weight:700;font-size:12px;color:var(--text);margin-bottom:4px">🏢 '+d.hub+'</div>';
+                    html_ += '<div style="margin-bottom:10px;padding:10px 12px;background:rgba(0,0,0,.3);border-radius:8px;border-left:4px solid '+accentColor+'">';
+                    html_ += '<div style="font-weight:700;font-size:13px;color:#e2e8f0;margin-bottom:5px">🏢 '+d.hub+'</div>';
                     d.rows.forEach(row => {
                       const pct = ((row.cur - row.prev)/row.prev*100);
                       const arrow = row.up ? '▲' : '▼';
                       const clr = row.up ? '#f87171' : '#f87171';
-                      html_ += '<div style="font-size:11px;display:flex;justify-content:space-between;padding:2px 0">';
-                      html_ += '<span style="color:var(--muted)">'+row.k+'</span>';
-                      html_ += '<span><b style="color:var(--text)">'+row.fmt_(row.cur)+'</b> <span style="color:var(--muted);font-size:10px">← prev '+row.fmt_(row.prev)+'</span> <span style="color:'+clr+';font-weight:700">'+arrow+Math.abs(pct).toFixed(1)+'%</span></span>';
+                      html_ += '<div style="font-size:11px;display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.07)">';
+                      html_ += '<span style="color:#94a3b8;font-weight:600">'+row.k+'</span>';
+                      html_ += '<span><b style="color:#f1f5f9;font-size:12px">'+row.fmt_(row.cur)+'</b> <span style="color:#64748b;font-size:10px">← prev <b style="color:#94a3b8">'+row.fmt_(row.prev)+'</b></span> <span style="color:'+clr+';font-weight:700;font-size:12px"> '+arrow+Math.abs(pct).toFixed(1)+'%</span></span>';
                       html_ += '</div>';
                     });
                     html_ += '</div>';
                   });
                 }
 
-                html_ += '<div style="margin-top:12px;padding:10px;background:rgba(0,0,0,.2);border-radius:6px">';
-                html_ += '<div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:6px">🎯 Action Plan</div>';
+                html_ += '<div style="margin-top:14px;padding:12px;background:rgba(0,0,0,.35);border-radius:8px;border:1px solid rgba(255,255,255,.08)">';
+                html_ += '<div style="font-size:12px;font-weight:700;color:#fbbf24;margin-bottom:8px;letter-spacing:.3px">🎯 Action Plan</div>';
                 actionPlan.forEach(a => {
-                  html_ += '<div style="font-size:11px;color:var(--text);margin-bottom:4px">'+a+'</div>';
+                  html_ += '<div style="font-size:12px;color:#e2e8f0;margin-bottom:5px;line-height:1.5">'+a+'</div>';
                 });
                 html_ += '</div>';
                 html_ += '</div>';
