@@ -412,6 +412,14 @@ const allDates=[...new Set(RAW.map(r=>r.d).filter(Boolean))].sort();
 const minDate=allDates[0],maxDate=allDates[allDates.length-1];
 document.getElementById('dateFrom').value=minDate;
 document.getElementById('dateTo').value=maxDate;
+let _cFR=null,_cPR=null,_cPid=null,_cHL=null;
+function getCachedRows(pid){
+  if(_cPid===pid&&_cFR) return {fRows:_cFR,pRows:_cPR,hList:_cHL};
+  const rows=getRows(pid);
+  _cFR=filt(rows);_cPR=filtPrev(rows);_cHL=getHList(pid);_cPid=pid;
+  return {fRows:_cFR,pRows:_cPR,hList:_cHL};
+}
+function invalidateCache(){_cPid=null;}
 let filterFrom=minDate,filterTo=maxDate,prevFrom='',prevTo='',curPid='all';
 
 function calcPrev(from,to){
@@ -1488,7 +1496,8 @@ function showPage(pid){
       <div id="${pid}_a" class="sec-block">${personHTML(fRows,pRows,'ast','👤 Top Asisten Driver','tA'+pid,showHub)}</div>
       `}`;
 
-    if(pid==='all'||pid==='ahi'||pid==='hci')setTimeout(()=>renderMap(fRows, hList),100);
+    if(pid==='all'||pid==='ahi'||pid==='hci')_cFR=fRows;_cPR=pRows;_cHL=hList;_cPid=pid;
+    setTimeout(()=>renderMap(fRows, hList),100);
 
     const hm=(hList||HUBS).map(h=>({h,m:metrics(fRows.filter(r=>r.hub===h))}));
     const hasHub=hm.length>1;
