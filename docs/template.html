@@ -1512,12 +1512,3 @@ showPage('all');
 </script>
 </body>
 </html>
-    // Defer Overview Growth table - heavy computation (45 hubs × 2 metrics)
-    if(pid==='all'){
-      const _fR=fRows,_pR=pRows,_hL=hList;
-      setTimeout(()=>{
-        const el=document.getElementById('ovg-placeholder');
-        if(el) el.outerHTML=hubGrowthTableHTML(_fR,_pR,_hL);
-      },50);
-    }
-
