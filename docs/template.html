@@ -1506,63 +1506,10 @@ function showPage(pid){
 
         <div class="tbl-wrap" style="margin-bottom:16px">
           <div class="tbl-head"><div class="tbl-title">🔍 Insight: Hub dengan Penurunan Growth</div></div>
-          <div style="padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div id="ins-declining-wrap" style="padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px"><div class="spin"></div> Menganalisis hub...</div>
             ${(()=>{
-              function buildCol(hubs, label, accentColor) {
-                const declines = hubs.map(hub => {
-                  const cf = metrics(fRows.filter(r=>r.hub===hub));
-                  const cp = metrics((pRows||[]).filter(r=>r.hub===hub));
-                  if(!cp.trips) return null;
-                  const rows = [];
-                  if(cf.trips < cp.trips) rows.push({k:'Trip', cur:cf.trips, prev:cp.trips, fmt_:fmt});
-                  if(cf.total_do < cp.total_do) rows.push({k:'DO', cur:cf.total_do, prev:cp.total_do, fmt_:fmt});
-                  if(cf.do_per_trip < cp.do_per_trip) rows.push({k:'DO/Trip', cur:cf.do_per_trip, prev:cp.do_per_trip, fmt_:fmtD});
-                  if(cf.dp_per_trip < cp.dp_per_trip) rows.push({k:'DP/Trip', cur:cf.dp_per_trip, prev:cp.dp_per_trip, fmt_:fmtD});
-                  if(cf.ujp_per_trip > cp.ujp_per_trip*1.05) rows.push({k:'UJP/Trip↑', cur:cf.ujp_per_trip, prev:cp.ujp_per_trip, fmt_:fmtM, up:true});
-                  return rows.length ? {hub, rows, cf, cp} : null;
-                }).filter(Boolean);
-
-                const actionPlan = [];
-                const tripDown = declines.filter(d=>d.rows.find(r=>r.k==='Trip'));
-                const doTripDown = declines.filter(d=>d.rows.find(r=>r.k==='DO/Trip'));
-                const ujpUp = declines.filter(d=>d.rows.find(r=>r.k==='UJP/Trip↑'));
-                if(tripDown.length) actionPlan.push('📌 '+tripDown.length+' hub trip menurun — evaluasi ketersediaan armada & jadwal');
-                if(doTripDown.length) actionPlan.push('📌 '+doTripDown.length+' hub DO/Trip turun — optimalkan konsolidasi muatan per trip');
-                if(ujpUp.length) actionPlan.push('📌 '+ujpUp.length+' hub UJP/Trip naik — review komponen biaya operasional');
-                if(!actionPlan.length) actionPlan.push('✅ Tidak ada anomali signifikan — pertahankan performa');
-
-                let html_ = '<div>';
-                html_ += '<div style="font-size:11px;font-weight:700;color:'+accentColor+';text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid '+accentColor+'">'+label+'</div>';
-
-                if(!declines.length) {
-                  html_ += '<div style="color:#4ade80;font-size:13px;font-weight:600;padding:10px 0">✅ Semua hub growth positif</div>';
-                } else {
-                  declines.forEach(d => {
-                    html_ += '<div style="margin-bottom:10px;padding:10px 12px;background:rgba(0,0,0,.3);border-radius:8px;border-left:4px solid '+accentColor+'">';
-                    html_ += '<div style="font-weight:700;font-size:13px;color:#e2e8f0;margin-bottom:5px">🏢 '+d.hub+'</div>';
-                    d.rows.forEach(row => {
-                      const pct = ((row.cur - row.prev)/row.prev*100);
-                      const arrow = row.up ? '▲' : '▼';
-                      const clr = row.up ? '#f87171' : '#f87171';
-                      html_ += '<div style="font-size:11px;display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.07)">';
-                      html_ += '<span style="color:#1e3a8a;font-weight:700">'+row.k+'</span>';
-                      html_ += '<span><b style="color:#f1f5f9;font-size:12px">'+row.fmt_(row.cur)+'</b> <span style="color:#1e3a8a;font-size:11px">← prev <b style="color:#1e3a8a">'+row.fmt_(row.prev)+'</b></span> <span style="color:'+clr+';font-weight:700;font-size:12px"> '+arrow+Math.abs(pct).toFixed(1)+'%</span></span>';
-                      html_ += '</div>';
-                    });
-                    html_ += '</div>';
-                  });
-                }
-
-                html_ += '<div style="margin-top:14px;padding:12px;background:rgba(0,0,0,.35);border-radius:8px;border:1px solid rgba(255,255,255,.08)">';
-                html_ += '<div style="font-size:12px;font-weight:700;color:#fbbf24;margin-bottom:8px;letter-spacing:.3px">🎯 Action Plan</div>';
-                actionPlan.forEach(a => {
-                  html_ += '<div style="font-size:12px;color:#e2e8f0;margin-bottom:5px;line-height:1.5">'+a+'</div>';
-                });
-                html_ += '</div>';
-                html_ += '</div>';
-                return html_;
-              }
-              return buildCol(HCI_HUBS,'🔵 HUB HCI','#3b82f6') + buildCol(AHI_HUBS,'🔴 HUB AHI','#ef4444');
+              // Deferred rendering via setTimeout
             })()}
           </div>
         </div>`;
