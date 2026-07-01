@@ -1452,20 +1452,1389 @@ function showPage(pid){
             <td class="num" style="font-weight:700;color:#fff">${fmtM(allF.bbm_ujp)}</td>${rTds(allF)}</tr>
         </tbody></table></div>
 
+        <div id="overview-growth-placeholder"></div>
         <div class="tbl-wrap" style="margin-bottom:16px">
-        <div class="tbl-head"><div class="tbl-title">📊 Overview Growth Delivery Hub AHI dan Hub HCI</div></div>
-        <div style="overflow-x:auto"><table>
+          <div class="tbl-head"><div class="tbl-title">🔍 Insight: Hub dengan Penurunan Growth</div></div>
+          <div id="ins-declining-wrap" style="padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px"><div class="spin"></div> Menganalisis hub...</div>
+            ${(()=>{
+              // Deferred rendering via setTimeout
+            })()}
+          </div>
+        </div>`;
+    } else if(pid==='ahi'||pid==='hci'){
+      extra=hubTblHTML(fRows,pRows,hList)+hubGrowthTableHTML(fRows,pRows,hList);
+    }
+
+    const mapHTML=(pid==='all'||pid==='ahi'||pid==='hci')?`<div class="map-card"><div class="map-header">🗺️ Peta Lokasi Hub</div><div id="hubMap"></div></div>`:'';
+
+    document.getElementById(pid+'_tab_overview').innerHTML=`${mapHTML}${kpiHTML(m,mp)}${extra}
+      ${pid==='all' ? '' : `
+      <div class="sub-nav">
+        <button class="sub-tab active" onclick="showSub(this,'${pid}','j')">📍 Per Jalur</button>
+        <button class="sub-tab" onclick="showSub(this,'${pid}','d')">🚗 Driver</button>
+        <button class="sub-tab" onclick="showSub(this,'${pid}','a')">👤 Asst Driver</button>
+      </div>
+      <div id="${pid}_j" class="sec-block show">${jalurHTML(fRows,pRows,'tJ'+pid,showHub)}</div>
+      <div id="${pid}_d" class="sec-block">${personHTML(fRows,pRows,'drv','🚗 Top Driver','tD'+pid,showHub)}</div>
+      <div id="${pid}_a" class="sec-block">${personHTML(fRows,pRows,'ast','👤 Top Asisten Driver','tA'+pid,showHub)}</div>
+      `}`;
+
+    if(pid==='all'||pid==='ahi'||pid==='hci')setTimeout(()=>renderMap(fRows, hList),100);
+
+    const hm=(hList||HUBS).map(h=>({h,m:metrics(fRows.filter(r=>r.hub===h))}));
+    const hasHub=hm.length>1;
+    document.getElementById(pid+'_tab_insight').innerHTML=`
+      <div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">📈 Trend Trip per Bulan</div><div class="chart-wrap"><canvas id="${pid}c1"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">💰 Total Cost per Bulan (Juta)</div><div class="chart-wrap"><canvas id="${pid}c2"></canvas></div></div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">🍩 DO Cust vs Store</div><div class="chart-wrap"><canvas id="${pid}c3"></canvas></div></div>
+        ${hasHub?`<div class="chart-card"><div class="chart-title">🏆 Trip per Hub</div><div class="chart-wrap"><canvas id="${pid}c4"></canvas></div></div>`:''}
+      </div>
+      ${hasHub?`<div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">💵 Cost/Trip per Hub (Rb)</div><div class="chart-wrap"><canvas id="${pid}c5"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">📊 Ratio per Hub</div>
+          <div style="overflow-x:auto;max-height:200px"><table><thead><tr>
+            <th>Hub</th><th class="num">DO/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>
+          </tr></thead><tbody>${hm.map(({h,m})=>{const bu=getBU(h),cls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';return`<tr>
+            <td class="${cls}" onclick="showPage('${HUB_PAGE[h]||''}')">${h}</td>
+            <td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td>
+            <td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td></tr>`;}).join('')}
+          </tbody></table></div>
+        </div></div>`:''}`;
+  });
+}
+
+updatePrevPeriod();
+showPage('all');
+</script>
+</body>
+</html>;
+
+    // Defer Overview Growth table (heavy: 45 hub × 2 metrics calls)
+    if(pid==='all'){
+      const _fR=fRows, _pR=pRows, _hL=hList;
+      setTimeout(()=>{
+        const el=document.getElementById('overview-growth-placeholder');
+        if(!el) return;
+        el.outerHTML = hubGrowthTableHTML(_fR,_pR,_hL);
+      }, 50);
+    }<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Performance & Productivity Hub</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b27;--surface2:#1e2535;--border:#2a3347;
+  --ahi:#dc2626;--hci:#1e3a8a;--all:#7c3aed;
+  --sky:#38bdf8;--mint:#34d399;--amber:#fbbf24;--rose:#fb7185;--violet:#a78bfa;
+  --text:#f1f5f9;--muted:#8892a4;--green:#10b981;--cyan:#06b6d4;--red:#ef4444;
+  --sidebar:220px
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;font-size:14px;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* TOPBAR */
+.topbar{background:linear-gradient(135deg,#1e2535,#161b27);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;height:48px;flex-shrink:0}
+.topbar-brand{font-size:15px;font-weight:700;background:linear-gradient(90deg,var(--sky),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+/* FILTER BAR */
+.filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:6px 16px;display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.filter-label{font-size:11px;color:var(--sky);font-weight:700;white-space:nowrap;min-width:86px}
+.date-input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;transition:border-color .15s}
+.date-input:focus{outline:none;border-color:var(--sky)}
+.date-input-prev{background:var(--surface2);border:1px dashed #4ade8060;border-radius:6px;padding:4px 8px;color:var(--mint);font-size:12px;transition:border-color .15s}
+.date-input-prev:focus{outline:none;border-color:var(--mint)}
+.filter-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:11px;font-weight:600;background:var(--surface2);color:var(--muted)}
+.filter-btn:hover{color:var(--text);border-color:var(--sky)}
+.presets{display:flex;gap:4px;flex-wrap:wrap}
+.preset{padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer;transition:all .15s}
+.preset:hover{color:var(--text);border-color:var(--sky)}
+.preset.active{background:var(--sky);color:#0d1117;border-color:var(--sky);font-weight:700}
+.filter-info{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.prev-label{font-size:10px;color:#4ade80;font-style:italic}
+
+/* LAYOUT */
+.layout{display:flex;flex:1;overflow:hidden}
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;padding:8px 0}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sidebar-group-label{padding:8px 14px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+.sidebar-item{display:flex;align-items:center;gap:8px;padding:6px 14px;cursor:pointer;color:var(--muted);font-size:12px;font-weight:500;transition:all .15s;border-left:3px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-item:hover{background:var(--surface2);color:var(--text)}
+.sidebar-item.active.ahi{border-left-color:var(--ahi);background:var(--surface2);color:#fca5a5}
+.sidebar-item.active.hci{border-left-color:var(--hci);background:var(--surface2);color:#93c5fd}
+.sidebar-item.active.all-item{border-left-color:var(--sky);background:var(--surface2);color:var(--sky)}
+.sidebar-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-all{background:var(--sky)}.dot-ahi{background:var(--ahi)}.dot-hci{background:var(--hci)}
+
+.content{flex:1;overflow-y:auto;padding:16px;transition:background .3s}
+.content.bg-hci{
+  background:#191970;
+  --text:#0a1628;--muted:#1e3a5f;--surface:rgba(255,255,255,.55);
+  --surface2:rgba(255,255,255,.35);--border:rgba(30,58,138,.25);
+  --sky:#0369a1
+}
+.content.bg-ahi{
+  background:#F08080;
+  --text:#3d0a0a;--muted:#7f1d1d;--surface:rgba(255,255,255,.65);
+  --surface2:rgba(248,200,200,.7);--border:rgba(180,30,30,.2);--sky:#1d4ed8;
+  --mint:#065f46;--amber:#92400e;--rose:#9f1239;--violet:#4c1d95;--cyan:#0e7490;
+  --green:#065f46;--red:#7f1d1d
+}
+.content.bg-all{background:var(--bg)}
+/* Force text color for AHI light background only */
+.content.bg-ahi *{color:inherit}
+.content.bg-ahi .sec-title{color:var(--text)!important}
+.content.bg-ahi td{color:var(--text)}
+.content.bg-ahi th{color:var(--sky)!important}
+.content.bg-ahi .kpi-value{color:var(--text)!important}
+.content.bg-ahi .kpi-label{color:var(--muted)!important}
+.content.bg-ahi .kpi-sub{color:var(--muted)!important}
+.content.bg-ahi .sec-sub{color:var(--muted)!important}
+.content.bg-ahi .tbl-title{color:var(--sky)!important}
+.content.bg-ahi .ratio-val{color:var(--sky)!important}
+.content.bg-ahi .page-tab.active{color:var(--sky)!important;border-bottom-color:var(--sky)!important}
+.content.bg-ahi .page-tab{color:var(--muted)!important}
+.content.bg-ahi .sub-tab{color:var(--muted)!important}
+.content.bg-ahi .sub-tab.active{color:var(--sky)!important;border-color:var(--sky)!important}
+.content.bg-ahi .rank{color:var(--muted)!important}
+.content.bg-ahi .d-up{color:#065f46!important}
+.content.bg-ahi .d-dn{color:#9f1239!important}
+.content.bg-ahi .delta-up{color:#065f46!important}
+.content.bg-ahi .delta-down{color:#9f1239!important}
+.content.bg-ahi .chart-title{color:var(--sky)!important}
+.content.bg-ahi .map-header{color:var(--sky)!important}
+
+/* ── Light mode overrides (active on all 3 bg variants) ── */
+.content.light-mode{color:#1a1a2e}
+.content.light-mode .sec-title{color:#1a1a2e}
+.content.light-mode .sec-sub{color:#444}
+.content.light-mode .kpi{background:rgba(255,255,255,.7);border-color:rgba(0,0,0,.1)}
+.content.light-mode .kpi-value{color:#1a1a2e}
+.content.light-mode .kpi-label{color:#555}
+.content.light-mode .kpi-sub{color:#666}
+.content.light-mode .kpi-delta.d-up{color:#059669}
+.content.light-mode .kpi-delta.d-dn{color:#dc2626}
+.content.light-mode .tbl-wrap{background:rgba(255,255,255,.75);border-color:rgba(0,0,0,.1)}
+.content.light-mode .tbl-head{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.08)}
+.content.light-mode .tbl-title{color:#1e40af}
+.content.light-mode .tbl-search{background:#fff;border-color:rgba(0,0,0,.2);color:#1a1a2e}
+.content.light-mode table th{background:rgba(0,0,0,.07);color:#1e40af;border-color:rgba(0,0,0,.08)}
+.content.light-mode table td{color:#1a1a2e;border-color:rgba(0,0,0,.07)}
+.content.light-mode tr:hover td{background:rgba(0,0,0,.04)}
+.content.light-mode .rank{color:#888}
+.content.light-mode .r1{color:#d97706}.content.light-mode .r2{color:#6b7280}.content.light-mode .r3{color:#92400e}
+.content.light-mode .ratio-val{color:#0369a1}
+.content.light-mode .inline-delta.d-up{color:#059669}
+.content.light-mode .inline-delta.d-dn{color:#dc2626}
+.content.light-mode .d-up{color:#059669}
+.content.light-mode .d-dn{color:#dc2626}
+.content.light-mode .sub-nav .sub-tab{background:rgba(255,255,255,.6);color:#555;border-color:rgba(0,0,0,.15)}
+.content.light-mode .sub-nav .sub-tab.active{background:#fff;color:#1e40af;border-color:#1e40af}
+.content.light-mode .sub-nav .sub-tab:hover{color:#1e40af;border-color:#1e40af}
+.content.light-mode .page-tabs{border-color:rgba(0,0,0,.15)}
+.content.light-mode .page-tab{color:#555}
+.content.light-mode .page-tab.active{color:#1e40af;border-bottom-color:#1e40af}
+.content.light-mode .map-card{background:rgba(255,255,255,.7);border-color:rgba(0,0,0,.1)}
+.content.light-mode .map-header{color:#1e40af;background:rgba(255,255,255,.5);border-color:rgba(0,0,0,.08)}
+.content.light-mode .chart-card{background:rgba(255,255,255,.7);border-color:rgba(0,0,0,.1)}
+.content.light-mode .chart-title{color:#1e40af}
+.content.light-mode .hub-link-ahi{color:#dc2626!important}
+.content.light-mode .hub-link-hci{color:#1d4ed8!important}
+.content.light-mode .hub-tag.hub-ahi{background:rgba(220,38,38,.12);color:#dc2626}
+.content.light-mode .hub-tag.hub-hci{background:rgba(29,78,216,.12);color:#1d4ed8}
+.content.light-mode .tag-ahi{background:rgba(220,38,38,.12);color:#dc2626}
+.content.light-mode .tag-hci{background:rgba(29,78,216,.12);color:#1d4ed8}
+.content.light-mode .empty{color:#666}
+.content.light-mode .spin-wrap{color:#666}
+.content.light-mode .badge-all{background:linear-gradient(135deg,#0369a1,#4f46e5);color:#fff}
+.content::-webkit-scrollbar{width:6px}.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.page-wrap{max-width:1400px;margin:0 auto}
+
+/* HEADER */
+.sec-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-all{background:linear-gradient(135deg,var(--sky),var(--violet));color:#fff}
+.badge-ahi{background:var(--ahi);color:#fff}
+.badge-hci{background:var(--hci);color:#fff}
+.sec-title{font-size:18px;font-weight:700;color:#ffffff!important}
+.sec-sub{color:#94a3b8!important}
+.content.bg-ahi .sec-title{color:#3d0a0a!important}
+.content.bg-ahi .sec-sub{color:#7f1d1d!important}
+.content.bg-hci .sec-title{color:#ffffff!important}
+.content.bg-hci .sec-sub{color:#dbeafe!important}
+.content.bg-hci .page-tab{color:#bfdbfe!important}
+.content.bg-hci .page-tab.active{color:#ffffff!important;border-bottom-color:#ffffff!important}
+.content.bg-hci .map-header{color:#ffffff!important}
+.content.bg-hci .sub-tab{color:#bfdbfe!important;border-color:rgba(255,255,255,.3)!important}
+.content.bg-hci .sub-tab.active{color:#ffffff!important;border-color:#ffffff!important;background:rgba(255,255,255,.2)!important}
+.content.bg-hci{--muted:#2c4a6e}
+.sec-sub{color:var(--muted);font-size:11px;margin-top:2px}
+
+/* PAGE TABS */
+.page-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.page-tab{padding:7px 16px;cursor:pointer;color:var(--muted);font-size:12px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;border-top:none;border-left:none;border-right:none;transition:all .15s}
+.page-tab:hover{color:var(--text)}
+.page-tab.active{color:var(--sky);border-bottom-color:var(--sky)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;transition:transform .15s,box-shadow .15s}
+.kpi:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.kpi-value{font-size:20px;font-weight:700;line-height:1;color:var(--text)}
+.kpi-delta{font-size:11px;font-weight:600;margin-top:3px}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.d-up{color:#4ade80;font-weight:600}.d-dn{color:#f87171;font-weight:600}.d-fl{color:var(--muted)}
+.t-sky{border-top:3px solid var(--sky)}
+.t-mint{border-top:3px solid var(--mint)}
+.t-amber{border-top:3px solid var(--amber)}
+.t-rose{border-top:3px solid var(--rose)}
+.t-violet{border-top:3px solid var(--violet)}
+.t-cyan{border-top:3px solid var(--cyan)}
+.t-green{border-top:3px solid var(--green)}
+.t-red{border-top:3px solid var(--red)}
+
+/* TABLE */
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.tbl-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,var(--surface2),var(--surface))}
+.tbl-title{font-weight:600;font-size:13px;color:var(--sky)}
+.tbl-search{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 9px;color:var(--text);font-size:12px;width:160px}
+.tbl-search:focus{outline:none;border-color:var(--sky)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--surface2);padding:7px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--sky);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--border);font-size:11px;white-space:nowrap;color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.rank{width:24px;color:var(--muted);font-weight:700;font-size:11px}
+.r1{color:#fbbf24}.r2{color:#94a3b8}.r3{color:#cd7c3b}
+.hub-tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700}
+.hub-ahi{background:rgba(220,38,38,.2);color:#fca5a5}
+.hub-hci{background:rgba(56,189,248,.15);color:#7dd3fc}
+.ratio-val{color:var(--sky);font-weight:600}
+.inline-delta{font-size:10px;font-weight:700;margin-left:4px}
+
+/* HUB LINK COLORS */
+.hub-link-ahi{cursor:pointer;color:#fca5a5 !important;font-weight:600}
+.hub-link-hci{cursor:pointer;color:#7dd3fc !important;font-weight:600}
+
+/* SUB NAV */
+.sub-nav{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.sub-tab{padding:5px 12px;border-radius:6px;cursor:pointer;color:var(--muted);font-size:12px;border:1px solid var(--border);background:var(--surface);transition:all .15s}
+.sub-tab:hover{color:var(--text);border-color:var(--sky)}
+.sub-tab.active{background:rgba(56,189,248,.15);color:var(--sky);border-color:var(--sky)}
+.sec-block{display:none}.sec-block.show{display:block}
+
+/* CHARTS */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+.chart-title{font-size:11px;font-weight:700;color:var(--sky);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.chart-wrap{position:relative;height:200px}
+
+/* MAP */
+.map-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.map-header{padding:10px 14px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px;color:var(--sky);background:linear-gradient(135deg,var(--surface2),var(--surface))}
+#hubMap{height:300px;width:100%}
+.hub-map-label{background:rgba(13,17,23,.85)!important;border:1px solid rgba(56,189,248,.4)!important;border-radius:4px!important;color:#f1f5f9!important;font-size:10px!important;font-weight:700!important;padding:2px 6px!important;box-shadow:0 2px 6px rgba(0,0,0,.4)!important;white-space:nowrap!important}
+.hub-map-label::before{display:none!important}
+
+/* MISC */
+.summary-col{display:flex;flex-direction:column;gap:14px;margin-bottom:16px}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700}
+.tag-ahi{background:rgba(220,38,38,.2);color:#fca5a5}
+.tag-hci{background:rgba(56,189,248,.15);color:#7dd3fc}
+.empty{text-align:center;padding:40px;color:var(--muted)}
+.footer{text-align:center;padding:7px;color:var(--muted);font-size:11px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface)}
+.spin-wrap{display:flex;align-items:center;justify-content:center;padding:50px;color:var(--muted);font-size:13px;gap:10px}
+:root{--ins-border:#2a3347}
+.ins-wrap{display:flex;flex-direction:column;gap:16px}
+.ins-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.ins-card-header{padding:11px 16px;background:linear-gradient(135deg,#0f1a2e,var(--surface2));font-weight:700;font-size:13px;color:var(--sky);border-bottom:1px solid var(--border)}
+.ins-loading{display:flex;align-items:center;gap:10px;padding:30px;color:var(--muted);font-size:13px}
+.ins-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.ins-tbl th{padding:7px 10px;background:#0d1f38;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #2a3347;white-space:nowrap}
+.ins-tbl td{padding:7px 10px;border-bottom:1px solid #1e2535;white-space:nowrap;color:#f1f5f9}
+.ins-tbl thead tr:first-child th{background:#071324;font-size:11px}
+.ins-tbl tr:hover td{background:var(--surface2)}
+.ins-hdr-p{color:#f1f5f9!important;font-weight:700!important}
+.ins-hdr-v{color:#64748b!important;font-style:italic}
+.ins-hdr-g{color:#38bdf8!important;font-weight:700!important}
+.ins-cur{color:#f1f5f9!important;font-weight:700!important}
+.ins-prev{color:#64748b!important;font-style:italic!important}
+.ins-up{color:#16a34a!important;font-weight:700!important}
+.ins-dn{color:#f87171!important;font-weight:700!important}
+.ins-flat{color:#64748b!important}
+.ins-tbl tbody tr:hover td{background:rgba(255,255,255,.05)!important}
+.ins-total{background:#1e3a8a!important}
+.ins-total td{background:#1e3a8a!important;color:#ffffff!important;font-weight:700!important;border-top:2px solid #38bdf8!important}
+.ins-prev-t{color:#93c5fd!important;font-style:italic}
+.ins-ai-content{padding:16px;font-size:13px;line-height:1.7;color:var(--text)}
+.ins-ai-content h4{color:var(--sky);margin:12px 0 6px;font-size:13px}
+.ins-ai-content ul{padding-left:20px;margin:4px 0}
+.ins-ai-content li{margin:4px 0}
+.ins-ai-content strong,.ins-ai-content b{color:var(--amber)}
+/* Insight on HCI (SteelBlue) background */
+.content.bg-hci .ins-card{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3)}
+.content.bg-hci .ins-card-header{background:rgba(5,30,60,.5);color:#fff;border-color:rgba(255,255,255,.2)}
+.content.bg-hci .ins-tbl th{background:rgba(5,25,55,.6);color:#e0f2fe}
+.content.bg-hci .ins-tbl thead tr:first-child th{background:rgba(2,15,40,.7)}
+.content.bg-hci .ins-tbl td{color:#ffffff!important;border-color:rgba(255,255,255,.15)}
+.content.bg-hci .ins-tbl tr:hover td{background:rgba(255,255,255,.1)!important}
+.content.bg-hci .ins-cur{color:#ffffff!important;font-weight:700!important}
+.content.bg-hci .ins-prev{color:#bfdbfe!important}
+.content.bg-hci .ins-hdr-p{color:#ffffff!important}
+.content.bg-hci .ins-hdr-v{color:#bfdbfe!important}
+.content.bg-hci .ins-hdr-g{color:#7dd3fc!important}
+.content.bg-hci .ins-tbl td.ins-up{color:#15803d!important;font-weight:700!important}
+.content.bg-hci .ins-tbl td.ins-dn{color:#b91c1c!important;font-weight:700!important}
+.content.bg-hci .ins-tbl td.ins-flat{color:#bfdbfe!important}
+.content.bg-hci .ins-up{color:#15803d!important;font-weight:700!important}
+.content.bg-hci .ins-dn{color:#b91c1c!important;font-weight:700!important}
+.content.bg-hci .ins-flat{color:#bfdbfe!important}
+.content.bg-hci .ins-total td{background:rgba(10,30,80,.8)!important;color:#fff!important}
+.content.bg-hci .ins-prev-t{color:#93c5fd!important}
+.content.bg-hci .ins-ai-content{color:#0a1628}
+.content.bg-hci .ins-ai-content h4{color:#0a2550}
+.content.bg-hci .ins-ai-content li{color:#0a1628}
+.content.bg-hci .ins-ai-content strong,.content.bg-hci .ins-ai-content b{color:#92400e}
+.content.bg-hci .ins-loading{color:#0a1628}
+.content.bg-hci .hub-link-hci{color:#0a1628!important}
+/* Insight on AHI (LightCoral) background */
+.content.bg-ahi .ins-card{background:rgba(255,255,255,.3);border-color:rgba(180,60,60,.3)}
+.content.bg-ahi .ins-card-header{background:rgba(180,50,50,.2);color:#3d0a0a;border-color:rgba(180,60,60,.2)}
+.content.bg-ahi .ins-tbl th{background:rgba(200,80,80,.25);color:#3d0a0a}
+.content.bg-ahi .ins-tbl thead tr:first-child th{background:rgba(200,80,80,.35)}
+.content.bg-ahi .ins-tbl td{color:#3d0a0a!important;border-color:rgba(180,60,60,.2)}
+.content.bg-ahi .ins-tbl tr:hover td{background:rgba(255,255,255,.2)!important}
+.content.bg-ahi .ins-cur{color:#1a0505!important;font-weight:700!important}
+.content.bg-ahi .ins-prev{color:#7f3030!important;font-style:italic!important}
+.content.bg-ahi .ins-hdr-p{color:#1a0505!important;font-weight:700!important}
+.content.bg-ahi .ins-hdr-v{color:#7f3030!important}
+.content.bg-ahi .ins-hdr-g{color:#1d4ed8!important}
+.content.bg-ahi .ins-tbl td.ins-up{color:#15803d!important;font-weight:700!important}
+.content.bg-ahi .ins-tbl td.ins-dn{color:#b91c1c!important;font-weight:700!important}
+.content.bg-ahi .ins-tbl td.ins-flat{color:#7f3030!important}
+.content.bg-ahi .ins-up{color:#15803d!important;font-weight:700!important}
+.content.bg-ahi .ins-dn{color:#b91c1c!important;font-weight:700!important}
+.content.bg-ahi .ins-flat{color:#7f3030!important}
+.content.bg-ahi .ins-total td{background:rgba(139,0,0,.5)!important;color:#fff!important;font-weight:700!important;border-top:2px solid #dc2626!important}
+.content.bg-ahi .ins-prev-t{color:#fca5a5!important}
+.content.bg-ahi .ins-ai-content{color:#3d0a0a}
+.content.bg-ahi .ins-ai-content h4{color:#7f1d1d}
+.content.bg-ahi .ins-ai-content li{color:#3d0a0a}
+.content.bg-ahi .ins-ai-content strong,.content.bg-ahi .ins-ai-content b{color:#92400e}
+.content.bg-ahi .ins-loading{color:#3d0a0a}
+.content.bg-ahi .hub-link-ahi{color:#3d0a0a!important}
+/* Insight tab styles */
+:root{--ins-border:#2a3347;--ins-header:#0f1a2e}
+.ins-wrap{display:flex;flex-direction:column;gap:16px}
+.ins-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.ins-card-header{padding:12px 16px;background:linear-gradient(135deg,#0f1a2e,var(--surface2));font-weight:700;font-size:13px;color:var(--sky);border-bottom:1px solid var(--border)}
+.ins-loading{display:flex;align-items:center;gap:10px;padding:30px;color:var(--muted);font-size:13px}
+.ins-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.ins-tbl th{padding:7px 10px;background:var(--surface2);color:var(--sky);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--border);white-space:nowrap}
+.ins-tbl td{padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap;color:var(--text)}
+.ins-tbl tr:last-child td{border-bottom:none}
+.ins-tbl tr:hover td{background:var(--surface2)}
+.ins-hdr-p{color:var(--text)!important}
+.ins-hdr-v{color:var(--muted)!important;font-style:italic}
+.ins-hdr-g{color:var(--sky)!important}
+.ins-cur{color:var(--text);font-weight:600}
+.ins-prev{color:var(--muted)!important;font-style:italic}
+.ins-up{color:#4ade80!important;font-weight:700}
+.ins-dn{color:#f87171!important;font-weight:700}
+.ins-flat{color:var(--muted)!important}
+.ins-total td{background:#1e3a8a!important;color:#fff!important;font-weight:700;border-top:2px solid var(--sky)}
+.ins-total .ins-prev{color:#93c5fd!important}
+.ins-ai-content{padding:16px;font-size:13px;line-height:1.7;color:var(--text)}
+.ins-ai-content h4{color:var(--sky);margin:12px 0 6px;font-size:13px}
+.ins-ai-content ul{padding-left:20px;margin:4px 0}
+.ins-ai-content li{margin:4px 0;color:var(--text)}
+.ins-ai-content b,.ins-ai-content strong{color:var(--amber)}
+.spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--sky);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topbar-brand">📦 Hub Dashboard</div></div>
+
+<div class="filter-bar">
+  <div class="filter-row">
+    <span class="filter-label">📅 Periode:</span>
+    <input type="date" id="dateFrom" class="date-input" onchange="onFilterChange()">
+    <span style="color:var(--muted);font-size:12px">s/d</span>
+    <input type="date" id="dateTo" class="date-input" onchange="onFilterChange()">
+    <button class="filter-btn" onclick="resetFilter()">Reset</button>
+    <div class="presets">
+      <button class="preset" onclick="setPreset('today',this)">Hari Ini</button>
+      <button class="preset" onclick="setPreset('week',this)">7 Hari</button>
+      <button class="preset" onclick="setPreset('month',this)">Bulan Ini</button>
+      <button class="preset" onclick="setPreset('3month',this)">3 Bulan</button>
+      <button class="preset active" onclick="setPreset('all',this)">Semua</button>
+    </div>
+    <span class="filter-info" id="filterInfo"></span>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">📊 Pembanding:</span>
+    <input type="date" id="prevFrom" class="date-input-prev" onchange="onPrevFilterChange()">
+    <span style="color:#4ade80;font-size:12px">s/d</span>
+    <input type="date" id="prevTo" class="date-input-prev" onchange="onPrevFilterChange()">
+    <span class="prev-label" id="prevLabel">⟳ Otomatis: periode bulan sebelumnya (apple-to-apple)</span>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="content" id="mainContent"></div>
+</div>
+<div class="footer">Dashboard Performance & Productivity Hub &nbsp;|&nbsp; *Status LC "New" dikecualikan &nbsp;|&nbsp; Auto-update 08:00 WIB</div>
+
+<script>
+const RAW = RAW_DATA_PLACEHOLDER;
+
+const HUB_COORDS = HUB_COORDS_PLACEHOLDER;
+
+const HUBS=[...new Set(RAW.map(r=>r.hub))];
+const AHI_HUBS=HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='AHI');
+const HCI_HUBS=HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='HCI');
+const BY_HUB={};HUBS.forEach(h=>BY_HUB[h]=[]);RAW.forEach(r=>BY_HUB[r.hub].push(r));
+
+const NAV=[
+  {id:'all',label:'🌐 ALL Hub',cls:'all-item',dot:'dot-all'},
+  {id:'hci',label:'🔵 ALL HUB HCI',cls:'hci',dot:'dot-hci',group:'HCI'},
+  ...HCI_HUBS.map((h,i)=>({id:'hci_'+i,label:'Hub '+h,cls:'hci',dot:'dot-hci',hub:h})),
+  {id:'ahi',label:'🔴 ALL HUB AHI',cls:'ahi',dot:'dot-ahi',group:'AHI'},
+  ...AHI_HUBS.map((h,i)=>({id:'ahi_'+i,label:'Hub '+h,cls:'ahi',dot:'dot-ahi',hub:h})),
+];
+const HUB_PAGE={};
+HCI_HUBS.forEach((h,i)=>HUB_PAGE[h]='hci_'+i);
+AHI_HUBS.forEach((h,i)=>HUB_PAGE[h]='ahi_'+i);
+
+const sidebar=document.getElementById('sidebar');
+NAV.forEach(n=>{
+  if(n.group){const l=document.createElement('div');l.className='sidebar-group-label';l.textContent=n.group==='HCI'?'BU HCI':'BU AHI';sidebar.appendChild(l);}
+  const el=document.createElement('div');
+  el.className=`sidebar-item ${n.cls}`;el.dataset.pid=n.id;
+  el.innerHTML=`<span class="sidebar-dot ${n.dot}"></span>${n.label}`;
+  el.onclick=()=>showPage(n.id);sidebar.appendChild(el);
+});
+
+// ── Date state ────────────────────────────────────────────────────────────────
+const allDates=[...new Set(RAW.map(r=>r.d).filter(Boolean))].sort();
+const minDate=allDates[0],maxDate=allDates[allDates.length-1];
+document.getElementById('dateFrom').value=minDate;
+document.getElementById('dateTo').value=maxDate;
+let filterFrom=minDate,filterTo=maxDate,prevFrom='',prevTo='',curPid='all';
+
+function calcPrev(from,to){
+  const f=new Date(from),t=new Date(to);
+  f.setMonth(f.getMonth()-1);t.setMonth(t.getMonth()-1);
+  return{from:f.toISOString().split('T')[0],to:t.toISOString().split('T')[0]};
+}
+function updatePrevPeriod(){
+  const p=calcPrev(filterFrom,filterTo);
+  prevFrom=p.from;prevTo=p.to;
+  document.getElementById('prevFrom').value=prevFrom;
+  document.getElementById('prevTo').value=prevTo;
+  const days=Math.round((new Date(filterTo)-new Date(filterFrom))/86400000)+1;
+  document.getElementById('prevLabel').textContent=`⟳ Otomatis: ${days} hari sebelumnya (apple-to-apple)`;
+}
+function onPrevFilterChange(){
+  prevFrom=document.getElementById('prevFrom').value;
+  prevTo=document.getElementById('prevTo').value;
+  document.getElementById('prevLabel').textContent='✏️ Periode pembanding diubah manual';
+  showPage(curPid);
+}
+function setPreset(p,btn){
+  document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const d=new Date(maxDate);let from=minDate;
+  if(p==='today')from=maxDate;
+  else if(p==='week'){d.setDate(d.getDate()-6);from=d.toISOString().split('T')[0];}
+  else if(p==='month')from=maxDate.substring(0,7)+'-01';
+  else if(p==='3month'){d.setMonth(d.getMonth()-2);from=d.toISOString().split('T')[0].substring(0,7)+'-01';}
+  document.getElementById('dateFrom').value=from;document.getElementById('dateTo').value=maxDate;
+  filterFrom=from;filterTo=maxDate;updatePrevPeriod();showPage(curPid);
+}
+function onFilterChange(){
+  document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
+  filterFrom=document.getElementById('dateFrom').value;
+  filterTo=document.getElementById('dateTo').value;
+  updatePrevPeriod();showPage(curPid);
+}
+function resetFilter(){
+  document.getElementById('dateFrom').value=minDate;document.getElementById('dateTo').value=maxDate;
+  filterFrom=minDate;filterTo=maxDate;
+  document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.preset[onclick*="all"]').classList.add('active');
+  updatePrevPeriod();showPage(curPid);
+}
+function filt(rows){return rows.filter(r=>!r.d||(r.d>=filterFrom&&r.d<=filterTo));}
+function filtPrev(rows){return rows.filter(r=>!r.d||(r.d>=prevFrom&&r.d<=prevTo));}
+
+// ── Metrics ───────────────────────────────────────────────────────────────────
+function metrics(rows){
+  const n=rows.length;
+  if(!n)return{trips:0,total_do:0,do_cust:0,do_store:0,total_dp:0,total_cost:0,total_ujp:0,bbm_ujp:0,jarak_km:0,tat_avg:'N/A',do_per_trip:0,dp_per_trip:0,ujp_per_trip:0,cost_per_trip:0,bbm_per_trip:0,km_per_trip:0};
+  let tdo=0,dc=0,ds=0,dp=0,cost=0,ujp=0,bbm=0,km=0,tatS=0,tatN=0;
+  for(const r of rows){tdo+=r.do;dc+=r.doc;ds+=r.dos;dp+=(r.dp||0);cost+=r.cost;ujp+=r.ujp;bbm+=r.bbm;km+=r.km;if(r.tat!=null){tatS+=r.tat;tatN++;}}
+  const avg=tatN?tatS/tatN:null;
+  const h=avg!=null?Math.floor(avg/60):0,m=avg!=null?Math.round(avg%60):0;
+  return{trips:n,total_do:tdo,do_cust:dc,do_store:ds,total_dp:dp,total_cost:cost,total_ujp:ujp,bbm_ujp:bbm,jarak_km:km,
+    tat_avg:avg!=null?`${h}:${String(m).padStart(2,'0')}`:'N/A',
+    do_per_trip:n?+(tdo/n).toFixed(1):0,dp_per_trip:n?+(dp/n).toFixed(1):0,
+    ujp_per_trip:n?Math.round(ujp/n):0,cost_per_trip:n?Math.round(cost/n):0,
+    bbm_per_trip:n?Math.round(bbm/n):0,km_per_trip:n?+(km/n).toFixed(1):0,
+  };
+}
+function grpBy(rows,key){const m={};for(const r of rows){const k=r[key]||'(kosong)';if(!m[k])m[k]=[];m[k].push(r);}return m;}
+const fmt=n=>n==null||isNaN(n)?'-':Math.round(n).toLocaleString('id-ID');
+const fmtD=n=>n==null||isNaN(n)?'-':Number(n).toLocaleString('id-ID',{maximumFractionDigits:1});
+function growthCell(cur,prev){
+  if(!prev||prev===0)return'<td class="num d-fl">-</td>';
+  const p=(cur-prev)/prev*100;
+  const c=p>0?'d-up':'d-dn';
+  const s=p>0?'▲':'▼';
+  return`<td class="num ${c}" style="font-weight:700">${s}${Math.abs(p).toFixed(1)}%</td>`;
+}
+function hubGrowthTableHTML(fRows, pRows, hubList){
+  const rows = hubList.map(hub => {
+    const mF = metrics(fRows.filter(r=>r.hub===hub));
+    const mP = metrics(pRows?pRows.filter(r=>r.hub===hub):[]);
+    const bu = getBU(hub);
+    const pid = HUB_PAGE[hub]||'';
+    const cls = bu==='HCI'?'hub-link-hci':'hub-link-ahi';
+    return `<tr>
+      <td class="${cls}" onclick="showPage('${pid}')" style="white-space:nowrap">Hub ${hub.replace(/^(AHI|HCI) /,'$1 ')}</td>
+      <td class="num">${fmt(mF.trips)}</td><td class="num" style="color:var(--muted)">${fmt(mP.trips)}</td>${growthCell(mF.trips,mP.trips)}
+      <td class="num">${fmt(mF.total_do)}</td><td class="num" style="color:var(--muted)">${fmt(mP.total_do)}</td>${growthCell(mF.total_do,mP.total_do)}
+      <td class="num">${fmt(mF.total_dp)}</td><td class="num" style="color:var(--muted)">${fmt(mP.total_dp)}</td>${growthCell(mF.total_dp,mP.total_dp)}
+      <td class="num">${mF.tat_avg}</td><td class="num" style="color:var(--muted)">${mP.tat_avg}</td>${growthCell(mF.tat_minutes,mP.tat_minutes)}
+      <td class="num ratio-val">${fmtD(mF.do_per_trip)}</td><td class="num" style="color:var(--muted)">${fmtD(mP.do_per_trip)}</td>${growthCell(mF.do_per_trip,mP.do_per_trip)}
+      <td class="num ratio-val">${fmtD(mF.dp_per_trip)}</td><td class="num" style="color:var(--muted)">${fmtD(mP.dp_per_trip)}</td>${growthCell(mF.dp_per_trip,mP.dp_per_trip)}
+    </tr>`;
+  }).join('');
+  // Total row
+  const allF=metrics(fRows), allP=metrics(pRows||[]);
+  return `<div class="tbl-wrap" style="margin-bottom:16px">
+    <div class="tbl-head"><div class="tbl-title">📊 Overview Growth Delivery per Hub</div></div>
+    <div style="overflow-x:auto"><table>
+    <thead>
+      <tr>
+        <th rowspan="2">Hub</th>
+        <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Trip</th>
+        <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Total DO</th>
+        <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Total DP</th>
+        <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">TAT</th>
+        <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">DO/Trip</th>
+        <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">DP/Trip</th>
+      </tr>
+      <tr>
+        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+      <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
+        <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
+        <td class="num" style="color:#fff;font-weight:700">${fmt(allF.trips)}</td><td class="num" style="color:#93c5fd">${fmt(allP.trips)}</td>${growthCell(allF.trips,allP.trips)}
+        <td class="num" style="color:#fff;font-weight:700">${fmt(allF.total_do)}</td><td class="num" style="color:#93c5fd">${fmt(allP.total_do)}</td>${growthCell(allF.total_do,allP.total_do)}
+        <td class="num" style="color:#fff;font-weight:700">${fmt(allF.total_dp)}</td><td class="num" style="color:#93c5fd">${fmt(allP.total_dp)}</td>${growthCell(allF.total_dp,allP.total_dp)}
+        <td class="num" style="color:#fff;font-weight:700">${allF.tat_avg}</td><td class="num" style="color:#93c5fd">${allP.tat_avg}</td>${growthCell(allF.tat_minutes,allP.tat_minutes)}
+        <td class="num" style="color:var(--sky);font-weight:700">${fmtD(allF.do_per_trip)}</td><td class="num" style="color:#93c5fd">${fmtD(allP.do_per_trip)}</td>${growthCell(allF.do_per_trip,allP.do_per_trip)}
+        <td class="num" style="color:var(--sky);font-weight:700">${fmtD(allF.dp_per_trip)}</td><td class="num" style="color:#93c5fd">${fmtD(allP.dp_per_trip)}</td>${growthCell(allF.dp_per_trip,allP.dp_per_trip)}
+      </tr>
+    </tbody></table></div></div>`;
+}
+const fmtM=n=>{if(!n||isNaN(n))return '-';if(n>=1e9)return(n/1e9).toFixed(2)+' M';if(n>=1e6)return(n/1e6).toFixed(1)+' Jt';if(n>=1e3)return(n/1e3).toFixed(0)+' Rb';return fmt(n);};
+
+// ── Inline delta ──────────────────────────────────────────────────────────────
+function inlineDelta(cur,prev){
+  if(!prev||prev===0||!cur)return'';
+  const pct=(cur-prev)/prev*100;
+  const cls=pct>0?'d-up':'d-dn';
+  const sign=pct>0?'▲':'▼';
+  return`<span class="inline-delta ${cls}">${sign}${Math.abs(pct).toFixed(0)}%</span>`;
+}
+function deltaKPI(cur,prev,key){
+  if(!prev||!prev[key]||prev[key]===0)return'';
+  const pct=(cur[key]-prev[key])/prev[key]*100;
+  const cls=pct>0?'d-up':'d-dn';
+  const sign=pct>0?'▲':'▼';
+  let pv;
+  if(['do_per_trip','dp_per_trip','km_per_trip','bbm_per_trip','ujp_per_trip','cost_per_trip'].includes(key))pv=fmtD(prev[key]);
+  else pv=fmt(prev[key]);
+  return`<div class="kpi-delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs prev (${pv})</div>`;
+}
+
+// ── KPI ───────────────────────────────────────────────────────────────────────
+function kpiHTML(m,mp){
+  const d=(k)=>mp?deltaKPI(m,mp,k):'';
+  return`<div class="kpi-grid">
+    <div class="kpi t-sky"><div class="kpi-label">Total Trip</div><div class="kpi-value">${fmt(m.trips)}</div>${d('trips')}<div class="kpi-sub">Pengiriman aktif</div></div>
+    <div class="kpi t-mint"><div class="kpi-label">Total DO</div><div class="kpi-value">${fmt(m.total_do)}</div>${d('total_do')}<div class="kpi-sub">Cust: ${fmt(m.do_cust)} | Store: ${fmt(m.do_store)}</div></div>
+    <div class="kpi t-amber"><div class="kpi-label">Total DP</div><div class="kpi-value">${fmt(m.total_dp)}</div>${d('total_dp')}<div class="kpi-sub">${fmtD(m.dp_per_trip)} DP/trip</div></div>
+    <div class="kpi t-violet"><div class="kpi-label">TAT Rata-rata</div><div class="kpi-value">${m.tat_avg}</div><div class="kpi-sub">Jam:Menit per trip</div></div>
+    <div class="kpi t-rose"><div class="kpi-label">Jarak KM</div><div class="kpi-value">${fmt(m.jarak_km)}</div>${d('jarak_km')}<div class="kpi-sub">${fmtD(m.km_per_trip)} km/trip</div></div>
+    <div class="kpi t-cyan"><div class="kpi-label">Total Cost</div><div class="kpi-value">${fmtM(m.total_cost)}</div>${d('total_cost')}<div class="kpi-sub">${fmtM(m.cost_per_trip)}/trip</div></div>
+    <div class="kpi t-sky"><div class="kpi-label">Total UJP</div><div class="kpi-value">${fmtM(m.total_ujp)}</div>${d('total_ujp')}<div class="kpi-sub">${fmtM(m.ujp_per_trip)}/trip</div></div>
+    <div class="kpi t-green"><div class="kpi-label">Biaya BBM</div><div class="kpi-value">${fmtM(m.bbm_ujp)}</div>${d('bbm_ujp')}<div class="kpi-sub">${fmtM(m.bbm_per_trip)}/trip</div></div>
+    <div class="kpi t-mint"><div class="kpi-label">DO/Trip</div><div class="kpi-value">${fmtD(m.do_per_trip)}</div>${d('do_per_trip')}<div class="kpi-sub">Rata-rata per trip</div></div>
+    <div class="kpi t-rose"><div class="kpi-label">DP/Trip</div><div class="kpi-value">${fmtD(m.dp_per_trip)}</div>${d('dp_per_trip')}<div class="kpi-sub">Rata-rata per trip</div></div>
+  </div>`;
+}
+
+// ── Table helpers ─────────────────────────────────────────────────────────────
+const rThs=`<th class="num">Total DP</th><th class="num">DO/Trip</th><th class="num">DP/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>`;
+const rTds=m=>`<td class="num ratio-val">${fmt(m.total_dp)}</td><td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtD(m.dp_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td><td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td>`;
+
+function getBU(hub){return RAW.find(r=>r.hub===hub)?.bu||'AHI';}
+
+// ── Jalur table ───────────────────────────────────────────────────────────────
+function jalurHTML(rows,prevRows,uid,showHub){
+  let entries;
+  if(showHub){
+    const grp={};
+    rows.forEach(r=>{const k=r.hub+'__'+r.jalur;if(!grp[k])grp[k]={hub:r.hub,jalur:r.jalur,rows:[]};grp[k].rows.push(r);});
+    entries=Object.values(grp).map(g=>({hub:g.hub,j:g.jalur,m:metrics(g.rows),pm:prevRows?metrics(prevRows.filter(r=>r.hub===g.hub&&r.jalur===g.jalur)):null}));
+  } else {
+    entries=Object.entries(grpBy(rows,'jalur')).map(([j,rs])=>({j,m:metrics(rs),pm:prevRows?metrics(prevRows.filter(r=>r.jalur===j)):null}));
+  }
+  entries.sort((a,b)=>b.m.trips-a.m.trips);
+  if(!entries.length)return`<div class="empty">📭 Tidak ada data untuk periode ini</div>`;
+  const hubTh=showHub?'<th>Hub</th>':'';
+  const tr=entries.map(({hub,j,m,pm},i)=>{
+    const bu=hub?getBU(hub):'';
+    const hubCell=showHub?`<td><span class="hub-tag hub-${bu.toLowerCase()}">${hub}</span></td>`:'';
+    return`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td>${hubCell}<td>${j}</td>
+    <td class="num">${fmt(m.trips)}</td>
+    <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
+    <td class="num">${fmtM(m.total_cost)}</td>
+    <td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>
+    ${rTds(m)}</tr>`;}).join('');
+  return`<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">📍 Analisa Per Jalur</div>
+    <input class="tbl-search" placeholder="Cari jalur..." oninput="ftbl(this,'${uid}')"></div>
+    <div style="overflow-x:auto"><table id="${uid}"><thead><tr>
+    <th class="rank">#</th>${hubTh}<th>Jalur</th>
+    <th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
+    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th>
+    <th class="num">Total UJP</th><th class="num">BBM</th>${rThs}
+    </tr></thead><tbody>${tr}</tbody></table></div></div>`;
+}
+
+// ── Person table ──────────────────────────────────────────────────────────────
+function personHTML(rows,prevRows,col,title,uid,showHub){
+  let entries;
+  if(showHub){
+    const grp={};
+    rows.filter(r=>r[col]&&r[col]!='nan'&&r[col]!='').forEach(r=>{
+      const k=r.hub+'__'+r[col];if(!grp[k])grp[k]={hub:r.hub,name:r[col],rows:[]};grp[k].rows.push(r);});
+    entries=Object.values(grp).map(g=>({hub:g.hub,n:g.name,m:metrics(g.rows),pm:prevRows?metrics(prevRows.filter(r=>r.hub===g.hub&&r[col]===g.name)):null}));
+  } else {
+    const src=rows.filter(r=>r[col]&&r[col]!='nan'&&r[col]!='');
+    entries=Object.entries(grpBy(src,col)).map(([n,rs])=>({n,m:metrics(rs),pm:prevRows?metrics(prevRows.filter(r=>r[col]===n)):null}));
+  }
+  entries.sort((a,b)=>b.m.trips-a.m.trips);entries=entries.slice(0,50);
+  if(!entries.length)return`<div class="empty">📭 Tidak ada data untuk periode ini</div>`;
+  const hubTh=showHub?'<th>Hub</th>':'';
+  const tr=entries.map(({hub,n,m,pm},i)=>{
+    const bu=hub?getBU(hub):'';
+    const hubCell=showHub?`<td><span class="hub-tag hub-${bu.toLowerCase()}">${hub}</span></td>`:'';
+    return`<tr><td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td>${hubCell}<td>${n}</td>
+    <td class="num">${fmt(m.trips)}</td>
+    <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+    <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
+    <td class="num">${fmtM(m.total_cost)}</td>
+    ${rTds(m)}</tr>`;}).join('');
+  return`<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">${title}</div>
+    <input class="tbl-search" placeholder="Cari nama..." oninput="ftbl(this,'${uid}')"></div>
+    <div style="overflow-x:auto"><table id="${uid}"><thead><tr>
+    <th class="rank">#</th>${hubTh}<th>Nama</th>
+    <th class="num">Trip</th><th class="num">Total DO</th><th class="num">DO Cust</th><th class="num">DO Store</th>
+    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th>${rThs}
+    </tr></thead><tbody>${tr}</tbody></table></div></div>`;
+}
+
+// ── Hub table ─────────────────────────────────────────────────────────────────
+function hubTblHTML(fRows,pRows,hList){
+  return`<div class="tbl-wrap" style="margin-bottom:16px"><div class="tbl-head"><div class="tbl-title">📦 Detail Per Hub</div></div>
+    <div style="overflow-x:auto"><table><thead><tr>
+    <th>Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Total DP</th><th class="num">DO Cust</th><th class="num">DO Store</th>
+    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>${rThs}
+    </tr></thead><tbody>${hList.map(hub=>{
+      const m=metrics(fRows.filter(r=>r.hub===hub));
+      const pm=pRows?metrics(pRows.filter(r=>r.hub===hub)):null;
+      const bu=getBU(hub);const pid=HUB_PAGE[hub];
+      const cls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';
+      return`<tr><td class="${cls}" onclick="showPage('${pid}')">Hub ${hub}</td>
+      <td class="num">${fmt(m.trips)}</td>
+      <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.total_dp)}</td>
+      <td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+      <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
+      <td class="num">${fmtM(m.total_cost)}</td>
+      <td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>${rTds(m)}</tr>`;}).join('')}
+    </tbody></table></div></div>`;
+}
+
+function ftbl(inp,id){const q=inp.value.toLowerCase();document.getElementById(id)?.querySelectorAll('tbody tr').forEach(tr=>tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none');}
+
+// ── Sub tabs ──────────────────────────────────────────────────────────────────
+function showSub(btn,pid,sec){
+  btn.closest('.sub-nav').querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
+  btn.closest('.tab-pane').querySelectorAll('.sec-block').forEach(s=>s.classList.remove('show'));
+  document.getElementById(pid+'_'+sec)?.classList.add('show');
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+const CI={};
+function mkC(id,type,labels,datasets,opts={}){
+  if(CI[id]){CI[id].destroy();delete CI[id];}
+  const ctx=document.getElementById(id)?.getContext('2d');if(!ctx)return;
+  CI[id]=new Chart(ctx,{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#8892a4',font:{size:10}}}},
+    scales:type==='doughnut'?{}:{x:{ticks:{color:'#8892a4',font:{size:9}},grid:{color:'#2a3347'}},y:{ticks:{color:'#8892a4',font:{size:9}},grid:{color:'#2a3347'}}},
+    ...opts}});
+}
+const CLR=['#38bdf8','#fb7185','#34d399','#a78bfa','#fbbf24','#06b6d4','#f97316','#ec4899','#84cc16','#14b8a6','#a855f7'];
+
+function renderInsight(pid, fRows, pRows, hubList){
+  const pane = document.getElementById(pid+'_tab_insight');
+  if(!pane) return;
+  pane.innerHTML = '<div class="ins-wrap"><div class="ins-loading"><div class="spin"></div> Memuat insight...</div></div>';
+  const isMulti = pid==='all'||pid==='ahi'||pid==='hci';
+  const hList = hubList||(pid==='ahi'?AHI_HUBS:pid==='hci'?HCI_HUBS:HUBS);
+
+  function im(rows){
+    const n=rows.length; if(!n) return{trip:0,do_:0,dp:0,ujp:0,do_t:0,dp_t:0,ujp_t:0};
+    let d=0,dp=0,u=0;
+    for(const r of rows){d+=r.do;dp+=(r.dp||0);u+=r.ujp;}
+    return{trip:n,do_:d,dp,ujp:u,do_t:n?+(d/n).toFixed(1):0,dp_t:n?+(dp/n).toFixed(1):0,ujp_t:n?Math.round(u/n):0};
+  }
+
+  const cols=[
+    {k:'trip', lb:'Trip',    fn:fmt,  r:false},
+    {k:'do_',  lb:'Total DO',fn:fmt,  r:false},
+    {k:'dp',   lb:'Total DP',fn:fmt,  r:false},
+    {k:'ujp',  lb:'Total UJP',fn:fmtM,r:false},
+    {k:'do_t', lb:'DO/Trip', fn:fmtD, r:true},
+    {k:'dp_t', lb:'DP/Trip', fn:fmtD, r:true},
+    {k:'ujp_t',lb:'UJP/Trip',fn:fmtM, r:true},
+  ];
+
+  function gc(cur,prev){
+    if(!prev||prev===0) return '<td class="num ins-flat">-</td>';
+    const p=(cur-prev)/prev*100,c=p>0?'ins-up':'ins-dn',s=p>0?'▲':'▼';
+    return '<td class="num '+c+'">'+s+Math.abs(p).toFixed(1)+'%</td>';
+  }
+
+  function buildTable(entries,rowLbl){
+    const h1='<tr><th rowspan="2">'+rowLbl+'</th>'+cols.map(c=>'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--ins-border)">'+c.lb+'</th>').join('')+'</tr>';
+    const h2='<tr>'+cols.map(()=>'<th class="num ins-hdr-p">Periode</th><th class="num ins-hdr-v">Prev</th><th class="num ins-hdr-g">Growth</th>').join('')+'</tr>';
+    const rows=entries.map(e=>{
+      const cc=e.cls?'class="'+e.cls+'"':'',pid=e.pid?'data-pid="'+e.pid+'" onclick="showPage(this.dataset.pid)" style="cursor:pointer"':'';
+      return '<tr><td '+cc+' '+pid+'>'+e.label+'</td>'
+        +cols.map(c=>'<td class="num ins-cur">'+c.fn(e.cf[c.k])+'</td><td class="num ins-prev">'+c.fn(e.cp[c.k])+'</td>'+gc(e.cf[c.k],e.cp[c.k])).join('')
+        +'</tr>';
+    }).join('');
+    const allF=im(fRows),allP=im(pRows||[]);
+    const tr='<tr class="ins-total"><td>⚡ TOTAL</td>'
+      +cols.map(c=>'<td class="num">'+c.fn(allF[c.k])+'</td><td class="num ins-prev-t">'+c.fn(allP[c.k])+'</td>'+gc(allF[c.k],allP[c.k])).join('')
+      +'</tr>';
+    return '<div style="overflow-x:auto"><table class="ins-tbl"><thead>'+h1+h2+'</thead><tbody>'+rows+tr+'</tbody></table></div>';
+  }
+
+  let entries=[],title='';
+  if(isMulti){
+    title=pid==='all'?'📊 Perbandingan Per Hub — ALL':pid==='hci'?'📊 Perbandingan Per Hub — HCI':'📊 Perbandingan Per Hub — AHI';
+    entries=hList.map(hub=>({
+      label:'Hub '+hub, pid:HUB_PAGE[hub]||'',
+      cls:getBU(hub)==='HCI'?'hub-link-hci':'hub-link-ahi',
+      cf:im(fRows.filter(r=>r.hub===hub)),
+      cp:im((pRows||[]).filter(r=>r.hub===hub))
+    }));
+  } else {
+    const hubName=NAV.find(n=>n.id===pid)?.hub||'';
+    title='📊 Perbandingan Per Jalur — '+hubName;
+    const jalurs=[...new Set(fRows.map(r=>r.jalur||('(kosong)')))].sort();
+    entries=jalurs.map(j=>({
+      label:j, pid:null, cls:'',
+      cf:im(fRows.filter(r=>(r.jalur||('(kosong)'))===j)),
+      cp:im((pRows||[]).filter(r=>(r.jalur||('(kosong)'))===j))
+    }));
+  }
+
+  const allF=im(fRows),allP=im(pRows||[]);
+  const top=entries.slice(0,8).map(e=>e.label+': Trip='+e.cf.trip+'(prev:'+e.cp.trip+'), DO='+e.cf.do_+'(prev:'+e.cp.do_+'), UJP='+fmtM(e.cf.ujp)+'(prev:'+fmtM(e.cp.ujp)+'), DO/Trip='+e.cf.do_t+'(prev:'+e.cp.do_t+')').join('; ');
+  const summary='Dashboard logistik. TOTAL: Trip='+allF.trip+'(prev:'+allP.trip+'), DO='+allF.do_+'(prev:'+allP.do_+'), DP='+allF.dp+'(prev:'+allP.dp+'), UJP='+fmtM(allF.ujp)+'(prev:'+fmtM(allP.ujp)+'), DO/Trip='+allF.do_t+'(prev:'+allP.do_t+'), DP/Trip='+allF.dp_t+'(prev:'+allP.dp_t+'), UJP/Trip='+fmtM(allF.ujp_t)+'(prev:'+fmtM(allP.ujp_t)+'). Detail: '+top;
+
+  pane.innerHTML='<div class="ins-wrap"><div class="ins-card"><div class="ins-card-header">'+title+'</div>'+buildTable(entries,isMulti?'Hub':'Jalur')+'</div><div class="ins-card" id="ins-ai-'+pid+'"><div class="ins-card-header">🤖 AI Insight & Action Plan</div><div class="ins-loading"><div class="spin"></div> Menganalisis data...</div></div></div>';
+
+  // Generate insight locally from data
+  function pct(cur,prev){return prev?((cur-prev)/prev*100):null;}
+  function sign(v){return v>0?'+':'';} 
+  function arrow(v){return v>2?'▲':v<-2?'▼':'→';}
+  function cls(v){return v>2?'ins-up':v<-2?'ins-dn':'ins-flat';}
+  function fmt_pct(v){return v===null?'N/A':sign(v)+v.toFixed(1)+'%';}
+
+  const pTrip=pct(allF.trip,allP.trip), pDO=pct(allF.do_,allP.do_);
+  const pDP=pct(allF.dp,allP.dp), pUJP=pct(allF.ujp,allP.ujp);
+  const pDOT=pct(allF.do_t,allP.do_t), pDPT=pct(allF.dp_t,allP.dp_t);
+  const pUJPT=pct(allF.ujp_t,allP.ujp_t);
+
+  // Determine overall health
+  const positives=[pDO,pDOT].filter(v=>v!==null&&v>2).length;
+  const negatives=[pTrip,pDO].filter(v=>v!==null&&v<-2).length;
+  const health = negatives>=2?'⚠️ Perlu Perhatian': positives>=2?'✅ Operasional Positif':'⚡ Operasional Stabil';
+  const healthClr = negatives>=2?'#f87171': positives>=2?'#4ade80':'#fbbf24';
+
+  // Top/bottom hub analysis (for multi-hub)
+  let topAnalysis='';
+  if(isMulti && entries.length>1){
+    const sorted=[...entries].sort((a,b)=>b.cf.do_t-a.cf.do_t);
+    const top3=sorted.slice(0,3).map(e=>e.label.replace('Hub ','')+' ('+fmtD(e.cf.do_t)+')').join(', ');
+    const btm3=[...entries].sort((a,b)=>a.cf.do_t-b.cf.do_t).slice(0,3).map(e=>e.label.replace('Hub ','')+' ('+fmtD(e.cf.do_t)+')').join(', ');
+    const bestGrow=[...entries].filter(e=>e.cp.trip>0).sort((a,b)=>pct(b.cf.trip,b.cp.trip)-pct(a.cf.trip,a.cp.trip))[0];
+    const worstGrow=[...entries].filter(e=>e.cp.trip>0).sort((a,b)=>pct(a.cf.trip,a.cp.trip)-pct(b.cf.trip,b.cp.trip))[0];
+    topAnalysis='<h4>🏆 Analisa Per Hub</h4><ul>'
+      +'<li>DO/Trip tertinggi: <b>'+top3+'</b></li>'
+      +'<li>DO/Trip terendah: <b>'+btm3+'</b></li>'
+      +(bestGrow?'<li>Growth Trip terbaik: <b>'+bestGrow.label.replace('Hub ','')+' ('+fmt_pct(pct(bestGrow.cf.trip,bestGrow.cp.trip))+')</b></li>':'')
+      +(worstGrow?'<li>Growth Trip terlemah: <b>'+worstGrow.label.replace('Hub ','')+' ('+fmt_pct(pct(worstGrow.cf.trip,worstGrow.cp.trip))+')</b></li>':'')
+      +'</ul>';
+  }
+
+  // Action plan based on conditions
+  const actions=[];
+  if(pTrip!==null&&pTrip<-5) actions.push('📌 Trip menurun signifikan — evaluasi kapasitas armada & jadwal pengiriman');
+  if(pDOT!==null&&pDOT<-3) actions.push('📌 DO/Trip turun — optimalkan konsolidasi muatan per perjalanan');
+  if(pUJPT!==null&&pUJPT>10) actions.push('📌 UJP/Trip naik — review komponen biaya UJP (BBM, Tol, Parkir)');
+  if(pDPT!==null&&pDPT<-5) actions.push('📌 DP/Trip turun — tinjau strategi distribusi ke drop point');
+  if(pDO!==null&&pDO>10) actions.push('📌 DO naik pesat — pastikan kapasitas operasional dapat mengimbangi');
+  if(actions.length===0) actions.push('📌 Pertahankan performa saat ini dengan monitoring rutin KPI mingguan');
+
+  const insHTML='<div style="padding:16px" class="ins-ai-content">'
+    +'<div style="padding:10px 14px;border-radius:8px;margin-bottom:14px;background:rgba(255,255,255,.07);border-left:4px solid '+healthClr+'">'
+    +'<b style="color:'+healthClr+';font-size:14px">'+health+'</b></div>'
+    +'<h4>📦 Demand & Volume</h4><ul>'
+    +'<li>Trip: <span class="'+cls(pTrip)+'">'+arrow(pTrip)+' '+fmt_pct(pTrip)+'</span> ('+fmt(allF.trip)+' vs prev '+fmt(allP.trip)+')</li>'
+    +'<li>Total DO: <span class="'+cls(pDO)+'">'+arrow(pDO)+' '+fmt_pct(pDO)+'</span> — '+(pDO>2?'demand meningkat':pDO<-2?'demand menurun':'demand stabil')+'</li>'
+    +'<li>Total DP: <span class="'+cls(pDP)+'">'+arrow(pDP)+' '+fmt_pct(pDP)+'</span></li>'
+    +'</ul>'
+    +'<h4>📊 Produktivitas per Trip</h4><ul>'
+    +'<li>DO/Trip: <span class="'+cls(pDOT)+'">'+arrow(pDOT)+' '+fmt_pct(pDOT)+'</span> ('+fmtD(allF.do_t)+' vs prev '+fmtD(allP.do_t)+')'+(pDOT<-3?' — produktivitas armada turun':' — produktivitas terjaga')+'</li>'
+    +'<li>DP/Trip: <span class="'+cls(pDPT)+'">'+arrow(pDPT)+' '+fmt_pct(pDPT)+'</span> ('+fmtD(allF.dp_t)+' vs prev '+fmtD(allP.dp_t)+')</li>'
+    +'</ul>'
+    +'<h4>💰 Biaya UJP</h4><ul>'
+    +'<li>Total UJP: <span class="'+cls(pUJP)+'">'+arrow(pUJP)+' '+fmt_pct(pUJP)+'</span> ('+fmtM(allF.ujp)+' vs prev '+fmtM(allP.ujp)+')</li>'
+    +'<li>UJP/Trip: <span class="'+cls(pUJPT)+'">'+arrow(pUJPT)+' '+fmt_pct(pUJPT)+'</span> ('+fmtM(allF.ujp_t)+' vs prev '+fmtM(allP.ujp_t)+')'+(pUJPT>5?' — perlu review efisiensi biaya':' — cost terkendali')+'</li>'
+    +'</ul>'
+    +topAnalysis
+    +'<h4>🎯 Action Plan</h4><ul>'
+    +actions.map(a=>'<li>'+a+'</li>').join('')
+    +'</ul></div>';
+
+  const el=document.getElementById('ins-ai-'+pid);
+  if(el) el.innerHTML='<div class="ins-card-header">💡 Insight & Action Plan</div>'+insHTML;
+}
+
+function switchTab(btn,pid,tab){
+  btn.closest('.page-tabs').querySelectorAll('.page-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
+  document.querySelectorAll('.tab-pane[data-pid="'+pid+'"]').forEach(t=>t.classList.remove('active'));
+  const pane=document.getElementById(pid+'_tab_'+tab);
+  if(pane){pane.classList.add('active');if(tab==='insight')renderInsight(pid,filt(getRows(pid)),filtPrev(getRows(pid)),getHList(pid));
+    if(tab==='bbm')renderBBM(pid,filt(getRows(pid)),filtPrev(getRows(pid)),getHList(pid));
+    if(tab==='cost')renderCost(pid,filt(getRows(pid)),filtPrev(getRows(pid)),getHList(pid));
+  }
+}
+
+// ── Map ───────────────────────────────────────────────────────────────────────
+let mapInst=null;
+function renderMap(fRows, hubFilter){
+  if(!document.getElementById('hubMap'))return;
+  if(mapInst){mapInst.remove();mapInst=null;}
+  const centerCoord = hubFilter&&hubFilter.length===HCI_HUBS.length?[-7.0,110.0]:hubFilter&&hubFilter.length===AHI_HUBS.length?[-6.8,108.5]:[-6.5,110.0];
+  const zoomLevel = hubFilter&&hubFilter.length<5?6:5;
+  mapInst=L.map('hubMap',{zoomControl:true,scrollWheelZoom:false}).setView(centerCoord,zoomLevel);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'©OSM ©CartoDB',maxZoom:18}).addTo(mapInst);
+  const displayHubs = hubFilter || HUBS;
+  displayHubs.forEach(hub=>{
+    const coords=HUB_COORDS[hub];if(!coords)return;
+    const m=metrics(filt(BY_HUB[hub]||[]));
+    const bu=getBU(hub);
+    const color=bu==='HCI'?'#38bdf8':'#fb7185';
+    const r=Math.max(8,Math.min(22,6+m.trips/80));
+    const marker = L.circleMarker(coords,{radius:r,fillColor:color,color:'#fff',weight:1.5,opacity:.9,fillOpacity:.75})
+      .bindPopup(`<div style="font-family:Segoe UI;min-width:160px;font-size:12px">
+        <b style="color:${color};font-size:13px">${hub}</b><br>
+        <span style="color:#888">BU ${bu}</span><hr style="margin:4px 0;border-color:#ddd">
+        Trip: <b>${fmt(m.trips)}</b><br>
+        Total DO: <b>${fmt(m.total_do)}</b><br>
+        Total Cost: <b>${fmtM(m.total_cost)}</b><br>
+        TAT: <b>${m.tat_avg}</b>
+      </div>`)
+      .bindTooltip(hub.replace(/^(AHI|HCI) /,''), {
+        permanent: true, direction: 'top', offset: [0, -r],
+        className: 'hub-map-label'
+      })
+      .addTo(mapInst);
+  });
+}
+
+// ── Data helpers ──────────────────────────────────────────────────────────────
+function getRows(pid){
+  if(pid==='all')return RAW;if(pid==='ahi')return RAW.filter(r=>r.bu==='AHI');if(pid==='hci')return RAW.filter(r=>r.bu==='HCI');
+  const n=NAV.find(x=>x.id===pid);return n?.hub?BY_HUB[n.hub]||[]:RAW;
+}
+function getHList(pid){
+  if(pid==='all')return[...HCI_HUBS,...AHI_HUBS];if(pid==='ahi')return AHI_HUBS;if(pid==='hci')return HCI_HUBS;return null;
+}
+function isMultiHub(pid){return pid==='all'||pid==='ahi'||pid==='hci';}
+
+// ── Show page ─────────────────────────────────────────────────────────────────
+function renderCost(pid, fRows, pRows, hubList){
+  const pane = document.getElementById(pid+'_tab_cost');
+  if(!pane) return;
+
+  function cm(rows){ // cost metrics
+    const n=rows.length;
+    if(!n) return {cost:0,ujp:0,bbm:0,tol:0,pkr:0,oth:0,vr:0,mpp:0,ovt:0,ins:0,trip:0};
+    let cost=0,ujp=0,bbm=0,tol=0,pkr=0,oth=0,vr=0,mpp=0,ovt=0,ins=0;
+    for(const r of rows){cost+=r.cost||0;ujp+=r.ujp||0;bbm+=r.bbm||0;tol+=r.tol||0;pkr+=r.pkr||0;oth+=r.oth||0;vr+=r.vr||0;mpp+=r.mpp||0;ovt+=r.ovt||0;ins+=r.ins||0;}
+    return{cost,ujp,bbm,tol,pkr,oth,vr,mpp,ovt,ins,trip:n};
+  }
+
+  const c=cm(fRows), p=cm(pRows||[]);
+
+  function costDelta(cur,prev){
+    if(!prev||prev===0) return '';
+    const pct=(cur-prev)/prev*100;
+    const cls=pct>0?'d-up':'d-dn',sign=pct>0?'▲':'▼';
+    return '<div class="kpi-delta '+cls+'">'+sign+' '+Math.abs(pct).toFixed(1)+'% vs prev ('+fmtM(prev)+')</div>';
+  }
+
+  // KPI 1: Main cost cards
+  const mainCards = '<div class="kpi-grid" style="margin-bottom:16px">'
+    +'<div class="kpi" style="border-top:3px solid #f59e0b;background:linear-gradient(135deg,rgba(245,158,11,.15),var(--surface))"><div class="kpi-label" style="color:#f59e0b;font-weight:700">Total Cost</div><div class="kpi-value" style="color:#ffffff!important;font-size:22px!important">'+fmtM(c.cost)+'</div>'+costDelta(c.cost,p.cost)+'<div class="kpi-sub" style="color:#fde68a">'+fmtM(c.trip?Math.round(c.cost/c.trip):0)+'/trip</div></div>'
+    +'<div class="kpi t-sky"><div class="kpi-label">Total UJP</div><div class="kpi-value">'+fmtM(c.ujp)+'</div>'+costDelta(c.ujp,p.ujp)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.ujp/c.trip):0)+'/trip</div></div>'
+    +'<div class="kpi t-amber"><div class="kpi-label">Total MPP Fee</div><div class="kpi-value">'+fmtM(c.mpp)+'</div>'+costDelta(c.mpp,p.mpp)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.mpp/c.trip):0)+'/trip</div></div>'
+    +'<div class="kpi t-cyan"><div class="kpi-label">Total VR</div><div class="kpi-value">'+fmtM(c.vr)+'</div>'+costDelta(c.vr,p.vr)+'<div class="kpi-sub">'+fmtM(c.trip?Math.round(c.vr/c.trip):0)+'/trip</div></div>'
+    +'</div>'
+
+  // KPI 2: UJP breakdown cards
+  const ujpCards = '<div class="tbl-wrap" style="margin-bottom:16px">'
+    +'<div class="tbl-head"><div class="tbl-title">💡 Overview Cost UJP — Breakdown</div></div>'
+    +'<div style="padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">'
+    +[['BBM','bbm','t-amber'],['Tol','tol','t-sky'],['Parkir','pkr','t-green'],['Others','oth','t-cyan']].map(([lbl,key,tc])=>{
+      const val=c[key],pval=p[key],pct=c.trip?+(val/c.cost*100).toFixed(1):0;
+      return '<div class="kpi '+tc+'" style="margin:0">'
+        +'<div class="kpi-label">'+lbl+'</div>'
+        +'<div class="kpi-value">'+fmtM(val)+'</div>'
+        +costDelta(val,pval)
+        +'<div class="kpi-sub">'+fmtM(c.trip?Math.round(val/c.trip):0)+'/trip &nbsp;|&nbsp; '+pct+'% of UJP</div>'
+        +'</div>';
+    }).join('')
+    +'</div></div>';
+
+  // Table
+  const isMulti = !!hubList;
+  let tableSection = '';
+
+  if(isMulti){
+    const hList = hubList||HUBS;
+    const rows = hList.map(hub=>{
+      const hf=fRows.filter(r=>r.hub===hub), hp=pRows?pRows.filter(r=>r.hub===hub):[];
+      const cf=cm(hf), cp=cm(hp);
+      const bu=getBU(hub), cls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';
+      const dg=(cur,prev)=>growthCell(cur,prev);
+      return '<tr>'
+        +'<td class="'+cls+'" data-pid="'+(HUB_PAGE[hub]||'')+'" onclick="showPage(this.dataset.pid)" style="cursor:pointer">Hub '+hub+'</td>'
+        +'<td class="num">'+fmt(cf.trip)+'</td>'+dg(cf.trip,cp.trip)
+        +'<td class="num">'+fmtM(cf.cost)+'</td>'+dg(cf.cost,cp.cost)
+        +'<td class="num ratio-val">'+fmtM(cf.trip?Math.round(cf.cost/cf.trip):0)+'</td>'
+        +'<td class="num">'+fmtM(cf.ujp)+'</td>'+dg(cf.ujp,cp.ujp)
+        +'<td class="num">'+fmtM(cf.bbm)+'</td>'+dg(cf.bbm,cp.bbm)
+        +'<td class="num">'+fmtM(cf.tol)+'</td>'+dg(cf.tol,cp.tol)
+        +'<td class="num">'+fmtM(cf.pkr)+'</td>'+dg(cf.pkr,cp.pkr)
+        +'<td class="num">'+fmtM(cf.oth)+'</td>'+dg(cf.oth,cp.oth)
+        +'<td class="num">'+fmtM(cf.mpp)+'</td>'+dg(cf.mpp,cp.mpp)
+        +'<td class="num">'+fmtM(cf.vr)+'</td>'+dg(cf.vr,cp.vr)
+        +'</tr>';
+    }).join('');
+
+    const totalRow = '<tr style="background:#1e3a8a;border-top:2px solid var(--sky)">'
+      +'<td style="color:#fff;font-weight:700">⚡ TOTAL</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmt(c.trip)+'</td>'+growthCell(c.trip,p.trip)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.cost)+'</td>'+growthCell(c.cost,p.cost)
+      +'<td class="num" style="color:var(--sky);font-weight:700">'+fmtM(c.trip?Math.round(c.cost/c.trip):0)+'</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.ujp)+'</td>'+growthCell(c.ujp,p.ujp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.bbm)+'</td>'+growthCell(c.bbm,p.bbm)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.tol)+'</td>'+growthCell(c.tol,p.tol)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.pkr)+'</td>'+growthCell(c.pkr,p.pkr)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.oth)+'</td>'+growthCell(c.oth,p.oth)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.mpp)+'</td>'+growthCell(c.mpp,p.mpp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.vr)+'</td>'+growthCell(c.vr,p.vr)
+      +'</tr>';
+
+        tableSection = '<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">💰 Detail Cost per Hub</div></div>'
+      +'<div style="overflow-x:auto"><table>'
+      +'<thead><tr><th rowspan="2">Hub</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Trip</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Total Cost</th>'
+      +'<th class="num" rowspan="2">Cost/Trip</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Total UJP</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">BBM</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Tol</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Parkir</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Others</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">MPP Fee</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">VR</th>'
+      +'</tr><tr>'
+      +Array(9).fill(0).map(()=>'<th class="num">Periode</th><th class="num" style="color:var(--muted)">Prev</th><th class="num">Growth</th>').join('')
+      +'</tr></thead><tbody>'
+      +hList.map(hub=>{
+        const hf=fRows.filter(r=>r.hub===hub),hp=pRows?pRows.filter(r=>r.hub===hub):[];
+        const cf=cm(hf),cp=cm(hp);
+        const bu=getBU(hub),cls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';
+        const dg=(cur,prev)=>growthCell(cur,prev);
+        const pv=(v)=>'<td class="num" style="color:var(--muted)">'+fmtM(v)+'</td>';
+        return '<tr>'
+          +'<td class="'+cls+'" data-pid="'+(HUB_PAGE[hub]||'')+'" onclick="showPage(this.dataset.pid)" style="cursor:pointer">Hub '+hub+'</td>'
+          +'<td class="num">'+fmt(cf.trip)+'</td>'+pv(cp.trip)+dg(cf.trip,cp.trip)
+          +'<td class="num">'+fmtM(cf.cost)+'</td>'+pv(cp.cost)+dg(cf.cost,cp.cost)
+          +'<td class="num ratio-val">'+fmtM(cf.trip?Math.round(cf.cost/cf.trip):0)+'</td>'
+          +'<td class="num">'+fmtM(cf.ujp)+'</td>'+pv(cp.ujp)+dg(cf.ujp,cp.ujp)
+          +'<td class="num">'+fmtM(cf.bbm)+'</td>'+pv(cp.bbm)+dg(cf.bbm,cp.bbm)
+          +'<td class="num">'+fmtM(cf.tol)+'</td>'+pv(cp.tol)+dg(cf.tol,cp.tol)
+          +'<td class="num">'+fmtM(cf.pkr)+'</td>'+pv(cp.pkr)+dg(cf.pkr,cp.pkr)
+          +'<td class="num">'+fmtM(cf.oth)+'</td>'+pv(cp.oth)+dg(cf.oth,cp.oth)
+          +'<td class="num">'+fmtM(cf.mpp)+'</td>'+pv(cp.mpp)+dg(cf.mpp,cp.mpp)
+          +'<td class="num">'+fmtM(cf.vr)+'</td>'+pv(cp.vr)+dg(cf.vr,cp.vr)
+          +'</tr>';
+      }).join('')
+      +'<tr style="background:#1e3a8a;border-top:2px solid var(--sky)">'
+      +'<td style="color:#fff;font-weight:700">⚡ TOTAL</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmt(c.trip)+'</td><td class="num" style="color:#93c5fd">'+fmt(p.trip)+'</td>'+growthCell(c.trip,p.trip)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.cost)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.cost)+'</td>'+growthCell(c.cost,p.cost)
+      +'<td class="num" style="color:var(--sky);font-weight:700">'+fmtM(c.trip?Math.round(c.cost/c.trip):0)+'</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.ujp)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.ujp)+'</td>'+growthCell(c.ujp,p.ujp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.bbm)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.bbm)+'</td>'+growthCell(c.bbm,p.bbm)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.tol)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.tol)+'</td>'+growthCell(c.tol,p.tol)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.pkr)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.pkr)+'</td>'+growthCell(c.pkr,p.pkr)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.oth)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.oth)+'</td>'+growthCell(c.oth,p.oth)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.mpp)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.mpp)+'</td>'+growthCell(c.mpp,p.mpp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.vr)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.vr)+'</td>'+growthCell(c.vr,p.vr)
+      +'</tr></tbody></table></div></div>';
+  } else {
+    // Single hub: detail per jalur
+    const jalurGrp = {};
+    fRows.forEach(r=>{const j=r.jalur||'(kosong)';if(!jalurGrp[j])jalurGrp[j]=[];jalurGrp[j].push(r);});
+    const jalurEntries = Object.entries(jalurGrp).sort((a,b)=>cm(b[1]).cost-cm(a[1]).cost);
+
+    const jalurRows = jalurEntries.map(([j,rs],i)=>{
+      const cf=cm(rs), pj=pRows?pRows.filter(r=>r.jalur===j):[], cp=cm(pj);
+      return '<tr>'
+        +'<td class="rank '+(i<3?'r'+(i+1):'')+'>'+(i+1)+'</td><td>'+j+'</td>'
+        +'<td class="num">'+fmt(cf.trip)+'</td>'+growthCell(cf.trip,cp.trip)
+        +'<td class="num">'+fmtM(cf.cost)+'</td>'+growthCell(cf.cost,cp.cost)
+        +'<td class="num ratio-val">'+fmtM(cf.trip?Math.round(cf.cost/cf.trip):0)+'</td>'
+        +'<td class="num">'+fmtM(cf.ujp)+'</td>'+growthCell(cf.ujp,cp.ujp)
+        +'<td class="num">'+fmtM(cf.bbm)+'</td>'+growthCell(cf.bbm,cp.bbm)
+        +'<td class="num">'+fmtM(cf.tol)+'</td>'+growthCell(cf.tol,cp.tol)
+        +'<td class="num">'+fmtM(cf.pkr)+'</td>'+growthCell(cf.pkr,cp.pkr)
+        +'<td class="num">'+fmtM(cf.oth)+'</td>'+growthCell(cf.oth,cp.oth)
+        +'<td class="num">'+fmtM(cf.mpp)+'</td>'+growthCell(cf.mpp,cp.mpp)
+        +'<td class="num">'+fmtM(cf.vr)+'</td>'+growthCell(cf.vr,cp.vr)
+        +'</tr>';
+    }).join('');
+
+    const totalRow2 = '<tr style="background:#1e3a8a;border-top:2px solid var(--sky)">'
+      +'<td colspan="2" style="color:#fff;font-weight:700">⚡ TOTAL</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmt(c.trip)+'</td>'+growthCell(c.trip,p.trip)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.cost)+'</td>'+growthCell(c.cost,p.cost)
+      +'<td class="num" style="color:var(--sky);font-weight:700">'+fmtM(c.trip?Math.round(c.cost/c.trip):0)+'</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.ujp)+'</td>'+growthCell(c.ujp,p.ujp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.bbm)+'</td>'+growthCell(c.bbm,p.bbm)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.tol)+'</td>'+growthCell(c.tol,p.tol)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.pkr)+'</td>'+growthCell(c.pkr,p.pkr)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.oth)+'</td>'+growthCell(c.oth,p.oth)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.mpp)+'</td>'+growthCell(c.mpp,p.mpp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.vr)+'</td>'+growthCell(c.vr,p.vr)
+      +'</tr>';
+
+        const tblId = 'cJ' + pid;
+    tableSection = '<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">💰 Detail Cost per Jalur</div>'
+      +'<input class="tbl-search" data-tbl="cJ" data-pid="'+pid+'" placeholder="Cari jalur..." oninput="ftbl(this,this.dataset.tbl+this.dataset.pid)"></div>'
+      +'<div style="overflow-x:auto"><table id="cJ'+pid+'">'
+      +'<thead><tr><th class="rank" rowspan="2">#</th><th rowspan="2">Jalur</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Trip</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Total Cost</th>'
+      +'<th class="num" rowspan="2">Cost/Trip</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Total UJP</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">BBM</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Tol</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Parkir</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Others</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">MPP Fee</th>'
+      +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">VR</th>'
+      +'</tr><tr>'
+      +Array(9).fill(0).map(()=>'<th class="num">Periode</th><th class="num" style="color:var(--muted)">Prev</th><th class="num">Growth</th>').join('')
+      +'</tr></thead><tbody>'
+      +jalurEntries.map(([j,rs],i)=>{
+        const cf=cm(rs),pj=pRows?pRows.filter(r=>r.jalur===j):[],cp=cm(pj);
+        const dg=(cur,prev)=>growthCell(cur,prev);
+        const pv=(v)=>'<td class="num" style="color:var(--muted)">'+fmtM(v)+'</td>';
+        return '<tr>'
+          +'<td class="rank '+(i<3?'r'+(i+1):'')+'">'+(i+1)+'</td><td>'+j+'</td>'
+          +'<td class="num">'+fmt(cf.trip)+'</td>'+pv(cp.trip)+dg(cf.trip,cp.trip)
+          +'<td class="num">'+fmtM(cf.cost)+'</td>'+pv(cp.cost)+dg(cf.cost,cp.cost)
+          +'<td class="num ratio-val">'+fmtM(cf.trip?Math.round(cf.cost/cf.trip):0)+'</td>'
+          +'<td class="num">'+fmtM(cf.ujp)+'</td>'+pv(cp.ujp)+dg(cf.ujp,cp.ujp)
+          +'<td class="num">'+fmtM(cf.bbm)+'</td>'+pv(cp.bbm)+dg(cf.bbm,cp.bbm)
+          +'<td class="num">'+fmtM(cf.tol)+'</td>'+pv(cp.tol)+dg(cf.tol,cp.tol)
+          +'<td class="num">'+fmtM(cf.pkr)+'</td>'+pv(cp.pkr)+dg(cf.pkr,cp.pkr)
+          +'<td class="num">'+fmtM(cf.oth)+'</td>'+pv(cp.oth)+dg(cf.oth,cp.oth)
+          +'<td class="num">'+fmtM(cf.mpp)+'</td>'+pv(cp.mpp)+dg(cf.mpp,cp.mpp)
+          +'<td class="num">'+fmtM(cf.vr)+'</td>'+pv(cp.vr)+dg(cf.vr,cp.vr)
+          +'</tr>';
+      }).join('')
+      +'<tr style="background:#1e3a8a;border-top:2px solid var(--sky)">'
+      +'<td colspan="2" style="color:#fff;font-weight:700">⚡ TOTAL</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmt(c.trip)+'</td><td class="num" style="color:#93c5fd">'+fmt(p.trip)+'</td>'+growthCell(c.trip,p.trip)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.cost)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.cost)+'</td>'+growthCell(c.cost,p.cost)
+      +'<td class="num" style="color:var(--sky);font-weight:700">'+fmtM(c.trip?Math.round(c.cost/c.trip):0)+'</td>'
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.ujp)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.ujp)+'</td>'+growthCell(c.ujp,p.ujp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.bbm)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.bbm)+'</td>'+growthCell(c.bbm,p.bbm)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.tol)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.tol)+'</td>'+growthCell(c.tol,p.tol)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.pkr)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.pkr)+'</td>'+growthCell(c.pkr,p.pkr)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.oth)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.oth)+'</td>'+growthCell(c.oth,p.oth)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.mpp)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.mpp)+'</td>'+growthCell(c.mpp,p.mpp)
+      +'<td class="num" style="color:#fff;font-weight:700">'+fmtM(c.vr)+'</td><td class="num" style="color:#93c5fd">'+fmtM(p.vr)+'</td>'+growthCell(c.vr,p.vr)
+      +'</tr></tbody></table></div></div>';
+  }
+
+  pane.innerHTML = mainCards + ujpCards + tableSection;
+}
+
+function renderBBM(pid, fRows, pRows, hubList){
+  const pane = document.getElementById(pid+'_tab_bbm');
+  if(!pane) return;
+
+  const totalTrip  = fRows.length;
+  const totalBbm   = fRows.reduce((s,r)=>s+(r.bbm||0),0);
+  const totalVol   = fRows.reduce((s,r)=>s+(r.vol||0),0);
+  const totalKm    = fRows.reduce((s,r)=>s+(r.km||0),0);
+  const bbmPerTrip = totalTrip ? Math.round(totalBbm/totalTrip) : 0;
+  const kmPerTrip  = totalTrip ? +(totalKm/totalTrip).toFixed(1) : 0;
+  const kmPerLiter = totalVol  ? +(totalKm/totalVol).toFixed(2) : 0;
+
+  // Prev period metrics
+  const pTrip    = pRows ? pRows.length : 0;
+  const pBbm     = pRows ? pRows.reduce((s,r)=>s+(r.bbm||0),0) : 0;
+  const pVol     = pRows ? pRows.reduce((s,r)=>s+(r.vol||0),0) : 0;
+  const pKm      = pRows ? pRows.reduce((s,r)=>s+(r.km||0),0) : 0;
+  const pBbmTrip = pTrip ? Math.round(pBbm/pTrip) : 0;
+  const pKmTrip  = pTrip ? +(pKm/pTrip).toFixed(1) : 0;
+  const pKmLiter = pVol  ? +(pKm/pVol).toFixed(2) : 0;
+
+  function bbmDelta(cur, prev){
+    if(!prev||prev===0) return '';
+    const pct=(cur-prev)/prev*100;
+    const cls=pct>0?'d-up':'d-dn', sign=pct>0?'▲':'▼';
+    const pv = (prev % 1 === 0) ? fmt(prev) : fmtD(prev);
+    return `<div class="kpi-delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs prev (${pv})</div>`;
+  }
+
+  // Group by Jenis BBM
+  const byJenis = {};
+  fRows.forEach(r=>{
+    const j = (r.jbbm&&r.jbbm!='nan'&&r.jbbm!='') ? r.jbbm : '(Tidak Diisi)';
+    if(!byJenis[j]) byJenis[j]={trip:0,bbm:0,vol:0,km:0};
+    byJenis[j].trip++;
+    byJenis[j].bbm += (r.bbm||0);
+    byJenis[j].vol += (r.vol||0);
+    byJenis[j].km  += (r.km||0);
+  });
+
+  const jenisColors = ['#38bdf8','#f59e0b','#34d399','#a78bfa','#fb7185','#06b6d4','#f97316'];
+  // Rename 'Rechecked' → 'Fuel Type On Checked'
+  if(byJenis['Rechecked']){byJenis['Fuel Type On Checked']=byJenis['Rechecked'];delete byJenis['Rechecked'];}
+
+  // Sort by trip desc, but always put 'Fuel Type On Checked' last
+  const jenisEntries = Object.entries(byJenis).sort((a,b)=>{
+    if(a[0]==='Fuel Type On Checked') return 1;
+    if(b[0]==='Fuel Type On Checked') return -1;
+    return b[1].trip - a[1].trip;
+  });
+
+  const volPerTrip = totalTrip&&totalVol ? +(totalVol/totalTrip).toFixed(1) : 0;
+  const pVolPerTrip = pTrip&&pVol ? +(pVol/pTrip).toFixed(1) : 0;
+
+  const spanPrevBbm = pBbmTrip ? '<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: '+fmt(pBbmTrip)+')</span>' : '';
+  const spanPrevVol = pVolPerTrip ? '<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: '+fmtD(pVolPerTrip)+' L)</span>' : '';
+  const spanPrevKm  = pKmTrip ? '<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: '+fmtD(pKmTrip)+')</span>' : '';
+  // KPI Cards
+  const kpiSection = `<div class="kpi-grid" style="margin-bottom:16px">
+    <div class="kpi t-sky">
+      <div class="kpi-label">Total Trip</div>
+      <div class="kpi-value">${fmt(totalTrip)}</div>
+      ${bbmDelta(totalTrip,pTrip)}
+      <div class="kpi-sub">Pengiriman aktif</div>
+    </div>
+    <div class="kpi t-amber">
+      <div class="kpi-label">Biaya BBM</div>
+      <div class="kpi-value">${fmtM(totalBbm)}</div>
+      ${bbmDelta(totalBbm,pBbm)}
+      <div class="kpi-sub" style="margin-top:6px">
+        <span style="font-size:13px;font-weight:700;color:#800000">💰 ${fmtM(bbmPerTrip)}/trip</span>
+        ${spanPrevBbm}
+      </div>
+    </div>
+    <div class="kpi t-green">
+      <div class="kpi-label">Volume BBM</div>
+      <div class="kpi-value">${fmtD(totalVol)} L</div>
+      ${bbmDelta(totalVol,pVol)}
+      <div class="kpi-sub" style="margin-top:6px">
+        <span style="font-size:13px;font-weight:700;color:var(--green)">🛢 ${fmtD(volPerTrip)} L/trip</span>
+        ${spanPrevVol}
+      </div>
+    </div>
+    <div class="kpi t-cyan">
+      <div class="kpi-label">Jarak KM</div>
+      <div class="kpi-value">${fmt(totalKm)}</div>
+      ${bbmDelta(totalKm,pKm)}
+      <div class="kpi-sub" style="margin-top:6px">
+        <span style="font-size:13px;font-weight:700;color:var(--cyan)">🛣 ${fmtD(kmPerTrip)} km/trip</span>
+        ${spanPrevKm}
+      </div>
+    </div>
+    <div class="kpi t-violet">
+      <div class="kpi-label">KM/Liter</div>
+      <div class="kpi-value">${fmtD(kmPerLiter)}</div>
+      ${bbmDelta(kmPerLiter,pKmLiter)}
+      <div class="kpi-sub">Efisiensi BBM</div>
+    </div>
+  </div>`;
+
+  // Jenis BBM Cards
+  const jenisCards = `<div style="margin-bottom:16px">
+    <div class="tbl-head" style="background:var(--surface);border:1px solid var(--border);border-radius:10px 10px 0 0;padding:10px 14px">
+      <div class="tbl-title">⛽ Penggunaan BBM per Jenis</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:14px;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px">
+      ${jenisEntries.map(([j,d],i)=>`
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;border-top:3px solid ${jenisColors[i%jenisColors.length]}">
+          <div style="font-size:12px;font-weight:700;color:${jenisColors[i%jenisColors.length]};margin-bottom:8px">${j}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Trip</div><div style="font-size:16px;font-weight:700;color:var(--text)">${fmt(d.trip)}</div></div>
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Volume</div><div style="font-size:16px;font-weight:700;color:var(--text)">${fmtD(d.vol)} L</div></div>
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Biaya BBM</div><div style="font-size:14px;font-weight:700;color:var(--text)">${fmtM(d.bbm)}</div></div>
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">KM</div><div style="font-size:14px;font-weight:700;color:var(--text)">${fmt(d.km)}</div></div>
+          </div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:space-between">
+            <span style="font-size:10px;color:var(--muted)">KM/L: <b style="color:var(--sky)">${d.vol?+(d.km/d.vol).toFixed(2):'-'}</b></span>
+            <span style="font-size:10px;color:var(--muted)">${fmt(Math.round(d.trip/totalTrip*100))}% trip</span>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+
+  // Hub table (only for multi-hub pages) OR Jalur/Driver/Asst for single hub
+  const isMulti = !!hubList;
+  let bottomSection = '';
+
+  if(isMulti){
+    const hList = hubList || HUBS;
+    const hubRows = hList.map(hub=>{
+      const hr  = fRows.filter(r=>r.hub===hub);
+      const trp = hr.length;
+      const bbm = hr.reduce((s,r)=>s+(r.bbm||0),0);
+      const vol = hr.reduce((s,r)=>s+(r.vol||0),0);
+      const km  = hr.reduce((s,r)=>s+(r.km||0),0);
+      const bu  = getBU(hub);
+      const cls = bu==='HCI'?'hub-link-hci':'hub-link-ahi';
+      return `<tr>
+        <td class="${cls}" onclick="showPage('${HUB_PAGE[hub]||''}')" style="cursor:pointer">Hub ${hub}</td>
+        <td class="num">${fmt(trp)}</td>
+        <td class="num">${fmtM(bbm)}</td>
+        <td class="num ratio-val">${fmtM(trp?Math.round(bbm/trp):0)}</td>
+        <td class="num">${fmtD(vol)} L</td>
+        <td class="num ratio-val">${fmtD(trp?+(vol/trp).toFixed(1):0)} L</td>
+        <td class="num">${fmt(km)}</td>
+        <td class="num ratio-val">${fmtD(trp?+(km/trp).toFixed(1):0)}</td>
+        <td class="num ratio-val">${vol?+(km/vol).toFixed(2):'-'}</td>
+      </tr>`;
+    }).join('');
+
+    // Build hub rows with prev & growth
+    // ALL HUB: group by BU (HCI/AHI). Others: per hub.
+    function bbmMetrics(rows, prev){
+      const trp=rows.length, ptrp=prev.length;
+      const bbm=rows.reduce((s,r)=>s+(r.bbm||0),0), pbbm=prev.reduce((s,r)=>s+(r.bbm||0),0);
+      const vol=rows.reduce((s,r)=>s+(r.vol||0),0), pvol=prev.reduce((s,r)=>s+(r.vol||0),0);
+      const km =rows.reduce((s,r)=>s+(r.km||0),0),  pkm =prev.reduce((s,r)=>s+(r.km||0),0);
+      const bpt=trp?Math.round(bbm/trp):0, pbpt=ptrp?Math.round(pbbm/ptrp):0;
+      const vpt=trp?+(vol/trp).toFixed(1):0, pvpt=ptrp?+(pvol/ptrp).toFixed(1):0;
+      const kpt=trp?+(km/trp).toFixed(1):0, pkpt=ptrp?+(pkm/ptrp).toFixed(1):0;
+      const kpl=vol?+(km/vol).toFixed(2):0, pkpl=pvol?+(pkm/pvol).toFixed(2):0;
+      return {trp,ptrp,bbm,pbbm,vol,pvol,km,pkm,bpt,pbpt,vpt,pvpt,kpt,pkpt,kpl,pkpl};
+    }
+    const hubRowsWithGrowth = (pid==='all' ? ['HCI','AHI'] : hList).map(hub=>{
+      const isGroup = pid==='all';
+      const hr  = isGroup ? fRows.filter(r=>getBU(r.hub)===hub) : fRows.filter(r=>r.hub===hub);
+      const phr = isGroup ? (pRows||[]).filter(r=>getBU(r.hub)===hub) : (pRows||[]).filter(r=>r.hub===hub);
+      const {trp,ptrp,bbm,pbbm,vol,pvol,km,pkm,bpt,pbpt,vpt,pvpt,kpt,pkpt,kpl,pkpl} = bbmMetrics(hr,phr);
+      const cls = isGroup ? (hub==='HCI'?'hub-link-hci':'hub-link-ahi') : (getBU(hub)==='HCI'?'hub-link-hci':'hub-link-ahi');
+      const label = isGroup ? 'Hub '+hub : hub;
+      return `<tr>
+        <td class="${cls}" style="font-weight:700">${label}</td>
+        <td class="num">${fmt(trp)}</td><td class="num" style="color:#93c5fd">${fmt(ptrp)}</td>${growthCell(trp,ptrp)}
+        <td class="num">${fmtM(bbm)}</td><td class="num" style="color:#93c5fd">${fmtM(pbbm)}</td>${growthCell(bbm,pbbm)}
+        <td class="num ratio-val">${fmtM(bpt)}</td><td class="num" style="color:#93c5fd">${fmtM(pbpt)}</td>${growthCell(bpt,pbpt)}
+        <td class="num">${fmtD(vol)} L</td><td class="num" style="color:#93c5fd">${fmtD(pvol)} L</td>${growthCell(vol,pvol)}
+        <td class="num ratio-val">${fmtD(vpt)} L</td><td class="num" style="color:#93c5fd">${fmtD(pvpt)} L</td>${growthCell(vpt,pvpt)}
+        <td class="num">${fmt(km)}</td><td class="num" style="color:#93c5fd">${fmt(pkm)}</td>${growthCell(km,pkm)}
+        <td class="num ratio-val">${fmtD(kpt)}</td><td class="num" style="color:#93c5fd">${fmtD(pkpt)}</td>${growthCell(kpt,pkpt)}
+        <td class="num ratio-val">${kpl?kpl:'-'}</td><td class="num" style="color:#93c5fd">${pkpl?pkpl:'-'}</td>${growthCell(kpl,pkpl)}
+      </tr>`;
+    }).join('');
+
+    // Total row
+    const tBbmPt=totalTrip?Math.round(totalBbm/totalTrip):0, ptBbmPt=pTrip?Math.round(pBbm/pTrip):0;
+    const tVolPt=totalTrip&&totalVol?+(totalVol/totalTrip).toFixed(1):0, ptVolPt=pTrip&&pVol?+(pVol/pTrip).toFixed(1):0;
+
+    bottomSection = `<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">⛽ Detail BBM per Hub</div></div>
+      <div style="overflow-x:auto"><table>
         <thead>
           <tr>
-            <th rowspan="2">BU</th>
-            <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">Trip</th>
-            <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">Total DO</th>
-            <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">Total DP</th>
-            <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">TAT</th>
-            <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">DO/Trip</th>
-            <th class="num" colspan="3" style="border-bottom:1px solid var(--border);text-align:center">DP/Trip</th>
+            <th rowspan="2">Hub</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Trip</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Biaya BBM</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">BBM/Trip</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Volume BBM</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Vol/Trip</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Jarak KM</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">KM/Trip</th>
+            <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">KM/Liter</th>
           </tr>
           <tr>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
             <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
             <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
             <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
@@ -1475,35 +2844,138 @@ function showPage(pid){
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td><span class="tag tag-ahi">AHI</span></td>
-            <td class="num">${fmt(maF.trips)}</td><td class="num" style="color:var(--muted)">${fmt(maP.trips)}</td>${growthCell(maF.trips,maP.trips)}
-            <td class="num">${fmt(maF.total_do)}</td><td class="num" style="color:var(--muted)">${fmt(maP.total_do)}</td>${growthCell(maF.total_do,maP.total_do)}
-            <td class="num">${fmt(maF.total_dp)}</td><td class="num" style="color:var(--muted)">${fmt(maP.total_dp)}</td>${growthCell(maF.total_dp,maP.total_dp)}
-            <td class="num">${maF.tat_avg}</td><td class="num" style="color:var(--muted)">${maP.tat_avg}</td>${growthCell(maF.tat_minutes,maP.tat_minutes)}
-            <td class="num ratio-val">${fmtD(maF.do_per_trip)}</td><td class="num" style="color:var(--muted)">${fmtD(maP.do_per_trip)}</td>${growthCell(maF.do_per_trip,maP.do_per_trip)}
-            <td class="num ratio-val">${fmtD(maF.dp_per_trip)}</td><td class="num" style="color:var(--muted)">${fmtD(maP.dp_per_trip)}</td>${growthCell(maF.dp_per_trip,maP.dp_per_trip)}
-          </tr>
-          <tr>
-            <td><span class="tag tag-hci">HCI</span></td>
-            <td class="num">${fmt(mhF.trips)}</td><td class="num" style="color:var(--muted)">${fmt(mhP.trips)}</td>${growthCell(mhF.trips,mhP.trips)}
-            <td class="num">${fmt(mhF.total_do)}</td><td class="num" style="color:var(--muted)">${fmt(mhP.total_do)}</td>${growthCell(mhF.total_do,mhP.total_do)}
-            <td class="num">${fmt(mhF.total_dp)}</td><td class="num" style="color:var(--muted)">${fmt(mhP.total_dp)}</td>${growthCell(mhF.total_dp,mhP.total_dp)}
-            <td class="num">${mhF.tat_avg}</td><td class="num" style="color:var(--muted)">${mhP.tat_avg}</td>${growthCell(mhF.tat_minutes,mhP.tat_minutes)}
-            <td class="num ratio-val">${fmtD(mhF.do_per_trip)}</td><td class="num" style="color:var(--muted)">${fmtD(mhP.do_per_trip)}</td>${growthCell(mhF.do_per_trip,mhP.do_per_trip)}
-            <td class="num ratio-val">${fmtD(mhF.dp_per_trip)}</td><td class="num" style="color:var(--muted)">${fmtD(mhP.dp_per_trip)}</td>${growthCell(mhF.dp_per_trip,mhP.dp_per_trip)}
-          </tr>
+          ${hubRowsWithGrowth}
           <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
             <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
-            <td class="num" style="color:#fff;font-weight:700">${fmt(allF.trips)}</td><td class="num" style="color:#93c5fd">${fmt(allP.trips)}</td>${growthCell(allF.trips,allP.trips)}
-            <td class="num" style="color:#fff;font-weight:700">${fmt(allF.total_do)}</td><td class="num" style="color:#93c5fd">${fmt(allP.total_do)}</td>${growthCell(allF.total_do,allP.total_do)}
-            <td class="num" style="color:#fff;font-weight:700">${fmt(allF.total_dp)}</td><td class="num" style="color:#93c5fd">${fmt(allP.total_dp)}</td>${growthCell(allF.total_dp,allP.total_dp)}
-            <td class="num" style="color:#fff;font-weight:700">${allF.tat_avg}</td><td class="num" style="color:#93c5fd">${allP.tat_avg}</td>${growthCell(allF.tat_minutes,allP.tat_minutes)}
-            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(allF.do_per_trip)}</td><td class="num" style="color:#93c5fd">${fmtD(allP.do_per_trip)}</td>${growthCell(allF.do_per_trip,allP.do_per_trip)}
-            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(allF.dp_per_trip)}</td><td class="num" style="color:#93c5fd">${fmtD(allP.dp_per_trip)}</td>${growthCell(allF.dp_per_trip,allP.dp_per_trip)}
+            <td class="num" style="color:#fff;font-weight:700">${fmt(totalTrip)}</td><td class="num" style="color:#93c5fd">${fmt(pTrip)}</td>${growthCell(totalTrip,pTrip)}
+            <td class="num" style="color:#fff;font-weight:700">${fmtM(totalBbm)}</td><td class="num" style="color:#93c5fd">${fmtM(pBbm)}</td>${growthCell(totalBbm,pBbm)}
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtM(tBbmPt)}</td><td class="num" style="color:#93c5fd">${fmtM(ptBbmPt)}</td>${growthCell(tBbmPt,ptBbmPt)}
+            <td class="num" style="color:#fff;font-weight:700">${fmtD(totalVol)} L</td><td class="num" style="color:#93c5fd">${fmtD(pVol)} L</td>${growthCell(totalVol,pVol)}
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(tVolPt)} L</td><td class="num" style="color:#93c5fd">${fmtD(ptVolPt)} L</td>${growthCell(tVolPt,ptVolPt)}
+            <td class="num" style="color:#fff;font-weight:700">${fmt(totalKm)}</td><td class="num" style="color:#93c5fd">${fmt(pKm)}</td>${growthCell(totalKm,pKm)}
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(kmPerTrip)}</td><td class="num" style="color:#93c5fd">${fmtD(pKmTrip)}</td>${growthCell(kmPerTrip,pKmTrip)}
+            <td class="num" style="color:var(--sky);font-weight:700">${fmtD(kmPerLiter)}</td><td class="num" style="color:#93c5fd">${fmtD(pKmLiter)}</td>${growthCell(kmPerLiter,pKmLiter)}
           </tr>
-        </tbody></table></div></div>
+        </tbody>
+      </table></div></div>`;
+  } else {
+    // Single hub → Jalur, Driver, Asst Driver tables
+    const bbmTblByGroup = (rows, groupKey, title, uid) => {
+      const grp = grpBy(rows, groupKey);
+      const entries = Object.entries(grp).map(([k,rs])=>{
+        const trp=rs.length, bbm=rs.reduce((s,r)=>s+(r.bbm||0),0),
+              vol=rs.reduce((s,r)=>s+(r.vol||0),0), km=rs.reduce((s,r)=>s+(r.km||0),0);
+        return {k,trp,bbm,vol,km};
+      }).sort((a,b)=>b.bbm-a.bbm);
+      if(!entries.length) return '<div class="empty">📭 Tidak ada data</div>';
+      const trows = entries.map((e,i)=>`<tr>
+        <td class="rank ${i<3?'r'+(i+1):''}">${i+1}</td><td>${e.k}</td>
+        <td class="num">${fmt(e.trp)}</td>
+        <td class="num">${fmtM(e.bbm)}</td>
+        <td class="num ratio-val">${fmtM(e.trp?Math.round(e.bbm/e.trp):0)}</td>
+        <td class="num">${fmtD(e.vol)} L</td>
+        <td class="num ratio-val">${fmtD(e.trp?+(e.vol/e.trp).toFixed(1):0)} L</td>
+        <td class="num">${fmt(e.km)}</td>
+        <td class="num ratio-val">${e.vol?+(e.km/e.vol).toFixed(2):'-'}</td>
+      </tr>`).join('');
+      return `<div class="tbl-wrap"><div class="tbl-head"><div class="tbl-title">${title}</div>
+        <input class="tbl-search" placeholder="Cari..." oninput="ftbl(this,'${uid}')"></div>
+        <div style="overflow-x:auto"><table id="${uid}"><thead><tr>
+          <th class="rank">#</th><th>${groupKey==='jalur'?'Jalur':groupKey==='drv'?'Driver':'Asst Driver'}</th>
+          <th class="num">Trip</th><th class="num">Biaya BBM</th><th class="num">BBM/Trip</th>
+          <th class="num">Volume BBM</th><th class="num">Vol/Trip</th>
+          <th class="num">KM</th><th class="num">KM/Liter</th>
+        </tr></thead><tbody>${trows}</tbody></table></div></div>`;
+    }
 
+    // Sub nav for jalur/driver/asst
+    bottomSection = `<div class="sub-nav">
+      <button class="sub-tab active" onclick="showSub(this,'${pid}_bbm','j')">📍 Per Jalur</button>
+      <button class="sub-tab" onclick="showSub(this,'${pid}_bbm','d')">🚗 Driver</button>
+      <button class="sub-tab" onclick="showSub(this,'${pid}_bbm','a')">👤 Asst Driver</button>
+    </div>
+    <div id="${pid}_bbm_j" class="sec-block show">${bbmTblByGroup(fRows,'jalur','⛽ BBM per Jalur','bbmJ'+pid)}</div>
+    <div id="${pid}_bbm_d" class="sec-block">${bbmTblByGroup(fRows.filter(r=>r.drv&&r.drv!='nan'&&r.drv!=''),'drv','⛽ BBM per Driver','bbmD'+pid)}</div>
+    <div id="${pid}_bbm_a" class="sec-block">${bbmTblByGroup(fRows.filter(r=>r.ast&&r.ast!='nan'&&r.ast!=''),'ast','⛽ BBM per Asst Driver','bbmA'+pid)}</div>`;
+  }
+
+  pane.innerHTML = kpiSection + jenisCards + bottomSection;
+}
+
+function showPage(pid){
+  curPid=pid;
+  document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.toggle('active',el.dataset.pid===pid));
+  // Dynamic background
+  const mc=document.getElementById('mainContent');
+  mc.classList.remove('bg-hci','bg-ahi','bg-all','light-mode');
+  if(pid==='hci'||pid.startsWith('hci_')){mc.classList.add('bg-hci','light-mode');}
+  else if(pid==='ahi'||pid.startsWith('ahi_')){mc.classList.add('bg-ahi','light-mode');}
+  else{mc.classList.add('bg-all','light-mode');}
+  const nav=NAV.find(n=>n.id===pid)||{};
+  const isHub=!!nav.hub;
+  let badgeCls='badge-all',badgeLbl='ALL HUB',title='ALL Hub',sub=`${HUBS.length} Hub`;
+  if(pid==='ahi'){badgeCls='badge-ahi';badgeLbl='AHI';title='ALL HUB AHI';sub=`${AHI_HUBS.length} Hub AHI`;}
+  else if(pid==='hci'){badgeCls='badge-hci';badgeLbl='HCI';title='ALL HUB HCI';sub=`${HCI_HUBS.length} Hub HCI`;}
+  else if(isHub){const bu=getBU(nav.hub);badgeCls=`badge-${bu.toLowerCase()}`;badgeLbl=bu;title=`Hub ${nav.hub}`;sub=`BU ${bu}`;}
+
+  document.getElementById('mainContent').innerHTML=`<div class="page-wrap">
+    <div class="sec-header"><span class="badge ${badgeCls}">${badgeLbl}</span>
+      <div><div class="sec-title">${title} — Performance & Productivity</div><div class="sec-sub">${sub}</div></div>
+    </div>
+    <div class="page-tabs">
+      <button class="page-tab active" onclick="switchTab(this,'${pid}','overview')">📊 Overview</button>
+      <button class="page-tab" onclick="switchTab(this,'${pid}','bbm')">⛽ Review BBM</button>
+      <button class="page-tab" onclick="switchTab(this,'${pid}','cost')">💰 Review Cost</button>
+      <button class="page-tab" onclick="switchTab(this,'${pid}','insight')">💡 Insight</button>
+    </div>
+    <div id="${pid}_tab_overview" class="tab-pane active" data-pid="${pid}">
+      <div class="spin-wrap"><div class="spin"></div> Memuat data...</div>
+    </div>
+    <div id="${pid}_tab_insight" class="tab-pane" data-pid="${pid}"></div>
+    <div id="${pid}_tab_bbm" class="tab-pane" data-pid="${pid}"></div>
+    <div id="${pid}_tab_cost" class="tab-pane" data-pid="${pid}"></div>
+  </div>`;
+  document.getElementById('mainContent').scrollTop=0;
+
+  requestAnimationFrame(()=>{
+    const rows=getRows(pid),hList=getHList(pid);
+    const fRows=filt(rows),pRows=filtPrev(rows);
+    const m=metrics(fRows),mp=metrics(pRows);
+    const showHub=isMultiHub(pid);
+
+    document.getElementById('filterInfo').textContent=
+      `${filt(RAW).length.toLocaleString('id-ID')} dari ${RAW.length.toLocaleString('id-ID')} trip`;
+
+    // Extra tables
+    let extra='';
+    if(pid==='all'){
+      const maF=metrics(filt(RAW.filter(r=>r.bu==='AHI'))),maP=metrics(filtPrev(RAW.filter(r=>r.bu==='AHI')));
+      const mhF=metrics(filt(RAW.filter(r=>r.bu==='HCI'))),mhP=metrics(filtPrev(RAW.filter(r=>r.bu==='HCI')));
+      // Total combined
+    const allF=metrics(fRows),allP=metrics(pRows);
+    extra=`<div class="tbl-wrap" style="margin-bottom:16px"><div class="tbl-head"><div class="tbl-title">📊 ALL HUB AHI vs ALL HUB HCI</div></div>
+        <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Total DP</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th>${rThs}</tr></thead>
+        <tbody>
+          <tr><td><span class="tag tag-ahi">AHI</span></td>
+          <td class="num">${fmt(maF.trips)}</td>
+          <td class="num">${fmt(maF.total_do)}</td><td class="num">${fmt(maF.total_dp)}</td><td class="num">${maF.tat_avg}</td><td class="num">${fmt(maF.jarak_km)}</td>
+          <td class="num">${fmtM(maF.total_cost)}</td><td class="num">${fmtM(maF.bbm_ujp)}</td>${rTds(maF)}</tr>
+          <tr><td><span class="tag tag-hci">HCI</span></td>
+          <td class="num">${fmt(mhF.trips)}</td>
+          <td class="num">${fmt(mhF.total_do)}</td><td class="num">${fmt(mhF.total_dp)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td>
+          <td class="num">${fmtM(mhF.total_cost)}</td><td class="num">${fmtM(mhF.bbm_ujp)}</td>${rTds(mhF)}</tr>
+          <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
+            <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmt(allF.trips)}</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmt(allF.total_do)}</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmt(allF.total_dp)}</td>
+            <td class="num" style="font-weight:700;color:#fff">${allF.tat_avg}</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmt(allF.jarak_km)}</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmtM(allF.total_cost)}</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmtM(allF.bbm_ujp)}</td>${rTds(allF)}</tr>
+        </tbody></table></div>
+
+        <div id="overview-growth-placeholder"></div>
         <div class="tbl-wrap" style="margin-bottom:16px">
           <div class="tbl-head"><div class="tbl-title">🔍 Insight: Hub dengan Penurunan Growth</div></div>
           <div id="ins-declining-wrap" style="padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
