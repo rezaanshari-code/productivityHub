@@ -844,10 +844,12 @@ function switchTab(btn,pid,tab){
   const pane=document.getElementById(pid+'_tab_'+tab);
   if(!pane) return;
   pane.classList.add('active');
-  if(tab==='overview') return; // already rendered
-  // Show spinner immediately
+  if(tab==='overview') return;
+  // If tab already has content, show instantly
+  const isEmpty = pane.innerHTML.trim()==='' || pane.innerHTML.includes('spin-wrap');
+  if(!isEmpty) return;
+  // Not yet rendered - show spinner + defer
   pane.innerHTML='<div class="spin-wrap"><div class="spin"></div> Memuat...</div>';
-  // Defer heavy render to avoid UI freeze
   setTimeout(()=>{
     const {fRows,pRows,hList}=getCachedRows(pid);
     if(tab==='bbm') renderBBM(pid,fRows,pRows,hList);
@@ -1498,6 +1500,10 @@ function showPage(pid){
 
     if(pid==='all'||pid==='ahi'||pid==='hci')_cFR=fRows;_cPR=pRows;_cHL=hList;_cPid=pid;
     setTimeout(()=>renderMap(fRows, hList),100);
+    // Pre-render all tabs in background so switching is instant
+    setTimeout(()=>renderBBM(pid,fRows,pRows,hList),200);
+    setTimeout(()=>renderCost(pid,fRows,pRows,hList),400);
+    setTimeout(()=>renderInsight(pid,fRows,pRows,hList),600);
 
     const hm=(hList||HUBS).map(h=>({h,m:metrics(fRows.filter(r=>r.hub===h))}));
     const hasHub=hm.length>1;
