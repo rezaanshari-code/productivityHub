@@ -834,10 +834,18 @@ function switchTab(btn,pid,tab){
   btn.closest('.page-tabs').querySelectorAll('.page-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
   document.querySelectorAll('.tab-pane[data-pid="'+pid+'"]').forEach(t=>t.classList.remove('active'));
   const pane=document.getElementById(pid+'_tab_'+tab);
-  if(pane){pane.classList.add('active');if(tab==='insight')renderInsight(pid,filt(getRows(pid)),filtPrev(getRows(pid)),getHList(pid));
-    if(tab==='bbm')renderBBM(pid,filt(getRows(pid)),filtPrev(getRows(pid)),getHList(pid));
-    if(tab==='cost')renderCost(pid,filt(getRows(pid)),filtPrev(getRows(pid)),getHList(pid));
-  }
+  if(!pane) return;
+  pane.classList.add('active');
+  if(tab==='overview') return; // already rendered
+  // Show spinner immediately
+  pane.innerHTML='<div class="spin-wrap"><div class="spin"></div> Memuat...</div>';
+  // Defer heavy render to avoid UI freeze
+  setTimeout(()=>{
+    const {fRows,pRows,hList}=getCachedRows(pid);
+    if(tab==='bbm') renderBBM(pid,fRows,pRows,hList);
+    if(tab==='cost') renderCost(pid,fRows,pRows,hList);
+    if(tab==='insight') renderInsight(pid,fRows,pRows,hList);
+  },0);
 }
 
 // ── Map ───────────────────────────────────────────────────────────────────────
