@@ -1499,55 +1499,64 @@ function showPage(pid){
 
         <div class="tbl-wrap" style="margin-bottom:16px">
           <div class="tbl-head"><div class="tbl-title">🔍 Insight: Hub dengan Penurunan Growth</div></div>
-          <div style="padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
-
-            <div>
-              <div style="font-size:11px;font-weight:700;color:var(--hci);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--hci)">🔵 HUB HCI</div>
-              <div style="font-size:12px;line-height:1.8">
-              ${(()=>{
-                const declines = HCI_HUBS.map(hub=>{
-                  const cf=metrics(fRows.filter(r=>r.hub===hub));
-                  const cp=metrics((pRows||[]).filter(r=>r.hub===hub));
-                  const items=[];
-                  if(cp.trips>0&&cf.trips<cp.trips) items.push('Trip '+growthCell(cf.trips,cp.trips).replace(/<[^>]+>/g,''));
-                  if(cp.total_do>0&&cf.total_do<cp.total_do) items.push('DO '+growthCell(cf.total_do,cp.total_do).replace(/<[^>]+>/g,''));
-                  if(cp.do_per_trip>0&&cf.do_per_trip<cp.do_per_trip) items.push('DO/Trip '+growthCell(cf.do_per_trip,cp.do_per_trip).replace(/<[^>]+>/g,''));
-                  return items.length>0?{hub,items}:null;
+          <div style="padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            ${(()=>{
+              function buildCol(hubs, label, accentColor) {
+                const declines = hubs.map(hub => {
+                  const cf = metrics(fRows.filter(r=>r.hub===hub));
+                  const cp = metrics((pRows||[]).filter(r=>r.hub===hub));
+                  if(!cp.trips) return null;
+                  const rows = [];
+                  if(cf.trips < cp.trips) rows.push({k:'Trip', cur:cf.trips, prev:cp.trips, fmt_:fmt});
+                  if(cf.total_do < cp.total_do) rows.push({k:'DO', cur:cf.total_do, prev:cp.total_do, fmt_:fmt});
+                  if(cf.do_per_trip < cp.do_per_trip) rows.push({k:'DO/Trip', cur:cf.do_per_trip, prev:cp.do_per_trip, fmt_:fmtD});
+                  if(cf.dp_per_trip < cp.dp_per_trip) rows.push({k:'DP/Trip', cur:cf.dp_per_trip, prev:cp.dp_per_trip, fmt_:fmtD});
+                  if(cf.ujp_per_trip > cp.ujp_per_trip*1.05) rows.push({k:'UJP/Trip↑', cur:cf.ujp_per_trip, prev:cp.ujp_per_trip, fmt_:fmtM, up:true});
+                  return rows.length ? {hub, rows, cf, cp} : null;
                 }).filter(Boolean);
-                if(!declines.length) return '<span style="color:var(--green)">✅ Semua Hub HCI menunjukkan growth positif</span>';
-                return declines.map(d=>'<div style="margin-bottom:6px"><span style="color:#93c5fd;font-weight:600">'+d.hub.replace('HCI ','')+'</span> <span style="color:var(--muted);font-size:11px">— '+d.items.map(i=>'<span style="color:#f87171">▼'+i.split('▼')[1]+'</span>').join(', ')+'</span></div>').join('');
-              })()}
-              </div>
-            </div>
 
-            <div>
-              <div style="font-size:11px;font-weight:700;color:var(--ahi);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--ahi)">🔴 HUB AHI</div>
-              <div style="font-size:12px;line-height:1.8">
-              ${(()=>{
-                const declines = AHI_HUBS.map(hub=>{
-                  const cf=metrics(fRows.filter(r=>r.hub===hub));
-                  const cp=metrics((pRows||[]).filter(r=>r.hub===hub));
-                  const items=[];
-                  if(cp.trips>0&&cf.trips<cp.trips) items.push('Trip');
-                  if(cp.total_do>0&&cf.total_do<cp.total_do) items.push('DO');
-                  if(cp.do_per_trip>0&&cf.do_per_trip<cp.do_per_trip) items.push('DO/Trip');
-                  if(cp.total_ujp>0&&cf.total_ujp<cp.total_ujp) items.push('UJP');
-                  return items.length>0?{hub,cf,cp,items}:null;
-                }).filter(Boolean);
-                if(!declines.length) return '<span style="color:var(--green)">✅ Semua Hub AHI menunjukkan growth positif</span>';
-                return declines.map(d=>{
-                  const details=d.items.map(item=>{
-                    const cur=item==='Trip'?d.cf.trips:item==='DO'?d.cf.total_do:item==='DO/Trip'?d.cf.do_per_trip:d.cf.total_ujp;
-                    const prev=item==='Trip'?d.cp.trips:item==='DO'?d.cp.total_do:item==='DO/Trip'?d.cp.do_per_trip:d.cp.total_ujp;
-                    const p=prev?((cur-prev)/prev*100):0;
-                    return '<span style="color:#f87171">'+item+' '+p.toFixed(1)+'%</span>';
-                  }).join(', ');
-                  return '<div style="margin-bottom:6px"><span style="color:#fca5a5;font-weight:600">'+d.hub.replace('AHI ','')+'</span> <span style="color:var(--muted);font-size:11px">— '+details+'</span></div>';
-                }).join('');
-              })()}
-              </div>
-            </div>
+                const actionPlan = [];
+                const tripDown = declines.filter(d=>d.rows.find(r=>r.k==='Trip'));
+                const doTripDown = declines.filter(d=>d.rows.find(r=>r.k==='DO/Trip'));
+                const ujpUp = declines.filter(d=>d.rows.find(r=>r.k==='UJP/Trip↑'));
+                if(tripDown.length) actionPlan.push('📌 '+tripDown.length+' hub trip menurun — evaluasi ketersediaan armada & jadwal');
+                if(doTripDown.length) actionPlan.push('📌 '+doTripDown.length+' hub DO/Trip turun — optimalkan konsolidasi muatan per trip');
+                if(ujpUp.length) actionPlan.push('📌 '+ujpUp.length+' hub UJP/Trip naik — review komponen biaya operasional');
+                if(!actionPlan.length) actionPlan.push('✅ Tidak ada anomali signifikan — pertahankan performa');
 
+                let html_ = '<div>';
+                html_ += '<div style="font-size:11px;font-weight:700;color:'+accentColor+';text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid '+accentColor+'">'+label+'</div>';
+
+                if(!declines.length) {
+                  html_ += '<div style="color:var(--green);font-size:12px;padding:8px 0">✅ Semua hub growth positif</div>';
+                } else {
+                  declines.forEach(d => {
+                    html_ += '<div style="margin-bottom:10px;padding:8px;background:rgba(0,0,0,.15);border-radius:6px;border-left:3px solid '+accentColor+'">';
+                    html_ += '<div style="font-weight:700;font-size:12px;color:var(--text);margin-bottom:4px">🏢 '+d.hub+'</div>';
+                    d.rows.forEach(row => {
+                      const pct = ((row.cur - row.prev)/row.prev*100);
+                      const arrow = row.up ? '▲' : '▼';
+                      const clr = row.up ? '#f87171' : '#f87171';
+                      html_ += '<div style="font-size:11px;display:flex;justify-content:space-between;padding:2px 0">';
+                      html_ += '<span style="color:var(--muted)">'+row.k+'</span>';
+                      html_ += '<span><b style="color:var(--text)">'+row.fmt_(row.cur)+'</b> <span style="color:var(--muted);font-size:10px">← prev '+row.fmt_(row.prev)+'</span> <span style="color:'+clr+';font-weight:700">'+arrow+Math.abs(pct).toFixed(1)+'%</span></span>';
+                      html_ += '</div>';
+                    });
+                    html_ += '</div>';
+                  });
+                }
+
+                html_ += '<div style="margin-top:12px;padding:10px;background:rgba(0,0,0,.2);border-radius:6px">';
+                html_ += '<div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:6px">🎯 Action Plan</div>';
+                actionPlan.forEach(a => {
+                  html_ += '<div style="font-size:11px;color:var(--text);margin-bottom:4px">'+a+'</div>';
+                });
+                html_ += '</div>';
+                html_ += '</div>';
+                return html_;
+              }
+              return buildCol(HCI_HUBS,'🔵 HUB HCI','#3b82f6') + buildCol(AHI_HUBS,'🔴 HUB AHI','#ef4444');
+            })()}
           </div>
         </div>`;
     } else if(pid==='ahi'||pid==='hci'){
