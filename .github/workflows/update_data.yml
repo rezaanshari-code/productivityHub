@@ -52,7 +52,7 @@ jobs:
 
           def clean(df):
               if "Status LC" in df.columns:
-                  df = df[df["Status LC"] != "New"].copy()
+                  df = df[df["Status LC"] == "Checkout"].copy()
               for col in ["Total DO Cust","Total DO Store","Total DO","BBM (UJP)",
                           "Total Cost UJP","Total Cost","Jarak (KM)","Jumlah DP",
                           "Cost VR","Cost MPP Fee","Cost Ovt","Cost Insentif"]:
