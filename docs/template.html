@@ -1525,9 +1525,9 @@ function showPage(pid){
           const tD=declines.filter(d=>d.rows.find(r=>r.k==='Trip'));
           const dD=declines.filter(d=>d.rows.find(r=>r.k==='DO/Trip'));
           const uU=declines.filter(d=>d.rows.find(r=>r.k.includes('UJP')));
-          if(tD.length) ap.push('\xf0\x9f\x93\x8c '+tD.length+' hub trip menurun \u2014 evaluasi ketersediaan armada & jadwal');
-          if(dD.length) ap.push('\xf0\x9f\x93\x8c '+dD.length+' hub DO/Trip turun \u2014 optimalkan konsolidasi muatan');
-          if(uU.length) ap.push('\xf0\x9f\x93\x8c '+uU.length+' hub UJP/Trip naik \u2014 review komponen biaya operasional');
+          if(tD.length) ap.push('📌 '+tD.length+' hub trip menurun \u2014 evaluasi ketersediaan armada & jadwal');
+          if(dD.length) ap.push('📌 '+dD.length+' hub DO/Trip turun \u2014 optimalkan konsolidasi muatan');
+          if(uU.length) ap.push('📌 '+uU.length+' hub UJP/Trip naik \u2014 review komponen biaya operasional');
           if(!ap.length) ap.push('\u2705 Tidak ada anomali signifikan');
           let h='<div><div style="font-size:11px;font-weight:700;color:'+accentColor+';text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid '+accentColor+'">'+label+'</div>';
           if(!declines.length){h+='<div style="color:#4ade80;font-size:13px;font-weight:600;padding:10px 0">\u2705 Semua hub growth positif</div>';}
@@ -1550,7 +1550,7 @@ function showPage(pid){
           h+='</div></div>';
           return h;
         }
-        wrap.innerHTML=buildCol(HCI_HUBS,'\xf0\x9f\x94\xb5 HUB HCI','#3b82f6')+buildCol(AHI_HUBS,'\xf0\x9f\x94\xb4 HUB AHI','#ef4444');
+        wrap.innerHTML=buildCol(HCI_HUBS,'🔵 HUB HCI','#3b82f6')+buildCol(AHI_HUBS,'🔴 HUB AHI','#ef4444');
       },800);
     }
 
