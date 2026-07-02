@@ -399,12 +399,66 @@ HCI_HUBS.forEach((h,i)=>HUB_PAGE[h]='hci_'+i);
 AHI_HUBS.forEach((h,i)=>HUB_PAGE[h]='ahi_'+i);
 
 const sidebar=document.getElementById('sidebar');
+// Build sidebar with hub select dropdowns
+function addHubSelect(bu, hubs){
+  const wrap=document.createElement('div');
+  wrap.className='hub-select-wrap';
+  const dot=bu==='HCI'?'dot-hci':'dot-ahi';
+  const accentCls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';
+  wrap.innerHTML=`
+    <input class="hub-search" placeholder="🔍 Cari hub ${bu}..." oninput="filterHubOpts(this,'opts-${bu}')">
+    <div class="hub-sel-count" id="count-${bu}">0 dipilih</div>
+    <div class="hub-opts" id="opts-${bu}">
+      ${hubs.map((h,i)=>`<label class="hub-opt" id="opt-${bu}-${i}">
+        <input type="checkbox" value="${bu==='HCI'?'hci_'+i:'ahi_'+i}" onchange="hubSelChange('${bu}')">
+        <span class="sidebar-dot ${dot}" style="flex-shrink:0"></span>
+        <span>Hub ${h}</span>
+      </label>`).join('')}
+    </div>
+    <button class="hub-filter-btn" onclick="applyHubFilter('${bu}')">Tampilkan</button>
+  `;
+  sidebar.appendChild(wrap);
+}
+
+window.filterHubOpts=function(input,optsId){
+  const q=input.value.toLowerCase();
+  document.querySelectorAll('#'+optsId+' .hub-opt').forEach(opt=>{
+    opt.style.display=opt.textContent.toLowerCase().includes(q)?'':'none';
+  });
+};
+
+window.hubSelChange=function(bu){
+  const count=document.querySelectorAll('#opts-'+bu+' input:checked').length;
+  document.getElementById('count-'+bu).textContent=count+' dipilih';
+};
+
+window.applyHubFilter=function(bu){
+  const checked=[...document.querySelectorAll('#opts-'+bu+' input:checked')];
+  if(!checked.length) return;
+  if(checked.length===1){
+    showPage(checked[0].value);
+  } else {
+    // Multi-hub: show combined filtered view
+    const pids=checked.map(c=>c.value);
+    showPageMulti(bu,pids);
+  }
+};
+
 NAV.forEach(n=>{
-  if(n.group){const l=document.createElement('div');l.className='sidebar-group-label';l.textContent=n.group==='HCI'?'BU HCI':'BU AHI';sidebar.appendChild(l);}
+  if(n.group){
+    const l=document.createElement('div');
+    l.className='sidebar-group-label';
+    l.textContent=n.group==='HCI'?'BU HCI':'BU AHI';
+    sidebar.appendChild(l);
+  }
+  if(n.hub) return; // skip individual hubs - replaced by select
   const el=document.createElement('div');
   el.className=`sidebar-item ${n.cls}`;el.dataset.pid=n.id;
   el.innerHTML=`<span class="sidebar-dot ${n.dot}"></span>${n.label}`;
-  el.onclick=()=>showPage(n.id);sidebar.appendChild(el);
+  el.onclick=()=>showPage(n.id);
+  sidebar.appendChild(el);
+  if(n.id==='hci') addHubSelect('HCI',HCI_HUBS);
+  if(n.id==='ahi') addHubSelect('AHI',AHI_HUBS);
 });
 
 // ── Date state ────────────────────────────────────────────────────────────────
@@ -1395,6 +1449,47 @@ function renderBBM(pid, fRows, pRows, hubList){
   }
 
   pane.innerHTML = kpiSection + jenisCards + bottomSection;
+}
+
+function showPageMulti(bu, pids){
+  // Multi-hub combined view - reuse ALL HUB HCI/AHI logic but filtered
+  const pid = bu==='HCI'?'hci':'ahi';
+  const hubNames = pids.map(p=>{
+    const n=NAV.find(x=>x.id===p);
+    return n?n.hub:'';
+  }).filter(Boolean);
+  curPid='multi_'+bu;
+  // Update sidebar active - clear all, mark the select area
+  document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
+  const mc=document.getElementById('mainContent');
+  mc.classList.remove('bg-hci','bg-ahi','bg-all','light-mode');
+  bu==='HCI'?mc.classList.add('bg-hci','light-mode'):mc.classList.add('bg-ahi','light-mode');
+  invalidateCache();
+  requestAnimationFrame(()=>{
+    const allRows=RAW;
+    const fRows=filt(allRows.filter(r=>hubNames.includes(r.hub)));
+    const pRows=filtPrev(allRows.filter(r=>hubNames.includes(r.hub)));
+    const m=metrics(fRows),mp=metrics(pRows);
+    _cFR=fRows;_cPR=pRows;_cHL=hubNames;_cPid='multi_'+bu;
+    mc.innerHTML=`<div class="page-header">
+      <span class="badge badge-${bu.toLowerCase()}">${bu}</span>
+      <h2 class="page-title">Hub ${bu} — ${hubNames.length} Hub Terpilih</h2>
+      <p class="page-sub">${hubNames.join(', ')}</p>
+    </div>
+    <div class="page-tabs">
+      <button class="page-tab active" onclick="switchTab(this,'multi_${bu}','overview')">📊 Overview</button>
+      <button class="page-tab" onclick="switchTab(this,'multi_${bu}','bbm')">⛽ Review BBM</button>
+      <button class="page-tab" onclick="switchTab(this,'multi_${bu}','cost')">💰 Review Cost</button>
+      <button class="page-tab" onclick="switchTab(this,'multi_${bu}','insight')">💡 Insight</button>
+    </div>
+    <div id="multi_${bu}_tab_overview" class="tab-pane active" data-pid="multi_${bu}">${kpiHTML(m,mp)}${hubGrowthTableHTML(fRows,pRows,hubNames)}</div>
+    <div id="multi_${bu}_tab_bbm" class="tab-pane" data-pid="multi_${bu}"></div>
+    <div id="multi_${bu}_tab_cost" class="tab-pane" data-pid="multi_${bu}"></div>
+    <div id="multi_${bu}_tab_insight" class="tab-pane" data-pid="multi_${bu}"></div>`;
+    setTimeout(()=>renderBBM('multi_'+bu,fRows,pRows,hubNames),200);
+    setTimeout(()=>renderCost('multi_'+bu,fRows,pRows,hubNames),400);
+    setTimeout(()=>renderInsight('multi_'+bu,fRows,pRows,hubNames),600);
+  });
 }
 
 function showPage(pid){
