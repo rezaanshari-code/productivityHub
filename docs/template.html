@@ -341,6 +341,17 @@ tr:hover td{background:var(--surface2)}
 .spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--sky);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
+
+/* Hub select sidebar */
+.hub-select-wrap{padding:4px 8px 10px}
+.hub-search{width:100%;box-sizing:border-box;padding:6px 8px;background:#1a2235;border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;outline:none;margin-bottom:4px}
+.hub-search::placeholder{color:var(--muted)}.hub-search:focus{border-color:var(--sky)}
+.hub-sel-count{font-size:10px;color:var(--muted);text-align:center;padding:2px 0 4px}
+.hub-opts{max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;background:#161b27;scrollbar-width:thin;display:flex;flex-direction:column}
+.hub-opt{padding:6px 10px;font-size:12px;cursor:pointer;color:var(--text);display:flex!important;align-items:center;gap:8px;user-select:none;width:100%!important;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hub-opt:hover{background:rgba(255,255,255,.06)}
+.hub-opt input:checked~span{color:var(--sky);font-weight:600}
+.hub-opt input[type=checkbox]{accent-color:var(--sky);cursor:pointer;flex-shrink:0;width:13px;height:13px}
 </style>
 </head>
 <body>
