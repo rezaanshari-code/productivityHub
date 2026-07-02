@@ -410,12 +410,12 @@ function addHubSelect(bu, hubs){
     <div class="hub-sel-count" id="count-${bu}">0 dipilih</div>
     <div class="hub-opts" id="opts-${bu}">
       ${hubs.map((h,i)=>`<label class="hub-opt" id="opt-${bu}-${i}">
-        <input type="checkbox" value="${bu==='HCI'?'hci_'+i:'ahi_'+i}" onchange="hubSelChange('${bu}')">
+        <input type="checkbox" value="${bu==='HCI'?'hci_'+i:'ahi_'+i}" onchange="hubSelChange('${bu}');hubSelDebounce('${bu}')">
         <span class="sidebar-dot ${dot}" style="flex-shrink:0"></span>
         <span>Hub ${h}</span>
       </label>`).join('')}
     </div>
-    <button class="hub-filter-btn" onclick="applyHubFilter('${bu}')">Tampilkan</button>
+
   `;
   sidebar.appendChild(wrap);
 }
@@ -427,21 +427,26 @@ window.filterHubOpts=function(input,optsId){
   });
 };
 
+const _hubTimers={};
 window.hubSelChange=function(bu){
   const count=document.querySelectorAll('#opts-'+bu+' input:checked').length;
   document.getElementById('count-'+bu).textContent=count+' dipilih';
 };
-
-window.applyHubFilter=function(bu){
-  const checked=[...document.querySelectorAll('#opts-'+bu+' input:checked')];
-  if(!checked.length) return;
-  if(checked.length===1){
-    showPage(checked[0].value);
-  } else {
-    // Multi-hub: show combined filtered view
-    const pids=checked.map(c=>c.value);
-    showPageMulti(bu,pids);
-  }
+window.hubSelDebounce=function(bu){
+  clearTimeout(_hubTimers[bu]);
+  _hubTimers[bu]=setTimeout(()=>{
+    const checked=[...document.querySelectorAll('#opts-'+bu+' input:checked')];
+    if(!checked.length){
+      // No selection - back to ALL HUB HCI/AHI
+      showPage(bu==='HCI'?'hci':'ahi');
+      return;
+    }
+    if(checked.length===1){
+      showPage(checked[0].value);
+    } else {
+      showPageMulti(bu,checked.map(c=>c.value));
+    }
+  },300);
 };
 
 NAV.forEach(n=>{
