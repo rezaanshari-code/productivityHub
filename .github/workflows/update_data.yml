@@ -51,8 +51,8 @@ jobs:
               return pd.read_csv(url)
 
           def clean(df):
-              if "Status LC" in df.columns and "Status Count" in df.columns:
-                  df = df[(df["Status LC"] == "Checkout") & (df["Status Count"] == "Count")].copy()
+              if "Status LC" in df.columns and "Count Status" in df.columns:
+                  df = df[(df["Status LC"] == "Checkout") & (df["Count Status"] == "Count")].copy()
               elif "Status LC" in df.columns:
                   df = df[df["Status LC"] == "Checkout"].copy()
               for col in ["Total DO Cust","Total DO Store","Total DO","BBM (UJP)",
