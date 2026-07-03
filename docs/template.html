@@ -1636,27 +1636,27 @@ function showPage(pid){
           const tD=declines.filter(d=>d.rows.find(r=>r.k==='Trip'));
           const dD=declines.filter(d=>d.rows.find(r=>r.k==='DO/Trip'));
           const uU=declines.filter(d=>d.rows.find(r=>r.k.includes('UJP')));
-          if(tD.length) ap.push('📌 '+tD.length+' hub trip menurun \u2014 evaluasi ketersediaan armada & jadwal');
-          if(dD.length) ap.push('📌 '+dD.length+' hub DO/Trip turun \u2014 optimalkan konsolidasi muatan');
-          if(uU.length) ap.push('📌 '+uU.length+' hub UJP/Trip naik \u2014 review komponen biaya operasional');
-          if(!ap.length) ap.push('\u2705 Tidak ada anomali signifikan');
+          if(tD.length) ap.push('📌 '+tD.length+' hub trip menurun — evaluasi ketersediaan armada & jadwal');
+          if(dD.length) ap.push('📌 '+dD.length+' hub DO/Trip turun — optimalkan konsolidasi muatan');
+          if(uU.length) ap.push('📌 '+uU.length+' hub UJP/Trip naik — review komponen biaya operasional');
+          if(!ap.length) ap.push('✅ Tidak ada anomali signifikan');
           let h='<div><div style="font-size:11px;font-weight:700;color:'+accentColor+';text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid '+accentColor+'">'+label+'</div>';
-          if(!declines.length){h+='<div style="color:#4ade80;font-size:13px;font-weight:600;padding:10px 0">\u2705 Semua hub growth positif</div>';}
+          if(!declines.length){h+='<div style="color:#4ade80;font-size:13px;font-weight:600;padding:10px 0">✅ Semua hub growth positif</div>';}
           else{declines.forEach(d=>{
             h+='<div style="margin-bottom:10px;padding:10px 12px;background:rgba(0,0,0,.3);border-radius:8px;border-left:4px solid '+accentColor+'">';
-            h+='<div style="font-weight:700;font-size:13px;color:#e2e8f0;margin-bottom:5px">\xf0\x9f\x8f\xa2 '+d.hub+'</div>';
+            h+='<div style="font-weight:700;font-size:13px;color:#e2e8f0;margin-bottom:5px">🏢 '+d.hub+'</div>';
             d.rows.forEach(row=>{
               const pct=((row.cur-row.prev)/row.prev*100);
-              const arrow=row.up?'\u25b2':'\u25bc';
+              const arrow=row.up?'▲':'▼';
               h+='<div style="font-size:11px;display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.07)">';
               h+='<span style="color:#1e3a8a;font-weight:700">'+row.k+'</span>';
-              h+='<span><b style="color:#f1f5f9;font-size:12px">'+row.fmt_(row.cur)+'</b> <span style="color:#1e3a8a;font-size:11px">\u2190 prev <b style="color:#1e3a8a">'+row.fmt_(row.prev)+'</b></span> <span style="color:#f87171;font-weight:700;font-size:12px"> '+arrow+Math.abs(pct).toFixed(1)+'%</span></span>';
+              h+='<span><b style="color:#f1f5f9;font-size:12px">'+row.fmt_(row.cur)+'</b> <span style="color:#1e3a8a;font-size:11px">← prev <b style="color:#1e3a8a">'+row.fmt_(row.prev)+'</b></span> <span style="color:#f87171;font-weight:700;font-size:12px"> '+arrow+Math.abs(pct).toFixed(1)+'%</span></span>';
               h+='</div>';
             });
             h+='</div>';
           });}
           h+='<div style="margin-top:14px;padding:12px;background:rgba(0,0,0,.35);border-radius:8px;border:1px solid rgba(255,255,255,.08)">';
-          h+='<div style="font-size:12px;font-weight:700;color:#fbbf24;margin-bottom:8px">\xf0\x9f\x8e\xaf Action Plan</div>';
+          h+='<div style="font-size:12px;font-weight:700;color:#fbbf24;margin-bottom:8px">🎯 Action Plan</div>';
           ap.forEach(a=>{h+='<div style="font-size:12px;color:#e2e8f0;margin-bottom:5px;line-height:1.5">'+a+'</div>';});
           h+='</div></div>';
           return h;
