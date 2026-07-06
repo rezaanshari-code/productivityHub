@@ -595,12 +595,12 @@ function hubGrowthTableHTML(fRows, pRows, hubList){
         <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">DP/Trip</th>
       </tr>
       <tr>
-        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
-        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
-        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
-        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
-        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
-        <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
+        <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
       </tr>
     </thead>
     <tbody>
@@ -634,7 +634,7 @@ function deltaKPI(cur,prev,key){
   let pv;
   if(['do_per_trip','dp_per_trip','km_per_trip','bbm_per_trip','ujp_per_trip','cost_per_trip'].includes(key))pv=fmtD(prev[key]);
   else pv=fmt(prev[key]);
-  return`<div class="kpi-delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs prev (${pv})</div>`;
+  return`<div class="kpi-delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs Before (${pv})</div>`;
 }
 
 // ── KPI ───────────────────────────────────────────────────────────────────────
@@ -800,7 +800,7 @@ function renderInsight(pid, fRows, pRows, hubList){
 
   function buildTable(entries,rowLbl){
     const h1='<tr><th rowspan="2">'+rowLbl+'</th>'+cols.map(c=>'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--ins-border)">'+c.lb+'</th>').join('')+'</tr>';
-    const h2='<tr>'+cols.map(()=>'<th class="num ins-hdr-p">Periode</th><th class="num ins-hdr-v">Prev</th><th class="num ins-hdr-g">Growth</th>').join('')+'</tr>';
+    const h2='<tr>'+cols.map(()=>'<th class="num ins-hdr-p">Periode</th><th class="num ins-hdr-v">Before</th><th class="num ins-hdr-g">Growth</th>').join('')+'</tr>';
     const rows=entries.map(e=>{
       const cc=e.cls?'class="'+e.cls+'"':'',pid=e.pid?'data-pid="'+e.pid+'" onclick="showPage(this.dataset.pid)" style="cursor:pointer"':'';
       return '<tr><td '+cc+' '+pid+'>'+e.label+'</td>'
@@ -990,7 +990,7 @@ function renderCost(pid, fRows, pRows, hubList){
     if(!prev||prev===0) return '';
     const pct=(cur-prev)/prev*100;
     const cls=pct>0?'d-up':'d-dn',sign=pct>0?'▲':'▼';
-    return '<div class="kpi-delta '+cls+'">'+sign+' '+Math.abs(pct).toFixed(1)+'% vs prev ('+fmtM(prev)+')</div>';
+    return '<div class="kpi-delta '+cls+'">'+sign+' '+Math.abs(pct).toFixed(1)+'% vs Before ('+fmtM(prev)+')</div>';
   }
 
   // KPI 1: Main cost cards
@@ -1070,7 +1070,7 @@ function renderCost(pid, fRows, pRows, hubList){
       +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">MPP Fee</th>'
       +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">VR</th>'
       +'</tr><tr>'
-      +Array(9).fill(0).map(()=>'<th class="num">Periode</th><th class="num" style="color:var(--muted)">Prev</th><th class="num">Growth</th>').join('')
+      +Array(9).fill(0).map(()=>'<th class="num">Periode</th><th class="num" style="color:var(--muted)">Before</th><th class="num">Growth</th>').join('')
       +'</tr></thead><tbody>'
       +hList.map(hub=>{
         const hf=fRows.filter(r=>r.hub===hub),hp=pRows?pRows.filter(r=>r.hub===hub):[];
@@ -1158,7 +1158,7 @@ function renderCost(pid, fRows, pRows, hubList){
       +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">MPP Fee</th>'
       +'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">VR</th>'
       +'</tr><tr>'
-      +Array(9).fill(0).map(()=>'<th class="num">Periode</th><th class="num" style="color:var(--muted)">Prev</th><th class="num">Growth</th>').join('')
+      +Array(9).fill(0).map(()=>'<th class="num">Periode</th><th class="num" style="color:var(--muted)">Before</th><th class="num">Growth</th>').join('')
       +'</tr></thead><tbody>'
       +jalurEntries.map(([j,rs],i)=>{
         const cf=cm(rs),pj=pRows?pRows.filter(r=>r.jalur===j):[],cp=cm(pj);
@@ -1222,7 +1222,7 @@ function renderBBM(pid, fRows, pRows, hubList){
     const pct=(cur-prev)/prev*100;
     const cls=pct>0?'d-up':'d-dn', sign=pct>0?'▲':'▼';
     const pv = (prev % 1 === 0) ? fmt(prev) : fmtD(prev);
-    return `<div class="kpi-delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs prev (${pv})</div>`;
+    return `<div class="kpi-delta ${cls}">${sign} ${Math.abs(pct).toFixed(1)}% vs Before (${pv})</div>`;
   }
 
   // Group by Jenis BBM
@@ -1250,9 +1250,9 @@ function renderBBM(pid, fRows, pRows, hubList){
   const volPerTrip = totalTrip&&totalVol ? +(totalVol/totalTrip).toFixed(1) : 0;
   const pVolPerTrip = pTrip&&pVol ? +(pVol/pTrip).toFixed(1) : 0;
 
-  const spanPrevBbm = pBbmTrip ? '<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: '+fmt(pBbmTrip)+')</span>' : '';
-  const spanPrevVol = pVolPerTrip ? '<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: '+fmtD(pVolPerTrip)+' L)</span>' : '';
-  const spanPrevKm  = pKmTrip ? '<span style="font-size:10px;color:var(--muted);margin-left:4px">(prev: '+fmtD(pKmTrip)+')</span>' : '';
+  const spanPrevBbm = pBbmTrip ? '<span style="font-size:10px;color:var(--muted);margin-left:4px">(Before: '+fmt(pBbmTrip)+')</span>' : '';
+  const spanPrevVol = pVolPerTrip ? '<span style="font-size:10px;color:var(--muted);margin-left:4px">(Before: '+fmtD(pVolPerTrip)+' L)</span>' : '';
+  const spanPrevKm  = pKmTrip ? '<span style="font-size:10px;color:var(--muted);margin-left:4px">(Before: '+fmtD(pKmTrip)+')</span>' : '';
   // KPI Cards
   const kpiSection = `<div class="kpi-grid" style="margin-bottom:16px">
     <div class="kpi t-sky">
@@ -1398,14 +1398,14 @@ function renderBBM(pid, fRows, pRows, hubList){
             <th class="num" colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">KM/Liter</th>
           </tr>
           <tr>
-            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
-            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
-            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
-            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
-            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
-            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
-            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
-            <th class="num">Periode</th><th class="num">Prev</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
+            <th class="num">Periode</th><th class="num">Before</th><th class="num">Growth</th>
           </tr>
         </thead>
         <tbody>
@@ -1650,7 +1650,7 @@ function showPage(pid){
               const arrow=row.up?'▲':'▼';
               h+='<div style="font-size:11px;display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.07)">';
               h+='<span style="color:#1e3a8a;font-weight:700">'+row.k+'</span>';
-              h+='<span><b style="color:#f1f5f9;font-size:12px">'+row.fmt_(row.cur)+'</b> <span style="color:#1e3a8a;font-size:11px">← prev <b style="color:#1e3a8a">'+row.fmt_(row.prev)+'</b></span> <span style="color:#f87171;font-weight:700;font-size:12px"> '+arrow+Math.abs(pct).toFixed(1)+'%</span></span>';
+              h+='<span><b style="color:#f1f5f9;font-size:12px">'+row.fmt_(row.cur)+'</b> <span style="color:#1e3a8a;font-size:11px">← Before <b style="color:#1e3a8a">'+row.fmt_(row.prev)+'</b></span> <span style="color:#f87171;font-weight:700;font-size:12px"> '+arrow+Math.abs(pct).toFixed(1)+'%</span></span>';
               h+='</div>';
             });
             h+='</div>';
