@@ -19,11 +19,11 @@
 body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;font-size:14px;display:flex;flex-direction:column;height:100vh;overflow:hidden}
 
 /* TOPBAR */
-.topbar{background:linear-gradient(135deg,#1e2535,#161b27);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;height:48px;flex-shrink:0}
+.topbar{background:linear-gradient(135deg,#1e2535,#161b27);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;height:48px;flex-shrink:0;gap:0}
 .topbar-brand{font-size:15px;font-weight:700;background:linear-gradient(90deg,var(--sky),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 
 /* FILTER BAR */
-.filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:6px 16px;display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.filter-bar{display:none}
 .filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .filter-label{font-size:11px;color:var(--sky);font-weight:700;white-space:nowrap;min-width:86px}
 .date-input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;transition:border-color .15s}
@@ -355,7 +355,30 @@ tr:hover td{background:var(--surface2)}
 </style>
 </head>
 <body>
-<div class="topbar"><div class="topbar-brand">📦 Hub Dashboard</div></div>
+<div class="topbar">
+  <div class="topbar-brand">📦 Hub Dashboard</div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-filters">
+    <span class="topbar-filter-label">📅 Periode:</span>
+    <input type="date" id="dateFrom" class="date-input" onchange="onFilterChange()">
+    <span style="color:var(--muted);font-size:11px">s/d</span>
+    <input type="date" id="dateTo" class="date-input" onchange="onFilterChange()">
+    <button class="filter-btn" onclick="resetFilter()">Reset</button>
+    <div class="presets">
+      <button class="preset" onclick="setPreset('today',this)">Hari Ini</button>
+      <button class="preset" onclick="setPreset('week',this)">7 Hari</button>
+      <button class="preset" onclick="setPreset('month',this)">Bulan Ini</button>
+      <button class="preset" onclick="setPreset('3month',this)">3 Bulan</button>
+      <button class="preset active" onclick="setPreset('all',this)">Semua</button>
+    </div>
+    <span class="topbar-filter-sep">|</span>
+    <span class="topbar-filter-label">📊 Pembanding:</span>
+    <input type="date" id="prevFrom" class="date-input-prev" onchange="onPrevFilterChange()">
+    <span style="color:#4ade80;font-size:11px">s/d</span>
+    <input type="date" id="prevTo" class="date-input-prev" onchange="onPrevFilterChange()">
+    <span class="prev-label" id="prevLabel" style="font-size:11px">⟳ Otomatis</span>
+  </div>
+</div>
 
 <div class="filter-bar">
   <div class="filter-row" style="flex-wrap:wrap;gap:6px;align-items:center">
