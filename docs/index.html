@@ -420,6 +420,12 @@ const RAW = [{"d": "2026-01-01", "hub": "AHI Alsut", "bu": "AHI", "jalur": "JAKA
 const HUB_COORDS = {"AHI Alsut": [-6.2297, 106.6541], "AHI Bintaro": [-6.2942, 106.7342], "AHI MAG": [-6.1456, 106.9091], "AHI Puri": [-6.1789, 106.7236], "AHI Gandaria": [-6.2487, 106.7797], "AHI Kasablanka": [-6.2248, 106.8398], "AHI Depok": [-6.4025, 106.7942], "AHI Cibubur": [-6.3691, 106.8773], "AHI Terasutera": [-6.235, 106.66], "AHI AYB": [-6.195, 106.8264], "AHI IBCC": [-6.9175, 107.6191], "AHI Paskal": [-6.9024, 107.5986], "AHI Semarang": [-6.9932, 110.4203], "AHI Yogyakarta": [-7.7956, 110.3695], "AHI Malang": [-7.9797, 112.6304], "AHI Palembang": [-2.9761, 104.7754], "AHI Kuta": [-8.7215, 115.1698], "AHI Denpasar": [-8.6705, 115.2126], "HCI Tangerang": [-6.1781, 106.6297], "HCI Bogor": [-6.5971, 106.806], "HCI Utara": [-6.1345, 106.8956], "HCI Bandung": [-6.9175, 107.6191], "HCI Tasik": [-7.3273, 108.2207], "HCI Semarang": [-6.9932, 110.4003], "HCI Yogya": [-7.8014, 110.3647], "HCI Kediri": [-7.848, 111.9675], "HCI Malang": [-7.9666, 112.6326], "HCI Bali": [-8.4095, 115.1889], "HCI Banyumas": [-7.4222, 109.235], "HCI Pekanbaru": [0.5071, 101.4478], "HCI Palembang": [-2.9761, 104.7754], "HCI Lampung": [-5.4295, 105.261], "HCI Banyuwangi": [-8.3325711, 114.141579], "HCI Tegal": [-6.8674488, 109.1378271], "HCI Dumai": [1.6631967, 101.4470369], "HCI Singkawang": [0.9069861, 108.9889657], "HCI Balikpapan": [-1.2398711, 116.8593379], "HCI Siantar": [2.9592252, 99.0628792], "HCI Garut": [-7.2162774, 107.9014912], "HCI Jember": [-8.2633237, 113.6278541], "HCI Padang": [-0.9247587, 100.3632561], "HCI Jambi": [-1.7069965, 102.7140041], "HCI Bengkulu": [-3.8115, 102.2682], "HCI Palangkaraya": [-2.2072919, 113.9164372], "HCI Cirebon": [-6.7137044, 108.5608483], "HCI Aceh": [4.3685491, 97.0253024]};
 
 const HUBS=[...new Set(RAW.map(r=>r.hub))];
+
+// Pre-group rows by hub for fast filtering (avoid 46x full-scan)
+const HUB_IDX={};
+for(const r of RAW){if(!HUB_IDX[r.hub])HUB_IDX[r.hub]=[];HUB_IDX[r.hub].push(r);}
+// Pre-sort RAW by date for faster range filtering
+RAW.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
 const AHI_HUBS=HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='AHI');
 const HCI_HUBS=HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='HCI');
 const BY_HUB={};HUBS.forEach(h=>BY_HUB[h]=[]);RAW.forEach(r=>BY_HUB[r.hub].push(r));
@@ -589,9 +595,11 @@ function growthCell(cur,prev){
   return`<td class="num ${c}" style="font-weight:700">${s}${Math.abs(p).toFixed(1)}%</td>`;
 }
 function hubGrowthTableHTML(fRows, pRows, hubList){
+  // Pre-filter HUB_IDX rows by date for speed
   const rows = hubList.map(hub => {
-    const mF = metrics(fRows.filter(r=>r.hub===hub));
-    const mP = metrics(pRows?pRows.filter(r=>r.hub===hub):[]);
+    const hr=HUB_IDX[hub]||[];
+    const mF = metrics(hr.filter(r=>!r.d||(r.d>=filterFrom&&r.d<=filterTo)));
+    const mP = metrics(pRows&&pRows.length?hr.filter(r=>!r.d||(r.d>=prevFrom&&r.d<=prevTo)):[]);
     const bu = getBU(hub);
     const pid = HUB_PAGE[hub]||'';
     const cls = bu==='HCI'?'hub-link-hci':'hub-link-ahi';
