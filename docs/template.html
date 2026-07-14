@@ -1008,13 +1008,6 @@ function getRows(pid){
 function getHList(pid){
   if(pid==='all')return[...HCI_HUBS,...AHI_HUBS];if(pid==='ahi')return AHI_HUBS;if(pid==='hci')return HCI_HUBS;return null;
 }
-function rTds(m){
-  return `<td class="num ratio-val">${fmtD(m.do_per_trip)}</td>`
-    +`<td class="num ratio-val">${fmtD(m.dp_per_trip)}</td>`
-    +`<td class="num ratio-val">${fmtM(m.cost_per_trip)}</td>`
-    +`<td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td>`
-    +`<td class="num ratio-val">${fmtD(m.km_per_trip)}</td>`;
-}
 function isMultiHub(pid){return pid==='all'||pid==='ahi'||pid==='hci';}
 
 // ── Show page ─────────────────────────────────────────────────────────────────
