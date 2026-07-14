@@ -420,6 +420,12 @@ const RAW = RAW_DATA_PLACEHOLDER;
 const HUB_COORDS = HUB_COORDS_PLACEHOLDER;
 
 const HUBS=[...new Set(RAW.map(r=>r.hub))];
+
+// Pre-group rows by hub for fast filtering (avoid 46x full-scan)
+const HUB_IDX={};
+for(const r of RAW){if(!HUB_IDX[r.hub])HUB_IDX[r.hub]=[];HUB_IDX[r.hub].push(r);}
+// Pre-sort RAW by date for faster range filtering
+RAW.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
 const AHI_HUBS=HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='AHI');
 const HCI_HUBS=HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='HCI');
 const BY_HUB={};HUBS.forEach(h=>BY_HUB[h]=[]);RAW.forEach(r=>BY_HUB[r.hub].push(r));
@@ -589,9 +595,11 @@ function growthCell(cur,prev){
   return`<td class="num ${c}" style="font-weight:700">${s}${Math.abs(p).toFixed(1)}%</td>`;
 }
 function hubGrowthTableHTML(fRows, pRows, hubList){
+  // Pre-filter HUB_IDX rows by date for speed
   const rows = hubList.map(hub => {
-    const mF = metrics(fRows.filter(r=>r.hub===hub));
-    const mP = metrics(pRows?pRows.filter(r=>r.hub===hub):[]);
+    const hr=HUB_IDX[hub]||[];
+    const mF = metrics(hr.filter(r=>!r.d||(r.d>=filterFrom&&r.d<=filterTo)));
+    const mP = metrics(pRows&&pRows.length?hr.filter(r=>!r.d||(r.d>=prevFrom&&r.d<=prevTo)):[]);
     const bu = getBU(hub);
     const pid = HUB_PAGE[hub]||'';
     const cls = bu==='HCI'?'hub-link-hci':'hub-link-ahi';
