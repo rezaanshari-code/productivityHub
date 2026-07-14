@@ -421,10 +421,15 @@ const HUB_COORDS = {"AHI Alsut": [-6.2297, 106.6541], "AHI Bintaro": [-6.2942, 1
 
 const HUBS=[...new Set(RAW.map(r=>r.hub))];
 
-// Pre-group rows by hub for fast filtering (avoid 46x full-scan)
+// Pre-group rows by hub and BU for fast filtering
 const HUB_IDX={};
-for(const r of RAW){if(!HUB_IDX[r.hub])HUB_IDX[r.hub]=[];HUB_IDX[r.hub].push(r);}
-// Pre-sort RAW by date for faster range filtering
+const BU_IDX={AHI:[],HCI:[]};
+for(const r of RAW){
+  if(!HUB_IDX[r.hub])HUB_IDX[r.hub]=[];
+  HUB_IDX[r.hub].push(r);
+  if(r.bu==='AHI')BU_IDX.AHI.push(r);
+  else if(r.bu==='HCI')BU_IDX.HCI.push(r);
+}
 RAW.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
 const AHI_HUBS=HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='AHI');
 const HCI_HUBS=HUBS.filter(h=>RAW.find(r=>r.hub===h)?.bu==='HCI');
@@ -1589,8 +1594,9 @@ function showPage(pid){
     // Extra tables
     let extra='';
     if(pid==='all'){
-      const maF=metrics(filt(RAW.filter(r=>r.bu==='AHI'))),maP=metrics(filtPrev(RAW.filter(r=>r.bu==='AHI')));
-      const mhF=metrics(filt(RAW.filter(r=>r.bu==='HCI'))),mhP=metrics(filtPrev(RAW.filter(r=>r.bu==='HCI')));
+      const _fa=r=>!r.d||(r.d>=filterFrom&&r.d<=filterTo),_fp=r=>!r.d||(r.d>=prevFrom&&r.d<=prevTo);
+      const maF=metrics(BU_IDX.AHI.filter(_fa)),maP=metrics(BU_IDX.AHI.filter(_fp));
+      const mhF=metrics(BU_IDX.HCI.filter(_fa)),mhP=metrics(BU_IDX.HCI.filter(_fp));
       // Total combined
     const allF=metrics(fRows),allP=metrics(pRows);
     extra=`<div class="tbl-wrap" style="margin-bottom:16px"><div class="tbl-head"><div class="tbl-title">📊 ALL HUB AHI vs ALL HUB HCI</div></div>
@@ -1627,7 +1633,7 @@ function showPage(pid){
       extra=hubTblHTML(fRows,pRows,hList)+hubGrowthTableHTML(fRows,pRows,hList);
     }
 
-    const mapHTML=(pid==='all'||pid==='ahi'||pid==='hci')?`<div class="map-card"><div class="map-header">🗺️ Peta Lokasi Hub</div><div id="hubMap"></div></div>`:'';
+    const mapHTML=(pid==='all'||pid==='ahi'||pid==='hci')?`<div class="map-card"><div class="map-header">🗺️ Peta Lokasi Hub</div><div id="hubMap"><div style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px"><div class="spin" style="margin-right:8px"></div>Memuat peta...</div></div></div>`:'';
 
     document.getElementById(pid+'_tab_overview').innerHTML=`${mapHTML}${kpiHTML(m,mp)}${extra}
       ${pid==='all' ? '' : `
@@ -1642,7 +1648,7 @@ function showPage(pid){
       `}`;
 
     if(pid==='all'||pid==='ahi'||pid==='hci')_cFR=fRows;_cPR=pRows;_cHL=hList;_cPid=pid;
-    setTimeout(()=>renderMap(fRows, hList),100);
+    setTimeout(()=>renderMap(fRows, hList),600);
     // Only pre-render BBM (lightest tab) - others render on click
     setTimeout(()=>renderBBM(pid,fRows,pRows,hList),300);
     // Populate declining hub insight section (ALL HUB overview tab)
