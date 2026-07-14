@@ -1057,7 +1057,7 @@ function renderCost(pid, fRows, pRows, hubList){
   if(isMulti){
     const hList = hubList||HUBS;
     const rows = hList.map(hub=>{
-      const hf=fRows.filter(r=>r.hub===hub), hp=pRows?pRows.filter(r=>r.hub===hub):[];
+      const _hr=HUB_IDX[hub]||[]; const hf=_hr.filter(r=>!r.d||(r.d>=filterFrom&&r.d<=filterTo)), hp=_hr.filter(r=>!r.d||(r.d>=prevFrom&&r.d<=prevTo));
       const cf=cm(hf), cp=cm(hp);
       const bu=getBU(hub), cls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';
       const dg=(cur,prev)=>growthCell(cur,prev);
@@ -1643,10 +1643,8 @@ function showPage(pid){
 
     if(pid==='all'||pid==='ahi'||pid==='hci')_cFR=fRows;_cPR=pRows;_cHL=hList;_cPid=pid;
     setTimeout(()=>renderMap(fRows, hList),100);
-    // Pre-render all tabs in background so switching is instant
-    setTimeout(()=>renderBBM(pid,fRows,pRows,hList),200);
-    setTimeout(()=>renderCost(pid,fRows,pRows,hList),400);
-    setTimeout(()=>renderInsight(pid,fRows,pRows,hList),600);
+    // Only pre-render BBM (lightest tab) - others render on click
+    setTimeout(()=>renderBBM(pid,fRows,pRows,hList),300);
     // Populate declining hub insight section (ALL HUB overview tab)
     if(pid==='all'){
       setTimeout(()=>{
