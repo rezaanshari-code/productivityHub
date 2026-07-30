@@ -343,10 +343,10 @@ tr:hover td{background:var(--surface2)}
 @media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
 
 /* Hub select sidebar */
-.hub-select-wrap{padding:4px 8px 10px}
+.hub-select-wrap{padding:4px 8px 10px;display:flex;flex-direction:column;flex:1;min-height:0}
 
 .hub-sel-count{font-size:10px;color:var(--muted);text-align:center;padding:2px 0 4px}
-.hub-opts{max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;background:#161b27;scrollbar-width:thin;display:flex;flex-direction:column}
+.hub-opts{flex:1;overflow-y:auto;border:1px solid var(--border);border-radius:6px;background:#161b27;scrollbar-width:thin;display:flex;flex-direction:column;min-height:60px}
 .hub-opt{padding:6px 10px;font-size:12px;cursor:pointer;color:var(--text);display:flex!important;align-items:center;gap:8px;user-select:none;width:100%!important;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hub-opt:hover{background:rgba(255,255,255,.06)}
 .hub-opt input:checked~span{color:var(--sky);font-weight:600}
