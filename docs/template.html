@@ -344,8 +344,7 @@ tr:hover td{background:var(--surface2)}
 
 /* Hub select sidebar */
 .hub-select-wrap{padding:4px 8px 10px}
-.hub-search{width:100%;box-sizing:border-box;padding:6px 8px;background:#1a2235;border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;outline:none;margin-bottom:4px}
-.hub-search::placeholder{color:var(--muted)}.hub-search:focus{border-color:var(--sky)}
+
 .hub-sel-count{font-size:10px;color:var(--muted);text-align:center;padding:2px 0 4px}
 .hub-opts{max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;background:#161b27;scrollbar-width:thin;display:flex;flex-direction:column}
 .hub-opt{padding:6px 10px;font-size:12px;cursor:pointer;color:var(--text);display:flex!important;align-items:center;gap:8px;user-select:none;width:100%!important;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -454,7 +453,6 @@ function addHubSelect(bu, hubs){
   const dot=bu==='HCI'?'dot-hci':'dot-ahi';
   const accentCls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';
   wrap.innerHTML=`
-    <input class="hub-search" placeholder="🔍 Cari hub ${bu}..." oninput="filterHubOpts(this,'opts-${bu}')">
     <div class="hub-sel-count" id="count-${bu}">0 dipilih</div>
     <div class="hub-opts" id="opts-${bu}">
       ${hubs.map((h,i)=>`<label class="hub-opt" id="opt-${bu}-${i}">
@@ -468,12 +466,7 @@ function addHubSelect(bu, hubs){
   sidebar.appendChild(wrap);
 }
 
-window.filterHubOpts=function(input,optsId){
-  const q=input.value.toLowerCase();
-  document.querySelectorAll('#'+optsId+' .hub-opt').forEach(opt=>{
-    opt.style.display=opt.textContent.toLowerCase().includes(q)?'':'none';
-  });
-};
+
 
 const _hubTimers={};
 window.hubSelChange=function(bu){
