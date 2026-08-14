@@ -66,7 +66,43 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;fo
   --mint:#065f46;--amber:#92400e;--rose:#9f1239;--violet:#4c1d95;--cyan:#0e7490;
   --green:#065f46;--red:#7f1d1d
 }
-.content.bg-all{background:var(--bg)}
+.content.bg-all{
+  background:#EEF1F6;
+  --text:#0f172a;
+  --muted:#475569;
+  --surface:rgba(255,255,255,.85);
+  --surface2:rgba(255,255,255,.6);
+  --border:rgba(0,0,0,.1);
+  --ins-border:#cbd5e1;
+}
+/* bg-all light background overrides */
+.content.bg-all .kpi{background:#fff;border:1px solid rgba(0,0,0,.08);box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.content.bg-all .kpi-value{color:#0f172a!important}
+.content.bg-all .kpi-label{color:#475569!important}
+.content.bg-all .kpi-sub{color:#64748b!important}
+.content.bg-all .tbl-wrap{background:#fff;border:1px solid rgba(0,0,0,.08);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.content.bg-all .tbl-head{background:#f1f5f9;border-bottom:1px solid rgba(0,0,0,.08)}
+.content.bg-all .tbl-title{color:#0f172a!important}
+.content.bg-all table th{background:#f1f5f9;color:#334155!important}
+.content.bg-all table td{color:#0f172a!important;border-bottom:1px solid #e2e8f0}
+.content.bg-all table tr:hover td{background:#f8fafc!important}
+.content.bg-all .page-title{color:#0f172a!important}
+.content.bg-all .page-sub{color:#475569!important}
+.content.bg-all .page-tabs{border-bottom:1px solid #cbd5e1;background:#fff}
+.content.bg-all .page-tab{color:#475569}
+.content.bg-all .page-tab.active{color:#0284c7;border-bottom-color:#0284c7}
+.content.bg-all .sec-title{color:#0f172a!important}
+.content.bg-all .ins-card{background:#fff;border:1px solid rgba(0,0,0,.08)}
+.content.bg-all .ins-card-header{background:#f1f5f9;color:#0284c7}
+.content.bg-all .ins-tbl th{background:#f1f5f9;color:#334155!important}
+.content.bg-all .ins-tbl td{color:#0f172a!important;border-bottom:1px solid #e2e8f0}
+.content.bg-all .ins-cur{color:#0f172a!important}
+.content.bg-all .ins-prev{color:#64748b!important}
+.content.bg-all .badge-all{background:#0284c7;color:#fff}
+.content.bg-all .map-card{background:#fff;border:1px solid rgba(0,0,0,.08)}
+.content.bg-all .sub-nav{background:#f1f5f9;border-bottom:1px solid #e2e8f0}
+.content.bg-all .sub-tab{color:#475569}.content.bg-all .sub-tab.active{color:#0284c7;border-bottom-color:#0284c7}
+.content.bg-all .hub-link-hci{color:#1e3a8a!important}.content.bg-all .hub-link-ahi{color:#dc2626!important}
 /* Force text color for AHI light background only */
 .content.bg-ahi *{color:inherit}
 .content.bg-ahi .sec-title{color:var(--text)!important}
