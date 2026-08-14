@@ -159,33 +159,41 @@ jobs:
                   if "BU Hub" not in df.columns or len(df)==0:
                       print(f"Skip {name}"); continue
                   all_hub_names.append(name)
+                  def _num(v):
+                      n = pd.to_numeric(str(v).replace(",",""), errors="coerce")
+                      return float(n) if pd.notna(n) else 0.0
+                  ok_rows=0
                   for _, r in df.iterrows():
-                      dt  = r.get("Delivery Date")
-                      tat = r.get("TAT_min")
-                      rows.append({
-                          "d":    dt.strftime("%Y-%m-%d") if pd.notna(dt) else None,
-                          "hub":  name,"bu":   str(r.get("BU Hub","")),
-                          "jalur":str(r.get("Jalur","(Tidak Ada Jalur)")),
-                          "drv":  str(r.get("Nama Driver","")).strip(),
-                          "ast":  str(r.get("Nama Asst to Driver","")).strip(),
-                          "do":   int(r["Total DO"]),"doc":  int(r["Total DO Cust"]),
-                          "dos":  int(r["Total DO Store"]),"dp":   int(r.get("Jumlah DP",0)),
-                          "cost": round(float(r["Total Cost"]),2),
-                          "ujp":  round(float(r["Total Cost UJP"]),2),
-                          "bbm":  round(float(r["BBM (UJP)"]),2),
-                          "km":   round(float(r["Jarak (KM)"]),2),
-                          "tat":  round(float(tat),1) if tat is not None else None,
-                          "vol":  round(float(pd.to_numeric(str(r.get("Volume BBM",0)).replace(",",""), errors="coerce") or 0), 2),
-                          "jbbm": str(r.get("Jenis BBM","")).strip(),
-                          "tol":  round(float(pd.to_numeric(str(r.get("Tol (UJP)",0)).replace(",",""), errors="coerce") or 0), 2),
-                          "pkr":  round(float(pd.to_numeric(str(r.get("Parkir (UJP)",0)).replace(",",""), errors="coerce") or 0), 2),
-                          "oth":  round(float(pd.to_numeric(str(r.get("Others (UJP)",0)).replace(",",""), errors="coerce") or 0), 2),
-                          "vr":   round(float(pd.to_numeric(str(r.get("Cost VR",0)).replace(",",""), errors="coerce") or 0), 2),
-                          "mpp":  round(float(pd.to_numeric(str(r.get("Cost MPP Fee",0)).replace(",",""), errors="coerce") or 0), 2),
-                          "ovt":  round(float(pd.to_numeric(str(r.get("Cost Ovt",0)).replace(",",""), errors="coerce") or 0), 2),
-                          "ins":  round(float(pd.to_numeric(str(r.get("Cost Insentif",0)).replace(",",""), errors="coerce") or 0), 2),
-                      })
-                  print(f"OK {name}: {len(df)} baris")
+                      try:
+                          dt  = r.get("Delivery Date")
+                          tat = r.get("TAT_min")
+                          rows.append({
+                              "d":    dt.strftime("%Y-%m-%d") if pd.notna(dt) else None,
+                              "hub":  name,"bu":   str(r.get("BU Hub","")),
+                              "jalur":str(r.get("Jalur","(Tidak Ada Jalur)")),
+                              "drv":  str(r.get("Nama Driver","")).strip(),
+                              "ast":  str(r.get("Nama Asst to Driver","")).strip(),
+                              "do":   int(_num(r.get("Total DO",0))),"doc":  int(_num(r.get("Total DO Cust",0))),
+                              "dos":  int(_num(r.get("Total DO Store",0))),"dp":   int(_num(r.get("Jumlah DP",0))),
+                              "cost": round(_num(r.get("Total Cost",0)),2),
+                              "ujp":  round(_num(r.get("Total Cost UJP",0)),2),
+                              "bbm":  round(_num(r.get("BBM (UJP)",0)),2),
+                              "km":   round(_num(r.get("Jarak (KM)",0)),2),
+                              "tat":  round(float(tat),1) if tat is not None and pd.notna(tat) else None,
+                              "vol":  round(_num(r.get("Volume BBM",0)), 2),
+                              "jbbm": str(r.get("Jenis BBM","")).strip(),
+                              "tol":  round(_num(r.get("Tol (UJP)",0)), 2),
+                              "pkr":  round(_num(r.get("Parkir (UJP)",0)), 2),
+                              "oth":  round(_num(r.get("Others (UJP)",0)), 2),
+                              "vr":   round(_num(r.get("Cost VR",0)), 2),
+                              "mpp":  round(_num(r.get("Cost MPP Fee",0)), 2),
+                              "ovt":  round(_num(r.get("Cost Ovt",0)), 2),
+                              "ins":  round(_num(r.get("Cost Insentif",0)), 2),
+                          })
+                          ok_rows+=1
+                      except Exception as re:
+                          print(f"   Row skip {name}: {re}")
+                  print(f"OK {name}: {ok_rows}/{len(df)} baris")
               except Exception as e:
                   print(f"GAGAL {name}: {e}")
 
