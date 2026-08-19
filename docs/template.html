@@ -435,6 +435,12 @@ tr:hover td{background:var(--surface2)}
 th.doa-col{background:rgba(245,158,11,.25)!important;color:#92400e!important}
 .content.bg-hci .doa-col{background:rgba(245,158,11,.18)!important;color:#92400e!important}
 .content.bg-ahi .doa-col{background:rgba(245,158,11,.18)!important;color:#92400e!important}
+
+/* TOTAL row - force white text, beats bg-hci/bg-ahi/bg-all td color overrides */
+.content.bg-hci table tr.tbl-total-row td,
+.content.bg-ahi table tr.tbl-total-row td,
+.content.bg-all table tr.tbl-total-row td,
+table tr.tbl-total-row td{color:#fff!important}
 </style>
 </head>
 <body>
@@ -859,7 +865,7 @@ function hubTblHTML(fRows,pRows,hList){
       <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
       <td class="num">${fmtM(m.total_cost)}</td>
       <td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>${rTds2(m)}</tr>`;}).join('')}
-    <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
+    <tr class="tbl-total-row" style="background:#1e3a8a;border-top:2px solid var(--sky)">
       <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
       <td class="num" style="color:#fff;font-weight:700">${fmt(allM.trips)}</td>
       <td class="num" style="color:#fff;font-weight:700">${fmt(allM.total_do)}</td>
@@ -1544,7 +1550,7 @@ function renderBBM(pid, fRows, pRows, hubList){
         </thead>
         <tbody>
           ${hubRowsWithGrowth}
-          <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
+          <tr class="tbl-total-row" style="background:#1e3a8a;border-top:2px solid var(--sky)">
             <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
             <td class="num" style="color:#fff;font-weight:700">${fmt(totalTrip)}</td><td class="num" style="color:#93c5fd">${fmt(pTrip)}</td>${growthCell(totalTrip,pTrip)}
             <td class="num" style="color:#fff;font-weight:700">${fmtM(totalBbm)}</td><td class="num" style="color:#93c5fd">${fmtM(pBbm)}</td>${growthCell(totalBbm,pBbm)}
@@ -1704,7 +1710,7 @@ function showPage(pid){
           <td class="num">${fmt(mhF.trips)}</td>
           <td class="num">${fmt(mhF.total_do)}</td><td class="num doa-col">${fmt(mhF.do_actual)}</td><td class="num">${fmt(mhF.total_dp)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td>
           <td class="num">${fmtM(mhF.total_cost)}</td><td class="num">${fmtM(mhF.bbm_ujp)}</td><td class="num">${fmtM(mhF.total_ujp)}</td>${rTds2(mhF)}</tr>
-          <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
+          <tr class="tbl-total-row" style="background:#1e3a8a;border-top:2px solid var(--sky)">
             <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
             <td class="num" style="font-weight:700;color:#fff">${fmt(allF.trips)}</td>
             <td class="num" style="font-weight:700;color:#fff">${fmt(allF.total_do)}</td>
