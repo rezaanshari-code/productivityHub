@@ -429,6 +429,12 @@ tr:hover td{background:var(--surface2)}
 .sidebar-item,.sidebar-group-label{flex-shrink:0}
 .hub-select-wrap:last-child{flex:1;min-height:0;display:flex;flex-direction:column}
 .hub-select-wrap:last-child .hub-opts{flex:1;min-height:60px;max-height:none}
+
+/* DO Actual highlight */
+.doa-col{background:rgba(245,158,11,.12)!important;color:#b45309!important;font-weight:700!important}
+th.doa-col{background:rgba(245,158,11,.25)!important;color:#92400e!important}
+.content.bg-hci .doa-col{background:rgba(245,158,11,.18)!important;color:#92400e!important}
+.content.bg-ahi .doa-col{background:rgba(245,158,11,.18)!important;color:#92400e!important}
 </style>
 </head>
 <body>
@@ -643,12 +649,12 @@ function filtPrev(rows){return rows.filter(r=>!r.d||(r.d>=prevFrom&&r.d<=prevTo)
 // ── Metrics ───────────────────────────────────────────────────────────────────
 function metrics(rows){
   const n=rows.length;
-  if(!n)return{trips:0,total_do:0,do_cust:0,do_store:0,total_dp:0,total_cost:0,total_ujp:0,bbm_ujp:0,jarak_km:0,tat_avg:'N/A',do_per_trip:0,dp_per_trip:0,ujp_per_trip:0,cost_per_trip:0,bbm_per_trip:0,km_per_trip:0};
-  let tdo=0,dc=0,ds=0,dp=0,cost=0,ujp=0,bbm=0,km=0,tatS=0,tatN=0;
-  for(const r of rows){tdo+=r.do;dc+=r.doc;ds+=r.dos;dp+=(r.dp||0);cost+=r.cost;ujp+=r.ujp;bbm+=r.bbm;km+=r.km;if(r.tat!=null){tatS+=r.tat;tatN++;}}
+  if(!n)return{trips:0,total_do:0,do_actual:0,do_cust:0,do_store:0,total_dp:0,total_cost:0,total_ujp:0,bbm_ujp:0,jarak_km:0,tat_avg:'N/A',do_per_trip:0,dp_per_trip:0,ujp_per_trip:0,cost_per_trip:0,bbm_per_trip:0,km_per_trip:0};
+  let tdo=0,tdoa=0,dc=0,ds=0,dp=0,cost=0,ujp=0,bbm=0,km=0,tatS=0,tatN=0;
+  for(const r of rows){tdo+=r.do;tdoa+=(r.doa||0);dc+=r.doc;ds+=r.dos;dp+=(r.dp||0);cost+=r.cost;ujp+=r.ujp;bbm+=r.bbm;km+=r.km;if(r.tat!=null){tatS+=r.tat;tatN++;}}
   const avg=tatN?tatS/tatN:null;
   const h=avg!=null?Math.floor(avg/60):0,m=avg!=null?Math.round(avg%60):0;
-  return{trips:n,total_do:tdo,do_cust:dc,do_store:ds,total_dp:dp,total_cost:cost,total_ujp:ujp,bbm_ujp:bbm,jarak_km:km,
+  return{trips:n,total_do:tdo,do_actual:tdoa,do_cust:dc,do_store:ds,total_dp:dp,total_cost:cost,total_ujp:ujp,bbm_ujp:bbm,jarak_km:km,
     tat_avg:avg!=null?`${h}:${String(m).padStart(2,'0')}`:'N/A',
     do_per_trip:n?+(tdo/n).toFixed(1):0,dp_per_trip:n?+(dp/n).toFixed(1):0,
     ujp_per_trip:n?Math.round(ujp/n):0,cost_per_trip:n?Math.round(cost/n):0,
@@ -748,9 +754,9 @@ function kpiHTML(m,mp){
   return`<div class="kpi-grid">
     <div class="kpi t-sky"><div class="kpi-label">Total Trip</div><div class="kpi-value">${fmt(m.trips)}</div>${d('trips')}<div class="kpi-sub">Pengiriman aktif</div></div>
     <div class="kpi t-mint"><div class="kpi-label">Total DO</div><div class="kpi-value">${fmt(m.total_do)}</div>${d('total_do')}<div class="kpi-sub">Cust: ${fmt(m.do_cust)} | Store: ${fmt(m.do_store)}</div></div>
+    <div class="kpi t-doa" style="border-top:3px solid #f59e0b;background:linear-gradient(135deg,rgba(245,158,11,.12),var(--surface))"><div class="kpi-label" style="color:#f59e0b;font-weight:700">DO Actual</div><div class="kpi-value">${fmt(m.do_actual)}</div>${d('do_actual')}<div class="kpi-sub">Realisasi DO</div></div>
     <div class="kpi t-amber"><div class="kpi-label">Total DP</div><div class="kpi-value">${fmt(m.total_dp)}</div>${d('total_dp')}<div class="kpi-sub">${fmtD(m.dp_per_trip)} DP/trip</div></div>
     <div class="kpi t-violet"><div class="kpi-label">TAT Rata-rata</div><div class="kpi-value">${m.tat_avg}</div><div class="kpi-sub">Jam:Menit per trip</div></div>
-    <div class="kpi t-rose"><div class="kpi-label">Jarak KM</div><div class="kpi-value">${fmt(m.jarak_km)}</div>${d('jarak_km')}<div class="kpi-sub">${fmtD(m.km_per_trip)} km/trip</div></div>
     <div class="kpi t-cyan"><div class="kpi-label">Total Cost</div><div class="kpi-value">${fmtM(m.total_cost)}</div>${d('total_cost')}<div class="kpi-sub">${fmtM(m.cost_per_trip)}/trip</div></div>
     <div class="kpi t-sky"><div class="kpi-label">Total UJP</div><div class="kpi-value">${fmtM(m.total_ujp)}</div>${d('total_ujp')}<div class="kpi-sub">${fmtM(m.ujp_per_trip)}/trip</div></div>
     <div class="kpi t-green"><div class="kpi-label">Biaya BBM</div><div class="kpi-value">${fmtM(m.bbm_ujp)}</div>${d('bbm_ujp')}<div class="kpi-sub">${fmtM(m.bbm_per_trip)}/trip</div></div>
@@ -762,6 +768,9 @@ function kpiHTML(m,mp){
 // ── Table helpers ─────────────────────────────────────────────────────────────
 const rThs=`<th class="num">Total DP</th><th class="num">DO/Trip</th><th class="num">DP/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>`;
 const rTds=m=>`<td class="num ratio-val">${fmt(m.total_dp)}</td><td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtD(m.dp_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td><td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td>`;
+// Variant without Total DP (used when Total DP already placed elsewhere in the row)
+const rThs2=`<th class="num">DO/Trip</th><th class="num">DP/Trip</th><th class="num">Cost/Trip</th><th class="num">BBM/Trip</th><th class="num">KM/Trip</th>`;
+const rTds2=m=>`<td class="num ratio-val">${fmtD(m.do_per_trip)}</td><td class="num ratio-val">${fmtD(m.dp_per_trip)}</td><td class="num ratio-val">${fmtM(m.cost_per_trip)}</td><td class="num ratio-val">${fmtM(m.bbm_per_trip)}</td><td class="num ratio-val">${fmtD(m.km_per_trip)}</td>`;
 
 function getBU(hub){return RAW.find(r=>r.hub===hub)?.bu||'AHI';}
 
@@ -835,8 +844,8 @@ function personHTML(rows,prevRows,col,title,uid,showHub){
 function hubTblHTML(fRows,pRows,hList){
   return`<div class="tbl-wrap" style="margin-bottom:16px"><div class="tbl-head"><div class="tbl-title">📦 Detail Per Hub</div></div>
     <div style="overflow-x:auto"><table><thead><tr>
-    <th>Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Total DP</th><th class="num">DO Cust</th><th class="num">DO Store</th>
-    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>${rThs}
+    <th>Hub</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num doa-col">DO Actual</th><th class="num">DO Cust</th><th class="num">DO Store</th><th class="num">Total DP</th>
+    <th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">Total UJP</th><th class="num">BBM</th>${rThs2}
     </tr></thead><tbody>${hList.map(hub=>{
       const m=metrics(fRows.filter(r=>r.hub===hub));
       const pm=pRows?metrics(pRows.filter(r=>r.hub===hub)):null;
@@ -844,11 +853,11 @@ function hubTblHTML(fRows,pRows,hList){
       const cls=bu==='HCI'?'hub-link-hci':'hub-link-ahi';
       return`<tr><td class="${cls}" onclick="showPage('${pid}')">Hub ${hub}</td>
       <td class="num">${fmt(m.trips)}</td>
-      <td class="num">${fmt(m.total_do)}</td><td class="num">${fmt(m.total_dp)}</td>
-      <td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td>
+      <td class="num">${fmt(m.total_do)}</td><td class="num doa-col">${fmt(m.do_actual)}</td>
+      <td class="num">${fmt(m.do_cust)}</td><td class="num">${fmt(m.do_store)}</td><td class="num">${fmt(m.total_dp)}</td>
       <td class="num">${m.tat_avg}</td><td class="num">${fmt(m.jarak_km)}</td>
       <td class="num">${fmtM(m.total_cost)}</td>
-      <td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>${rTds(m)}</tr>`;}).join('')}
+      <td class="num">${fmtM(m.total_ujp)}</td><td class="num">${fmtM(m.bbm_ujp)}</td>${rTds2(m)}</tr>`;}).join('')}
     </tbody></table></div></div>`;
 }
 
@@ -1665,25 +1674,27 @@ function showPage(pid){
       // Total combined
     const allF=metrics(fRows),allP=metrics(pRows);
     extra=`<div class="tbl-wrap" style="margin-bottom:16px"><div class="tbl-head"><div class="tbl-title">📊 ALL HUB AHI vs ALL HUB HCI</div></div>
-        <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num">Total DP</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th>${rThs}</tr></thead>
+        <table><thead><tr><th>BU</th><th class="num">Trip</th><th class="num">Total DO</th><th class="num doa-col">DO Actual</th><th class="num">Total DP</th><th class="num">TAT</th><th class="num">KM</th><th class="num">Total Cost</th><th class="num">BBM</th><th class="num">Total UJP</th>${rThs2}</tr></thead>
         <tbody>
           <tr><td><span class="tag tag-ahi">AHI</span></td>
           <td class="num">${fmt(maF.trips)}</td>
-          <td class="num">${fmt(maF.total_do)}</td><td class="num">${fmt(maF.total_dp)}</td><td class="num">${maF.tat_avg}</td><td class="num">${fmt(maF.jarak_km)}</td>
-          <td class="num">${fmtM(maF.total_cost)}</td><td class="num">${fmtM(maF.bbm_ujp)}</td>${rTds(maF)}</tr>
+          <td class="num">${fmt(maF.total_do)}</td><td class="num doa-col">${fmt(maF.do_actual)}</td><td class="num">${fmt(maF.total_dp)}</td><td class="num">${maF.tat_avg}</td><td class="num">${fmt(maF.jarak_km)}</td>
+          <td class="num">${fmtM(maF.total_cost)}</td><td class="num">${fmtM(maF.bbm_ujp)}</td><td class="num">${fmtM(maF.total_ujp)}</td>${rTds2(maF)}</tr>
           <tr><td><span class="tag tag-hci">HCI</span></td>
           <td class="num">${fmt(mhF.trips)}</td>
-          <td class="num">${fmt(mhF.total_do)}</td><td class="num">${fmt(mhF.total_dp)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td>
-          <td class="num">${fmtM(mhF.total_cost)}</td><td class="num">${fmtM(mhF.bbm_ujp)}</td>${rTds(mhF)}</tr>
+          <td class="num">${fmt(mhF.total_do)}</td><td class="num doa-col">${fmt(mhF.do_actual)}</td><td class="num">${fmt(mhF.total_dp)}</td><td class="num">${mhF.tat_avg}</td><td class="num">${fmt(mhF.jarak_km)}</td>
+          <td class="num">${fmtM(mhF.total_cost)}</td><td class="num">${fmtM(mhF.bbm_ujp)}</td><td class="num">${fmtM(mhF.total_ujp)}</td>${rTds2(mhF)}</tr>
           <tr style="background:#1e3a8a;border-top:2px solid var(--sky)">
             <td style="color:#fff;font-weight:700">⚡ TOTAL</td>
             <td class="num" style="font-weight:700;color:#fff">${fmt(allF.trips)}</td>
             <td class="num" style="font-weight:700;color:#fff">${fmt(allF.total_do)}</td>
+            <td class="num doa-col" style="font-weight:700">${fmt(allF.do_actual)}</td>
             <td class="num" style="font-weight:700;color:#fff">${fmt(allF.total_dp)}</td>
             <td class="num" style="font-weight:700;color:#fff">${allF.tat_avg}</td>
             <td class="num" style="font-weight:700;color:#fff">${fmt(allF.jarak_km)}</td>
             <td class="num" style="font-weight:700;color:#fff">${fmtM(allF.total_cost)}</td>
-            <td class="num" style="font-weight:700;color:#fff">${fmtM(allF.bbm_ujp)}</td>${rTds(allF)}</tr>
+            <td class="num" style="font-weight:700;color:#fff">${fmtM(allF.bbm_ujp)}</td>
+            <td class="num" style="font-weight:700;color:#fff">${fmtM(allF.total_ujp)}</td>${rTds2(allF)}</tr>
         </tbody></table></div>
 
         <div id="ovg-placeholder"></div>
