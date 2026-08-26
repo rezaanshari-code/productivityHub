@@ -465,7 +465,9 @@ table tr.tbl-total-row td{color:#fff!important}
     <input type="date" id="prevFrom" class="date-input-prev" onchange="onPrevFilterChange()">
     <span style="color:#4ade80;font-size:11px">s/d</span>
     <input type="date" id="prevTo" class="date-input-prev" onchange="onPrevFilterChange()">
-    <span class="prev-label" id="prevLabel" style="font-size:11px">⟳ Otomatis</span>
+    <span class="prev-label" id="prevLabel" style="font-size:11px"></span>
+    <span class="topbar-filter-sep">|</span>
+    <span class="prev-label" id="freshLabel" style="font-size:11px;color:#4ade80;font-weight:600">📅 Data Terupdate : -</span>
   </div>
 </div>
 
@@ -617,8 +619,7 @@ function updatePrevPeriod(){
   prevFrom=p.from;prevTo=p.to;
   document.getElementById('prevFrom').value=prevFrom;
   document.getElementById('prevTo').value=prevTo;
-  const days=Math.round((new Date(filterTo)-new Date(filterFrom))/86400000)+1;
-  document.getElementById('prevLabel').textContent=`⟳ Otomatis: ${days} hari sebelumnya (apple-to-apple)`;
+  document.getElementById('prevLabel').textContent='';
 }
 function onPrevFilterChange(){
   prevFrom=document.getElementById('prevFrom').value;
@@ -1110,6 +1111,21 @@ function getHList(pid){
   if(pid==='all')return[...HCI_HUBS,...AHI_HUBS];if(pid==='ahi')return AHI_HUBS;if(pid==='hci')return HCI_HUBS;return null;
 }
 function isMultiHub(pid){return pid==='all'||pid==='ahi'||pid==='hci';}
+
+// ── Freshness indicator (data terbaru sesuai filter site aktif) ────────────────
+const ID_MONTHS=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+function formatIdDate(dateStr){
+  if(!dateStr) return '-';
+  const parts=dateStr.split('-');
+  const y=parts[0],m=parseInt(parts[1],10),d=parseInt(parts[2],10);
+  return `${d} ${ID_MONTHS[m-1]} ${y}`;
+}
+function updateFreshnessLabel(rows){
+  const dates=rows.map(r=>r.d).filter(Boolean).sort();
+  const latest=dates.length?dates[dates.length-1]:null;
+  const el=document.getElementById('freshLabel');
+  if(el) el.textContent=`📅 Data Terupdate : ${formatIdDate(latest)}`;
+}
 
 // ── Show page ─────────────────────────────────────────────────────────────────
 function renderCost(pid, fRows, pRows, hubList){
@@ -1615,6 +1631,7 @@ function showPageMulti(bu, pids){
     return n?n.hub:'';
   }).filter(Boolean);
   curPid='multi_'+bu;
+  updateFreshnessLabel(RAW.filter(r=>hubNames.includes(r.hub)));
   // Update sidebar active - clear all, mark the select area
   document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
   const mc=document.getElementById('mainContent');
@@ -1650,6 +1667,7 @@ function showPageMulti(bu, pids){
 
 function showPage(pid){
   curPid=pid;
+  updateFreshnessLabel(getRows(pid));
   document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.toggle('active',el.dataset.pid===pid));
   // Dynamic background
   const mc=document.getElementById('mainContent');
