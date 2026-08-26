@@ -42,6 +42,11 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;fo
 /* LAYOUT */
 .layout{display:flex;flex:1;overflow:hidden}
 .sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;padding:8px 0;display:flex;flex-direction:column}
+.sidebar-wrap{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;overflow:hidden}
+.sidebar-wrap .sidebar{width:100%;border-right:none;flex:1;min-height:0}
+.sidebar-back-btn{display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 12px;padding:12px 10px;background:var(--sky);color:#0b1220;font-weight:700;font-size:14px;border-radius:8px;text-decoration:none;text-align:center;flex-shrink:0;transition:filter .15s,transform .1s}
+.sidebar-back-btn:hover{filter:brightness(1.1)}
+.sidebar-back-btn:active{transform:scale(.98)}
 .sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 .sidebar-group-label{padding:8px 14px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
 .sidebar-item{display:flex;align-items:center;gap:8px;padding:6px 14px;cursor:pointer;color:var(--muted);font-size:12px;font-weight:500;transition:all .15s;border-left:3px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -495,10 +500,13 @@ table tr.tbl-total-row td{color:#fff!important}
 </div>
 
 <div class="layout">
-  <div class="sidebar" id="sidebar"></div>
+  <div class="sidebar-wrap">
+    <div class="sidebar" id="sidebar"></div>
+    <a class="sidebar-back-btn" href="https://rezaanshari-code.github.io/All-Dashboard-Hub/">← Back to All Dashboard</a>
+  </div>
   <div class="content" id="mainContent"></div>
 </div>
-<div class="footer"><a href="https://rezaanshari-code.github.io/All-Dashboard-Hub/" style="color:var(--sky);text-decoration:none;font-weight:600;margin-right:16px">← Back to All Dashboard</a>Dashboard Performance & Productivity Hub &nbsp;|&nbsp; *Status LC "Checkout" & Count Status "Count" &nbsp;|&nbsp; Auto-update 08:00 WIB</div>
+<div class="footer">Dashboard Performance & Productivity Hub &nbsp;|&nbsp; *Status LC "Checkout" & Count Status "Count" &nbsp;|&nbsp; Auto-update 08:00 WIB</div>
 
 <script>
 const RAW = RAW_DATA_PLACEHOLDER;
